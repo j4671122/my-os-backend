@@ -216,6 +216,10 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;b
 /* ── Drag & drop ── */
 .task-card.dragging{opacity:.4;border:2px dashed var(--accent)}
 .task-card.drag-over{border-top:2px solid var(--accent);margin-top:-2px}
+.folder-row.dragging{opacity:.4;background:var(--accent-light)}
+.folder-row.drag-over{border-top:2px solid var(--accent)}
+.goal-card.dragging{opacity:.4;border:2px dashed var(--accent)!important}
+.goal-card.drag-over{border-top:3px solid var(--accent)}
 .drag-handle{cursor:grab;color:var(--text3);font-size:12px;padding:0 3px;opacity:0;transition:opacity .15s}
 .task-head:hover .drag-handle{opacity:1}
 /* ── Habit toggle ── */
@@ -370,15 +374,26 @@ canvas{max-width:100%}
 .goal-acts{display:flex;gap:5px}
 
 /* ── Habits ── */
-.habit-grid{display:flex;flex-direction:column;gap:12px}
-.habit-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px 16px}
-.habit-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.habit-name{flex:1;font-weight:600;font-size:13.5px}
-.streak-badge{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700}
-.habit-calendar{display:flex;gap:3px}
-.hc-day{width:22px;height:22px;border-radius:4px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--text3)}
+.habit-grid{display:flex;flex-direction:column;gap:10px}
+.habit-row{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;transition:box-shadow .15s,border-color .15s}
+.habit-row:hover{border-color:var(--border2);box-shadow:var(--shadow)}
+.habit-row.dragging{opacity:.4;border:2px dashed var(--accent)}
+.habit-row.drag-over{border-top:3px solid var(--accent)}
+.habit-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.habit-name{flex:1;font-weight:600;font-size:13.5px;color:var(--text1)}
+.streak-badge{border-radius:20px;padding:2px 9px;font-size:11.5px;font-weight:700;color:#fff;white-space:nowrap}
+.habit-meta{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:11.5px;color:var(--text3)}
+.habit-today-btn{padding:4px 14px;border-radius:20px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.habit-today-btn.done{background:var(--accent);color:#fff;border-color:var(--accent)}
+.habit-today-btn:hover{opacity:.8}
+.habit-weeks{display:flex;flex-direction:column;gap:3px}
+.habit-week-row{display:flex;gap:3px}
+.hc-day{width:20px;height:20px;border-radius:4px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:7.5px;color:var(--text3);flex-shrink:0}
 .hc-day.done{background:var(--accent);color:#fff}
-.hc-day.today{border:2px solid var(--accent)}
+.hc-day.today{border:2px solid var(--accent);font-weight:700}
+.hc-day.today.done{background:var(--accent);border-color:transparent}
+.hc-day[onclick]{cursor:pointer}
+.hc-day[onclick]:hover{opacity:.75;transform:scale(1.1)}
 
 /* ── Search ── */
 .search-bar{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);display:flex;align-items:center;gap:8px;padding:10px 13px;margin-bottom:14px;transition:border-color .15s}
@@ -1727,7 +1742,7 @@ const LANG_DATA={
     // Habits
     habitPlaceholder:'새 습관 이름 입력 (Enter)',addHabitBtn:'+ 추가',
     habitsEmpty:'습관을 직접 추가해보세요!<br><br>예: 운동, 독서, 공부',
-    dayStreak:'일 연속',todayDone:'✅ 오늘 완료!',deleteHabit:'삭제',
+    dayStreak:'일 연속',todayDone:'오늘 완료',todayCheck:'오늘 완료하기',deleteHabit:'삭제',
     // Search
     searchPlaceholder:'키워드, 태그, 메모로 검색...',filterHigh:'🔴 중요',filterMed:'🟡 보통',filterToday:'📅 오늘',
     filterOverdue:'⚠️ 기한 초과',filterWeek:'📆 이번 주',filterDone:'✔️ 완료 포함',
@@ -1777,7 +1792,7 @@ const LANG_DATA={
     // Habits
     habitPlaceholder:'New habit name (Enter)',addHabitBtn:'+ Add',
     habitsEmpty:'Add your first habit!<br><br>e.g. Exercise, Reading, Study',
-    dayStreak:' day streak',todayDone:'✅ Done today!',deleteHabit:'Delete',
+    dayStreak:' day streak',todayDone:'Done today',todayCheck:'Mark today',deleteHabit:'Delete',
     // Search
     searchPlaceholder:'Search by keyword, tag, or note...',filterHigh:'🔴 High',filterMed:'🟡 Normal',filterToday:'📅 Today',
     filterOverdue:'⚠️ Overdue',filterWeek:'📆 This Week',filterDone:'✔️ Include Done',
@@ -1827,7 +1842,7 @@ const LANG_DATA={
     // Habits
     habitPlaceholder:'输入新习惯名称 (Enter)',addHabitBtn:'+ 添加',
     habitsEmpty:'添加您的第一个习惯！<br><br>例如：运动、阅读、学习',
-    dayStreak:'天连续',todayDone:'✅ 今天已完成！',deleteHabit:'删除',
+    dayStreak:'天连续',todayDone:'今日已完成',todayCheck:'完成今日',deleteHabit:'删除',
     // Search
     searchPlaceholder:'按关键词、标签或备注搜索...',filterHigh:'🔴 重要',filterMed:'🟡 普通',filterToday:'📅 今天',
     filterOverdue:'⚠️ 已逾期',filterWeek:'📆 本周',filterDone:'✔️ 包含已完成',
@@ -2430,6 +2445,58 @@ function onSubDrop(e,tid,sid){
   saveD();renderDetail(tid);
 }
 
+// ── Folder drag reorder ─────────────────────────────────────
+let _folderDragId=null;
+function onFolderDragStart(e,id){
+  _folderDragId=id;e.dataTransfer.effectAllowed='move';
+  setTimeout(()=>document.querySelector(`.folder-row[ondragstart*="${id}"]`)?.classList.add('dragging'),0);
+}
+function onFolderDragOver(e,id){
+  e.preventDefault();e.dataTransfer.dropEffect='move';
+  document.querySelectorAll('.folder-row.drag-over').forEach(el=>el.classList.remove('drag-over'));
+  if(_folderDragId&&_folderDragId!==id){
+    document.querySelector(`.folder-row[ondragstart*="${id}"]`)?.classList.add('drag-over');
+  }
+}
+function onFolderDrop(e,id){
+  e.preventDefault();e.stopPropagation();
+  if(!_folderDragId||_folderDragId===id)return;
+  const fi=D.folders.findIndex(f=>f.id===_folderDragId),ti=D.folders.findIndex(f=>f.id===id);
+  if(fi<0||ti<0)return;
+  const[moved]=D.folders.splice(fi,1);D.folders.splice(ti,0,moved);
+  saveD();renderSidebar();
+}
+function onFolderDragEnd(e){
+  document.querySelectorAll('.folder-row.dragging,.folder-row.drag-over').forEach(el=>el.classList.remove('dragging','drag-over'));
+  _folderDragId=null;
+}
+
+// ── Goal drag reorder ────────────────────────────────────────
+let _goalDragId=null;
+function onGoalDragStart(e,id){
+  _goalDragId=id;e.dataTransfer.effectAllowed='move';
+  setTimeout(()=>document.getElementById('goal-card-'+id)?.classList.add('dragging'),0);
+}
+function onGoalDragOver(e,id){
+  e.preventDefault();e.dataTransfer.dropEffect='move';
+  document.querySelectorAll('.goal-card.drag-over').forEach(el=>el.classList.remove('drag-over'));
+  if(_goalDragId&&_goalDragId!==id){
+    document.getElementById('goal-card-'+id)?.classList.add('drag-over');
+  }
+}
+function onGoalDrop(e,id){
+  e.preventDefault();
+  if(!_goalDragId||_goalDragId===id)return;
+  const fi=D.goals.findIndex(g=>g.id===_goalDragId),ti=D.goals.findIndex(g=>g.id===id);
+  if(fi<0||ti<0)return;
+  const[moved]=D.goals.splice(fi,1);D.goals.splice(ti,0,moved);
+  saveD();render();
+}
+function onGoalDragEnd(e){
+  document.querySelectorAll('.goal-card.dragging,.goal-card.drag-over').forEach(el=>el.classList.remove('dragging','drag-over'));
+  _goalDragId=null;
+}
+
 function filteredTasks(){
   let tasks=[...D.tasks];
   if(VIEW==='today'){tasks=tasks.filter(tk=>!tk.done)}
@@ -2497,7 +2564,13 @@ function renderSidebar(){
   const fl=document.getElementById('sb-folders');
   fl.innerHTML=D.folders.map(f=>{
     const cnt=D.tasks.filter(t=>!t.done&&t.folderId===f.id).length;
-    return`<div class="folder-row${VIEW===f.id?' active':''}" onclick="setView('${f.id}')">
+    return`<div class="folder-row${VIEW===f.id?' active':''}" draggable="true"
+      ondragstart="onFolderDragStart(event,'${f.id}')"
+      ondragover="onFolderDragOver(event,'${f.id}')"
+      ondrop="onFolderDrop(event,'${f.id}')"
+      ondragend="onFolderDragEnd(event)"
+      onclick="setView('${f.id}')">
+      <span style="cursor:grab;color:var(--text3);font-size:11px;opacity:.5;margin-right:3px">⠿</span>
       <div class="folder-dot" style="background:${f.color}"></div>
       <span style="flex:1">${esc(f.name)}</span>
       ${cnt?`<span style="font-size:10px;background:${f.color}22;color:${f.color};padding:1px 5px;border-radius:8px;font-weight:600">${cnt}</span>`:''}
@@ -2637,86 +2710,86 @@ function renderTaskView(){
   return html;
 }
 
-function taskCardHTML(t){
-  const folder=t.folderId?D.folders.find(f=>f.id===t.folderId):null;
-  const subDone=t.subtasks.filter(s=>s.done).length,subTotal=t.subtasks.length;
-  const isOpen=openTaskIds.has(t.id);
-  const overdue=!t.done&&isOverdue(t.dueDate);
-  const pLabel={high:`<span class="ttag pr-high">${t('prHighLabel')}</span>`,med:'',low:`<span class="ttag pr-low">${t('prLowLabel')}</span>`}[t.priority]||'';
-  const selMode=_doneSelectMode&&t.done;
-  const isSel=_selectedDoneIds.has(t.id);
-  const dragAttrs=selMode?'draggable="false"':`draggable="true" ondragstart="onTaskDragStart(event,'${t.id}')" ondragend="onTaskDragEnd(event,'${t.id}')" ondragover="onTaskDragOver(event,'${t.id}')" ondrop="onTaskDrop(event,'${t.id}')"`;
-  const headClick=selMode?`toggleDoneSel('${t.id}',event)`:`toggleOpen('${t.id}')`;
-  const checkClick=selMode?`toggleDoneSel('${t.id}',event)`:`toggleDone('${t.id}',event)`;
+function taskCardHTML(task){
+  const folder=task.folderId?D.folders.find(f=>f.id===task.folderId):null;
+  const subDone=task.subtasks.filter(s=>s.done).length,subTotal=task.subtasks.length;
+  const isOpen=openTaskIds.has(task.id);
+  const overdue=!task.done&&isOverdue(task.dueDate);
+  const pLabel={high:`<span class="ttag pr-high">${t('prHighLabel')}</span>`,med:'',low:`<span class="ttag pr-low">${t('prLowLabel')}</span>`}[task.priority]||'';
+  const selMode=_doneSelectMode&&task.done;
+  const isSel=_selectedDoneIds.has(task.id);
+  const dragAttrs=selMode?'draggable="false"':`draggable="true" ondragstart="onTaskDragStart(event,'${task.id}')" ondragend="onTaskDragEnd(event,'${task.id}')" ondragover="onTaskDragOver(event,'${task.id}')" ondrop="onTaskDrop(event,'${task.id}')"`;
+  const headClick=selMode?`toggleDoneSel('${task.id}',event)`:`toggleOpen('${task.id}')`;
+  const checkClick=selMode?`toggleDoneSel('${task.id}',event)`:`toggleDone('${task.id}',event)`;
   const leftEl=selMode
-    ?`<input type="checkbox" class="done-cb" id="dcb-${t.id}" ${isSel?'checked':''} onclick="toggleDoneSel('${t.id}',event)">`
+    ?`<input type="checkbox" class="done-cb" id="dcb-${task.id}" ${isSel?'checked':''} onclick="toggleDoneSel('${task.id}',event)">`
     :`<span class="drag-handle" onclick="event.stopPropagation()" title="${t('dragTitle')}">⠿</span>`;
-  return`<div class="task-card${t.done?' done-card':''}${isOpen?' open':''}${selMode?' sel-mode':''}${selMode&&isSel?' selected':''}" id="card-${t.id}" ${dragAttrs}>
+  return`<div class="task-card${task.done?' done-card':''}${isOpen?' open':''}${selMode?' sel-mode':''}${selMode&&isSel?' selected':''}" id="card-${task.id}" ${dragAttrs}>
     <div class="task-head" onclick="${headClick}">
       ${leftEl}
-      <button class="check-btn${t.done?' chk':''}" onclick="${checkClick}">${t.done?'✓':''}</button>
-      <div class="task-title-text">${esc(t.title)}</div>
-      <div class="task-tags">${t.tags.slice(0,3).map(tg=>tagHTML(tg)).join('')}</div>
+      <button class="check-btn${task.done?' chk':''}" onclick="${checkClick}">${task.done?'✓':''}</button>
+      <div class="task-title-text">${esc(task.title)}</div>
+      <div class="task-tags">${task.tags.slice(0,3).map(tg=>tagHTML(tg)).join('')}</div>
       <div class="task-right">
         ${pLabel}
         ${folder?`<span class="ttag" style="background:${folder.color}22;color:${folder.color}">${esc(folder.name)}</span>`:''}
         ${subTotal?`<span style="font-size:11px;color:var(--text3);background:var(--surface2);padding:1px 6px;border-radius:10px">${subDone}/${subTotal}</span>`:''}
-        ${t.dueDate?`<span class="due-label${overdue?' overdue':isUpcoming(t.dueDate)?' upcoming':''}">${getDateLabel(t.dueDate)}</span>`:''}
-        ${t.links.length||t.sessionUrl?'<span style="font-size:11px">🔗</span>':''}
+        ${task.dueDate?`<span class="due-label${overdue?' overdue':isUpcoming(task.dueDate)?' upcoming':''}">${getDateLabel(task.dueDate)}</span>`:''}
+        ${task.links.length||task.sessionUrl?'<span style="font-size:11px">🔗</span>':''}
       </div>
       <span class="chevron">›</span>
     </div>
     ${subTotal?`<div class="sub-prog-bar"><div class="prog-track"><div class="prog-fill" style="width:${Math.round(subDone/subTotal*100)}%"></div></div></div>`:''}
-    <div class="task-detail"><div class="detail-inner" id="di-${t.id}"></div></div>
+    <div class="task-detail"><div class="detail-inner" id="di-${task.id}"></div></div>
   </div>`;
 }
 
 function renderDetail(tid){
-  const t=D.tasks.find(t=>t.id===tid);if(!t)return;
+  const task=D.tasks.find(tk=>tk.id===tid);if(!task)return;
   const el=document.getElementById('di-'+tid);if(!el)return;
-  const subDone=t.subtasks.filter(s=>s.done).length,subTotal=t.subtasks.length;
+  const subDone=task.subtasks.filter(s=>s.done).length,subTotal=task.subtasks.length;
   const pct=subTotal?Math.round(subDone/subTotal*100):null;
-  const folderOptions=D.folders.map(f=>`<option value="${f.id}"${t.folderId===f.id?' selected':''}>${esc(f.name)}</option>`).join('');
-  const goalOptions=D.goals.map(g=>`<option value="${g.id}"${t.goalId===g.id?' selected':''}>${esc(g.name)}</option>`).join('');
-  const suggestedTags=autoDetectTags(t.title,t.notes).filter(tg=>!t.tags.includes(tg));
+  const folderOptions=D.folders.map(f=>`<option value="${f.id}"${task.folderId===f.id?' selected':''}>${esc(f.name)}</option>`).join('');
+  const goalOptions=D.goals.map(g=>`<option value="${g.id}"${task.goalId===g.id?' selected':''}>${esc(g.name)}</option>`).join('');
+  const suggestedTags=autoDetectTags(task.title,task.notes).filter(tg=>!task.tags.includes(tg));
   el.innerHTML=`
     <div class="resume-bar">
       <div class="rt"><strong>${t('resumeTitle')}</strong>${pct!==null?`${t('progressLabel')} ${pct}% · ${t('remainingLabel')} ${subTotal-subDone}`:t('noSubtask')}</div>
-      <button class="resume-btn" onclick="resumeSession('${t.id}',event)">${t('openSession')}</button>
+      <button class="resume-btn" onclick="resumeSession('${task.id}',event)">${t('openSession')}</button>
     </div>
     <div class="session-row">
       <span style="font-size:14px">💬</span>
-      <input placeholder="${t('sessionPlaceholder')}" value="${esc(t.sessionUrl||'')}"
-        onclick="event.stopPropagation()" oninput="updateTaskField('${t.id}','sessionUrl',this.value)"/>
-      ${t.sessionUrl?`<button class="session-open-btn" onclick="window.open('${esc(t.sessionUrl)}','_blank');event.stopPropagation()">${t('openBtn')}</button>`:''}
+      <input placeholder="${t('sessionPlaceholder')}" value="${esc(task.sessionUrl||'')}"
+        onclick="event.stopPropagation()" oninput="updateTaskField('${task.id}','sessionUrl',this.value)"/>
+      ${task.sessionUrl?`<button class="session-open-btn" onclick="window.open('${esc(task.sessionUrl)}','_blank');event.stopPropagation()">${t('openBtn')}</button>`:''}
     </div>
     <div class="opts-row">
-      <div class="opt-item"><label>📅</label><input type="date" value="${t.dueDate||''}" onchange="updateTaskField('${t.id}','dueDate',this.value)"/></div>
-      <div class="opt-item"><label>🚦</label><select onchange="updateTaskField('${t.id}','priority',this.value)"><option value="high"${t.priority==='high'?' selected':''}>${t('prHigh')}</option><option value="med"${t.priority==='med'?' selected':''}>${t('prMed')}</option><option value="low"${t.priority==='low'?' selected':''}>${t('prLow')}</option></select></div>
-      <div class="opt-item"><label>📁</label><select onchange="updateTaskField('${t.id}','folderId',this.value||null)"><option value=""${!t.folderId?' selected':''}>${t('noneOpt')}</option>${folderOptions}</select></div>
-      <div class="opt-item"><label>🎯</label><select onchange="updateTaskField('${t.id}','goalId',this.value||null)"><option value=""${!t.goalId?' selected':''}>${t('noneOpt')}</option>${goalOptions}</select></div>
-      <button class="del-task-btn" onclick="deleteTask('${t.id}',event)">${t('deleteBtn')}</button>
+      <div class="opt-item"><label>📅</label><input type="date" value="${task.dueDate||''}" onchange="updateTaskField('${task.id}','dueDate',this.value)"/></div>
+      <div class="opt-item"><label>🚦</label><select onchange="updateTaskField('${task.id}','priority',this.value)"><option value="high"${task.priority==='high'?' selected':''}>${t('prHigh')}</option><option value="med"${task.priority==='med'?' selected':''}>${t('prMed')}</option><option value="low"${task.priority==='low'?' selected':''}>${t('prLow')}</option></select></div>
+      <div class="opt-item"><label>📁</label><select onchange="updateTaskField('${task.id}','folderId',this.value||null)"><option value=""${!task.folderId?' selected':''}>${t('noneOpt')}</option>${folderOptions}</select></div>
+      <div class="opt-item"><label>🎯</label><select onchange="updateTaskField('${task.id}','goalId',this.value||null)"><option value=""${!task.goalId?' selected':''}>${t('noneOpt')}</option>${goalOptions}</select></div>
+      <button class="del-task-btn" onclick="deleteTask('${task.id}',event)">${t('deleteBtn')}</button>
     </div>
     <div>
       <div class="ds-label">${t('checklist')}</div>
-      <div class="sub-list">${t.subtasks.map(s=>`<div class="sub-item" draggable="true" ondragstart="onSubDragStart(event,'${t.id}','${s.id}')" ondragover="event.preventDefault()" ondrop="onSubDrop(event,'${t.id}','${s.id}')"><span style="cursor:grab;color:var(--text3);font-size:11px;padding:0 3px">⠿</span><button class="sub-ck${s.done?' chk':''}" onclick="toggleSub('${t.id}','${s.id}')">${s.done?'✓':''}</button><span class="sub-text${s.done?' dk':''}">${esc(s.text)}</span><button class="sub-del" onclick="delSub('${t.id}','${s.id}')">✕</button></div>`).join('')}</div>
-      <div class="add-sub"><input id="sub-inp-${t.id}" placeholder="${t('addItem')}" onkeydown="handleSubKey(event,'${t.id}')" onclick="event.stopPropagation()"/><button class="btn btn-ghost btn-sm" onclick="addSubtask('${t.id}');event.stopPropagation()">${t('addBtn')}</button></div>
+      <div class="sub-list">${task.subtasks.map(s=>`<div class="sub-item" draggable="true" ondragstart="onSubDragStart(event,'${task.id}','${s.id}')" ondragover="event.preventDefault()" ondrop="onSubDrop(event,'${task.id}','${s.id}')"><span style="cursor:grab;color:var(--text3);font-size:11px;padding:0 3px">⠿</span><button class="sub-ck${s.done?' chk':''}" onclick="toggleSub('${task.id}','${s.id}')">${s.done?'✓':''}</button><span class="sub-text${s.done?' dk':''}">${esc(s.text)}</span><button class="sub-del" onclick="delSub('${task.id}','${s.id}')">✕</button></div>`).join('')}</div>
+      <div class="add-sub"><input id="sub-inp-${task.id}" placeholder="${t('addItem')}" onkeydown="handleSubKey(event,'${task.id}')" onclick="event.stopPropagation()"/><button class="btn btn-ghost btn-sm" onclick="addSubtask('${task.id}');event.stopPropagation()">${t('addBtn')}</button></div>
     </div>
     <div>
       <div class="ds-label">${t('tagsLabel')} ${suggestedTags.length?`<span style="font-weight:400;font-size:11px;color:var(--text3)">${t('suggestLabel')}</span>`:''}
-        ${suggestedTags.map(tg=>`<button onclick="addTagToTask('${t.id}','${tg}');event.stopPropagation()" style="background:none;border:1px solid var(--border);border-radius:10px;padding:1px 7px;font-size:10.5px;cursor:pointer;color:var(--text2)">#${esc(tg)}</button>`).join('')}
+        ${suggestedTags.map(tg=>`<button onclick="addTagToTask('${task.id}','${tg}');event.stopPropagation()" style="background:none;border:1px solid var(--border);border-radius:10px;padding:1px 7px;font-size:10.5px;cursor:pointer;color:var(--text2)">#${esc(tg)}</button>`).join('')}
       </div>
-      <div class="task-tags" style="margin-bottom:6px">${t.tags.map(tg=>`${tagHTML(tg)}<span style="cursor:pointer;font-size:10px;color:var(--text3)" onclick="removeTagFromTask('${t.id}','${tg}')"> ✕</span>`).join('')}</div>
-      <div class="tag-input-row"><input id="tag-inp-${t.id}" placeholder="${t('tagPlaceholder')}" onclick="event.stopPropagation()" onkeydown="handleTagKey(event,'${t.id}')"/></div>
+      <div class="task-tags" style="margin-bottom:6px">${task.tags.map(tg=>`${tagHTML(tg)}<span style="cursor:pointer;font-size:10px;color:var(--text3)" onclick="removeTagFromTask('${task.id}','${tg}')"> ✕</span>`).join('')}</div>
+      <div class="tag-input-row"><input id="tag-inp-${task.id}" placeholder="${t('tagPlaceholder')}" onclick="event.stopPropagation()" onkeydown="handleTagKey(event,'${task.id}')"/></div>
     </div>
     <div>
       <div class="ds-label">${t('notesLabel')}</div>
-      <textarea class="note-area" onclick="event.stopPropagation()" oninput="updateTaskField('${t.id}','notes',this.value)">${esc(t.notes)}</textarea>
+      <textarea class="note-area" onclick="event.stopPropagation()" oninput="updateTaskField('${task.id}','notes',this.value)">${esc(task.notes)}</textarea>
     </div>
     <div>
       <div class="ds-label">${t('linksLabel')}</div>
-      <div class="link-list">${t.links.map(l=>`<div class="link-item"><span>🔗</span><a href="${esc(l.url)}" target="_blank">${esc(l.label)}</a><button class="link-del" onclick="delLink('${t.id}','${l.id}');event.stopPropagation()">✕</button></div>`).join('')}</div>
-      <div class="add-link"><input id="link-inp-${t.id}" placeholder="${t('urlPlaceholder')}" onclick="event.stopPropagation()" onkeydown="handleLinkKey(event,'${t.id}')"/><button onclick="addLink('${t.id}');event.stopPropagation()">${t('addBtn')}</button></div>
+      <div class="link-list">${task.links.map(l=>`<div class="link-item"><span>🔗</span><a href="${esc(l.url)}" target="_blank">${esc(l.label)}</a><button class="link-del" onclick="delLink('${task.id}','${l.id}');event.stopPropagation()">✕</button></div>`).join('')}</div>
+      <div class="add-link"><input id="link-inp-${task.id}" placeholder="${t('urlPlaceholder')}" onclick="event.stopPropagation()" onkeydown="handleLinkKey(event,'${task.id}')"/><button onclick="addLink('${task.id}');event.stopPropagation()">${t('addBtn')}</button></div>
     </div>`;
 }
 
@@ -2808,11 +2881,16 @@ function renderGoals(){
   const globals=D.goals.filter(g=>g.type==='global');
   const projects=D.goals.filter(g=>g.type==='project');
   let html=`<button class="btn btn-primary btn-sm" style="margin-bottom:16px" onclick="openGoalModal()">${t('addGoal')}</button><div class="goal-tree">`;
-  globals.forEach(g=>{
+  const renderGoalCard=(g,ico)=>{
     const p=goalProgress(g.id);
-    html+=`<div class="goal-card global" style="border-left-color:${g.color}">
+    return`<div class="goal-card ${g.type}" id="goal-card-${g.id}" style="border-left-color:${g.color}" draggable="true"
+      ondragstart="onGoalDragStart(event,'${g.id}')"
+      ondragover="onGoalDragOver(event,'${g.id}')"
+      ondrop="onGoalDrop(event,'${g.id}')"
+      ondragend="onGoalDragEnd(event)">
       <div class="goal-header">
-        <span class="goal-icon">🌍</span>
+        <span style="cursor:grab;color:var(--text3);font-size:13px;opacity:.4;margin-right:4px;align-self:flex-start;padding-top:2px">⠿</span>
+        <span class="goal-icon">${ico}</span>
         <div class="goal-info">
           <div class="goal-title">${esc(g.name)}</div>
           ${g.desc?`<div class="goal-desc">${esc(g.desc)}</div>`:''}
@@ -2821,21 +2899,9 @@ function renderGoals(){
         </div>
         <div class="goal-acts"><button class="btn btn-ghost btn-sm" onclick="openGoalModal('${g.id}')">✏️</button><button class="btn btn-sm btn-danger" onclick="deleteGoal('${g.id}')">🗑</button></div>
       </div></div>`;
-  });
-  projects.forEach(g=>{
-    const p=goalProgress(g.id);
-    html+=`<div class="goal-card project" style="border-left-color:${g.color}">
-      <div class="goal-header">
-        <span class="goal-icon">📁</span>
-        <div class="goal-info">
-          <div class="goal-title">${esc(g.name)}</div>
-          ${g.desc?`<div class="goal-desc">${esc(g.desc)}</div>`:''}
-          <div class="goal-prog-row"><div class="goal-prog-track"><div class="goal-prog-fill" style="width:${p.pct}%;background:${g.color}"></div></div><span class="goal-prog-pct">${p.pct}%</span></div>
-          <div class="goal-tasks-count">${p.done}/${p.total} ${t('tasksDone')}${g.targetDate?` · ${t('targetDate')} ${g.targetDate}`:''}</div>
-        </div>
-        <div class="goal-acts"><button class="btn btn-ghost btn-sm" onclick="openGoalModal('${g.id}')">✏️</button><button class="btn btn-sm btn-danger" onclick="deleteGoal('${g.id}')">🗑</button></div>
-      </div></div>`;
-  });
+  };
+  globals.forEach(g=>{html+=renderGoalCard(g,'🌍');});
+  projects.forEach(g=>{html+=renderGoalCard(g,'📁');});
   return html+'</div>';
 }
 
@@ -2855,43 +2921,66 @@ function renderHabits(){
     return addBar+`<div class="empty"><div class="ei">💪</div><p>${t('habitsEmpty')}</p></div>`;
   }
 
+  // Build 28-day grid (4 weeks × 7 days)
+  const DAYS=28;
+  const lang=D.settings?.lang||'ko';
+  const dayLabels=lang==='en'?['Su','Mo','Tu','We','Th','Fr','Sa']:
+                  lang==='zh'?['日','一','二','三','四','五','六']:
+                              ['일','월','화','수','목','금','토'];
+
   let html=addBar+`<div class="habit-grid">`;
   D.habits.forEach(h=>{
-    // build 30-day calendar from habit.completions
-    const calendar=[];
-    for(let i=29;i>=0;i--){
+    // Build DAYS-day array
+    const days=[];
+    for(let i=DAYS-1;i>=0;i--){
       const d=new Date();d.setDate(d.getDate()-i);
       const ds=d.toISOString().slice(0,10);
-      calendar.push({date:ds,done:!!(h.completions&&h.completions[ds]),isToday:ds===today});
+      days.push({date:ds,done:!!(h.completions&&h.completions[ds]),isToday:ds===today,dow:d.getDay()});
     }
-    // streak
+    // streak (count backwards from today)
     let streak=0;
-    for(let i=0;i<30;i++){
-      if(calendar[29-i]?.done)streak++;else break;
+    for(let i=0;i<DAYS;i++){
+      if(days[DAYS-1-i]?.done)streak++;else break;
     }
-    const total=calendar.filter(c=>c.done).length;
-    // streak badge color: orange for multiples of 5, else default
-    const streakColor=streak>0&&streak%5===0?'background:linear-gradient(135deg,#ea580c,#d97706)':'background:linear-gradient(135deg,#f59e0b,#d97706)';
+    const total=days.filter(d=>d.done).length;
     const isDoneToday=!!(h.completions&&h.completions[today]);
+    const streakBg=streak>0&&streak%5===0?'linear-gradient(135deg,#ea580c,#d97706)':'linear-gradient(135deg,#22c55e,#16a34a)';
+    const totalLabel=lang==='en'?`${total}/${DAYS}d`:lang==='zh'?`${total}/${DAYS}天`:`${total}/${DAYS}일`;
+
+    // Group days into weeks (rows of 7)
+    const weeks=[];
+    // Pad front so first row aligns to Sun
+    const firstDow=days[0].dow;
+    const padded=[...Array(firstDow).fill(null),...days];
+    for(let i=0;i<padded.length;i+=7){weeks.push(padded.slice(i,i+7));}
+
+    // Day-of-week header (only once, using last week's days)
+    const dowHeader=dayLabels.map(l=>`<div style="width:20px;height:14px;font-size:9px;color:var(--text3);display:flex;align-items:center;justify-content:center;font-weight:600">${l}</div>`).join('');
 
     html+=`<div class="habit-row" draggable="true"
       ondragstart="onHabitDragStart(event,'${h.id}')"
-      ondragover="event.preventDefault()"
-      ondrop="onHabitDrop(event,'${h.id}')">
+      ondragover="onHabitDragOver(event,'${h.id}')"
+      ondrop="onHabitDrop(event,'${h.id}')"
+      ondragend="onHabitDragEnd(event)">
       <div class="habit-header">
-        <span style="cursor:grab;color:var(--text3);font-size:13px;padding:0 4px 0 0;opacity:.5">⠿</span>
+        <span style="cursor:grab;color:var(--text3);font-size:13px;opacity:.4;flex-shrink:0">⠿</span>
         <div class="habit-name">${esc(h.name)}</div>
-        ${streak>=1?`<div class="streak-badge" style="${streakColor}">🔥 ${streak}${t('dayStreak')}${streak%5===0?' 🎉':''}</div>`:''}
-        <span style="font-size:11.5px;color:var(--text3);margin-left:8px">${(()=>{const lang=D.settings?.lang||'ko';if(lang==='en')return`${total} / 30 days`;if(lang==='zh')return`30天中${total}天`;return`30일 중 ${total}일`;})()} </span>
-        <button onclick="deleteHabit('${h.id}')" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text3);margin-left:auto;padding:2px 5px;border-radius:4px" title="${t('deleteHabit')}">✕</button>
+        ${streak>=1?`<div class="streak-badge" style="background:${streakBg}">🔥 ${streak}${t('dayStreak')}${streak%5===0?' 🎉':''}</div>`:''}
+        <button onclick="deleteHabit('${h.id}')" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--text3);padding:2px 4px;border-radius:4px;flex-shrink:0" title="${t('deleteHabit')}">✕</button>
       </div>
-      <div class="habit-calendar">
-        ${calendar.map(d=>`<div class="hc-day${d.done?' done':''}${d.isToday?' today':''}"
-          title="${d.date}"
-          ${d.isToday?`onclick="toggleHabitToday('${h.id}')" style="cursor:pointer"`:''}
-        >${d.done?'✓':''}</div>`).join('')}
+      <div class="habit-meta">
+        <span>${totalLabel} ${lang==='en'?'complete':lang==='zh'?'完成':'완료'}</span>
+        <button class="habit-today-btn${isDoneToday?' done':''}" onclick="toggleHabitToday('${h.id}')">
+          ${isDoneToday?'✓ '+t('todayDone'):'+ '+t('todayCheck')}
+        </button>
       </div>
-      ${isDoneToday?`<div style="margin-top:8px;font-size:11.5px;color:var(--accent);font-weight:600">${t('todayDone')}</div>`:''}
+      <div class="habit-weeks">
+        <div class="habit-week-row">${dowHeader}</div>
+        ${weeks.map(week=>`<div class="habit-week-row">${week.map(d=>{
+          if(!d)return`<div style="width:20px;height:20px"></div>`;
+          return`<div class="hc-day${d.done?' done':''}${d.isToday?' today':''}" title="${d.date}">${d.done?'✓':''}</div>`;
+        }).join('')}</div>`).join('')}
+      </div>
     </div>`;
   });
   return html+'</div>';
@@ -2941,8 +3030,20 @@ async function toggleHabitToday(id){
 }
 
 function onHabitDragStart(e,id){
-  _habitDragId=id;
-  e.dataTransfer.effectAllowed='move';
+  _habitDragId=id;e.dataTransfer.effectAllowed='move';
+  setTimeout(()=>document.getElementById('habit-card-'+id)?.classList.add('dragging'),0);
+}
+function onHabitDragOver(e,id){
+  e.preventDefault();e.dataTransfer.dropEffect='move';
+  document.querySelectorAll('.habit-row.drag-over').forEach(el=>el.classList.remove('drag-over'));
+  if(_habitDragId&&_habitDragId!==id){
+    // find parent habit-row
+    e.currentTarget?.classList.add('drag-over');
+  }
+}
+function onHabitDragEnd(e){
+  document.querySelectorAll('.habit-row.dragging,.habit-row.drag-over').forEach(el=>el.classList.remove('dragging','drag-over'));
+  _habitDragId=null;
 }
 function onHabitDrop(e,id){
   e.preventDefault();
@@ -2952,8 +3053,8 @@ function onHabitDrop(e,id){
   if(fi<0||ti<0)return;
   const[moved]=D.habits.splice(fi,1);
   D.habits.splice(ti,0,moved);
-  saveD();document.getElementById('view-area').innerHTML=renderHabits();
   _habitDragId=null;
+  saveD();document.getElementById('view-area').innerHTML=renderHabits();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -3267,6 +3368,74 @@ function signInAsGuest(){
   startApp()
 }
 
+// ── 신규 유저 샘플 데이터 ────────────────────────────────
+async function seedSampleData(){
+  // 폴더 만들기
+  const f1={id:uid(),name:'🏠 개인',color:'#2c5f2e'};
+  const f2={id:uid(),name:'💼 업무',color:'#2563eb'};
+  D.folders=[f1,f2];
+
+  // 목표 만들기
+  const g1={id:uid(),name:'건강한 생활 만들기',type:'global',desc:'매일 운동하고 일찍 자는 습관 들이기',targetDate:'',color:'#16a34a',createdAt:Date.now()};
+  const g2={id:uid(),name:'My OS TODO 활용하기',type:'project',desc:'앱 기능 익히고 생산성 올리기',targetDate:'',color:'#2563eb',createdAt:Date.now()};
+  D.goals=[g1,g2];
+
+  const td=todayStr();
+
+  // 할일 만들기
+  D.tasks=[
+    {id:uid(),title:'📌 이 앱 사용법 — 할일 클릭 시 세부사항 열림',done:false,priority:'high',folderId:null,goalId:g2.id,dueDate:td,sessionUrl:'',notes:'할일을 클릭하면 체크리스트, 메모, 태그, 링크를 추가할 수 있어요.\n\n완료하면 ○ 버튼을 눌러보세요!',tags:['공부'],subtasks:[{id:uid(),text:'할일 클릭해서 세부사항 보기',done:false},{id:uid(),text:'체크리스트 항목 추가해보기',done:false},{id:uid(),text:'완료 버튼 눌러보기',done:false}],links:[],isRecurring:false,createdAt:Date.now(),completedAt:null,completionHour:null},
+    {id:uid(),title:'📁 폴더 기능 — 왼쪽 사이드바에서 폴더 추가 가능',done:false,priority:'med',folderId:f1.id,goalId:g2.id,dueDate:'',sessionUrl:'',notes:'폴더로 할일을 분류할 수 있어요. 사이드바 하단 + 폴더 추가 버튼을 사용해보세요.',tags:['생활'],subtasks:[],links:[],isRecurring:false,createdAt:Date.now()-60000,completedAt:null,completionHour:null},
+    {id:uid(),title:'🎯 목표 설정 — 할일을 목표에 연결해보기',done:false,priority:'med',folderId:f2.id,goalId:g1.id,dueDate:'',sessionUrl:'',notes:'할일 세부사항에서 목표를 연결하면 목표 뷰에서 진행율을 볼 수 있어요.',tags:['업무'],subtasks:[],links:[],isRecurring:false,createdAt:Date.now()-120000,completedAt:null,completionHour:null},
+    {id:uid(),title:'💪 습관 만들기 — 왼쪽 메뉴에서 습관 뷰 열기',done:false,priority:'low',folderId:null,goalId:g1.id,dueDate:'',sessionUrl:'',notes:'매일 반복하고 싶은 습관을 추가하면 30일 캘린더로 추적할 수 있어요.',tags:['습관','건강'],subtasks:[],links:[],isRecurring:false,createdAt:Date.now()-180000,completedAt:null,completionHour:null},
+  ];
+
+  // 습관 만들기
+  D.habits=[
+    {id:uid(),name:'🏃 매일 운동',completions:{},checks:[],streak:0,sortOrder:0,createdAt:Date.now()},
+    {id:uid(),name:'📚 30분 독서',completions:{},checks:[],streak:0,sortOrder:1,createdAt:Date.now()},
+    {id:uid(),name:'🌙 11시 전 취침',completions:{},checks:[],streak:0,sortOrder:2,createdAt:Date.now()},
+  ];
+
+  // 서버에 저장 (비동기 — 실패해도 앱은 동작)
+  if(window.ApiClient?.isOnline()){
+    try{
+      const [sf1,sf2]=await Promise.all([
+        ApiClient.createFolder({name:f1.name,color:f1.color}),
+        ApiClient.createFolder({name:f2.name,color:f2.color})
+      ]);
+      if(sf1?.id)f1.id=sf1.id;
+      if(sf2?.id)f2.id=sf2.id;
+
+      const [sg1,sg2]=await Promise.all([
+        ApiClient.createGoal({name:g1.name,type:g1.type,description:g1.desc,color:g1.color}),
+        ApiClient.createGoal({name:g2.name,type:g2.type,description:g2.desc,color:g2.color})
+      ]);
+      if(sg1?.id)g1.id=sg1.id;
+      if(sg2?.id)g2.id=sg2.id;
+
+      // 할일 저장 (순서 보장)
+      for(const task of D.tasks){
+        const srv=await ApiClient.createTask({
+          title:task.title,priority:task.priority,
+          folder_id:D.folders.find(f=>f.id===task.folderId)?.id||null,
+          goal_id:D.goals.find(g=>g.id===task.goalId)?.id||null,
+          due_date:task.dueDate||null,tags:task.tags,notes:task.notes
+        }).catch(()=>null);
+        if(srv?.id)task.id=srv.id;
+      }
+      // 습관 저장
+      for(const h of D.habits){
+        const srv=await ApiClient.createHabit({name:h.name,sortOrder:h.sortOrder}).catch(()=>null);
+        if(srv?.id)h.id=srv.id;
+      }
+    }catch(e){console.warn('[seedSampleData] 서버 저장 실패:',e.message)}
+  }
+
+  pushNotification('👋 My OS TODO에 오신 것을 환영해요! 샘플 데이터가 준비됐어요.','info');
+  render();
+}
+
 // ── 이메일 인증 대기 화면 ─────────────────────────────────
 let _pendingVerifyEmail = ''
 function showVerifyScreen(email){
@@ -3309,8 +3478,8 @@ function startApp(){
   }
 
   // ── 신규 유저 seed (서버 데이터 없을 때만) ──────────────
-  if(!D.tasks.length && !window.GUEST_MODE){
-    pushNotification('👋 My OS TODO에 오신 것을 환영해요! 할일을 추가해보세요.','info');
+  if(!D.tasks.length && !D.folders.length && !window.GUEST_MODE){
+    seedSampleData();
   }
 
   applyDateColors();
