@@ -91,16 +91,34 @@
     async deleteAccount()        { if (!ONLINE) return null; return del('/api/profile') },
     async checkUserTag(tag)      { if (!ONLINE) return null; return get(`/api/profile?check=${encodeURIComponent(tag)}`) },
 
-    // ── AI ─────────────────────────────────────────────────
+    // ── AI (3-mode system) ─────────────────────────────────
+    // mode: 'coach' | 'alarm' | 'analysis'
+    // 백엔드가 [MODE: X] 태그 + systemInstruction으로 AI 행동 제어
     async aiTag(taskId, title, notes = '') {
       if (!ONLINE) return null
-      return post('/api/ai/tag', { taskId, title, notes })
+      // alarm mode: 감정 없이 정확한 분류
+      return post('/api/ai/tag', { taskId, title, notes, mode: 'alarm' })
     },
-    async aiReport(days = 7)     { if (!ONLINE) return null; return post('/api/ai/report', { days }) },
-    async aiSuggest()            { if (!ONLINE) return null; return get('/api/ai/suggest') },
+    async aiReport(days = 7) {
+      if (!ONLINE) return null
+      // analysis mode: 전문적 데이터 분석 리포트
+      return post('/api/ai/report', { days, mode: 'analysis' })
+    },
+    async aiSuggest() {
+      if (!ONLINE) return null
+      // coach mode: 동기부여 코칭 메시지
+      return get('/api/ai/suggest')   // GET이라 mode는 백엔드에서 고정
+    },
     async aiBadges(stats, personality = 'default') {
       if (!ONLINE) return null
-      return post('/api/ai/badges', { stats, personality })
+      // coach mode: 위트있는 칭호 생성
+      return post('/api/ai/badges', { stats, personality, mode: 'coach' })
+    },
+    // 사용자 직접 입력 → mode 자동 감지 또는 명시
+    async aiChat(userInput, mode = null) {
+      if (!ONLINE) return null
+      const detectedMode = mode || detectAiMode(userInput)
+      return post('/api/ai/suggest', { userInput, mode: detectedMode })
     },
 
     // ── Habits ─────────────────────────────────────────────
@@ -1090,6 +1108,19 @@ function autoDetectTags(title,notes=''){
   const found=[];
   for(const k in AUTO_TAGS){if(text.includes(k)&&!found.includes(k))found.push(k)}
   return found.slice(0,3);
+}
+/**
+ * AI 3-mode 자동 감지 (백엔드 detectMode와 동일 로직)
+ * @param {string} text
+ * @returns {'coach'|'alarm'|'analysis'}
+ */
+function detectAiMode(text=''){
+  const t=text.toLowerCase();
+  const alarmKw  =['streak','연속','로그','통계','알림','notification','log','stat'];
+  const analysisKw=['분석','리포트','요약','패턴','인사이트','summary','report','analysis','trend'];
+  if(alarmKw.some(k=>t.includes(k)))    return 'alarm';
+  if(analysisKw.some(k=>t.includes(k))) return 'analysis';
+  return 'coach';
 }
 function tagHTML(name){const c=getTagColor(name);return `<span class="ttag" style="background:${c.bg};color:${c.color}">#${esc(name)}</span>`}
 
@@ -3016,9 +3047,13 @@ function showAuthError(msg){
 // ── Google 로그인 ─────────────────────────────────────────
 async function signInWithGoogle(){
   if(!_sbClient) return showAuthError('Supabase 설정이 필요합니다')
+  // redirectTo: 항상 배포된 프로덕션 URL 사용 (localhost/file:// 접속 시에도)
+  const prodUrl = (window.location.protocol === 'file:' || window.location.hostname === 'localhost')
+    ? (window.API_BASE || 'https://my-os-backend.vercel.app')
+    : window.location.origin
   const { error } = await _sbClient.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.href }
+    options: { redirectTo: prodUrl + '/' }
   })
   if(error) showAuthError(error.message)
 }

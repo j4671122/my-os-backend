@@ -12,6 +12,7 @@
  */
 import supabase from '../_lib/supabase.js'
 import { callGemini } from '../_lib/gemini.js'
+// MODE: analysis — 데이터 분석 리포트
 import { withCors, getUserId } from '../_lib/cors.js'
 import { getAuthUser } from '../_lib/auth.js'
 
@@ -105,7 +106,7 @@ export default withCors(async (req, res) => {
 각 항목은 1~2문장. 격려하되 솔직하게.
 `
 
-  const insight = await callGemini(prompt, { temperature: 0.4, maxTokens: 600 })
+  const insight = await callGemini(prompt, { mode: 'analysis', temperature: 0.3, maxTokens: 600 })
 
   return res.json({ stats, insight, generatedAt: new Date().toISOString() })
 })

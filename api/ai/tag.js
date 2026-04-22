@@ -15,6 +15,7 @@
  */
 import supabase from '../_lib/supabase.js'
 import { callGeminiJSON } from '../_lib/gemini.js'
+// MODE: alarm — 중립적이고 정확한 분류 (감정 없이 facts만)
 import { withCors, getUserId } from '../_lib/cors.js'
 import { getAuthUser } from '../_lib/auth.js'
 
@@ -46,7 +47,7 @@ JSON 예시:
 {"tags":["개발","공부"],"priority":"high","category":"학습","due_hint":"tomorrow"}
 `
 
-  const result = await callGeminiJSON(prompt)
+  const result = await callGeminiJSON(prompt, { mode: 'alarm', temperature: 0.1 })
 
   if (!result) return res.status(500).json({ error: 'AI parsing failed' })
 

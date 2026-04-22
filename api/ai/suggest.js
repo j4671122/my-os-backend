@@ -14,6 +14,7 @@
  */
 import supabase from '../_lib/supabase.js'
 import { callGeminiJSON } from '../_lib/gemini.js'
+// MODE: coach — 개인 코칭 메시지
 import { withCors, getUserId } from '../_lib/cors.js'
 import { getAuthUser } from '../_lib/auth.js'
 
@@ -106,7 +107,7 @@ JSON만 출력:
 {"message":"...","type":"...","action":"..."}
 `
 
-  const result = await callGeminiJSON(prompt)
+  const result = await callGeminiJSON(prompt, { mode: 'coach', temperature: 0.5 })
 
   if (!result) {
     // Gemini 실패 시 규칙 기반 폴백

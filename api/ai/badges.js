@@ -8,6 +8,7 @@
 import { withCors, getUserId } from '../_lib/cors.js'
 import { getAuthUser } from '../_lib/auth.js'
 import { callGeminiJSON } from '../_lib/gemini.js'
+// MODE: coach — 창의적이고 위트있는 칭호 생성
 
 const PERSONALITY_HINTS = {
   default: '친절하고 균형잡힌 톤으로',
@@ -88,7 +89,7 @@ export default withCors(async (req, res) => {
 `
 
   try {
-    const result = await callGeminiJSON(prompt)
+    const result = await callGeminiJSON(prompt, { mode: 'coach', temperature: 0.7 })
     if (!result?.badges?.length) {
       // fallback
       return res.json({ badges: [{ icon: '🌱', label: '성장 중', desc: '꾸준히 가는 중' }] })
