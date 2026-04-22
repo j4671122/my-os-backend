@@ -69,5 +69,11 @@ export default withCors(async (req, res) => {
     return res.json({ events: data, hourMap, dayMap })
   }
 
+  if (req.method === 'DELETE') {
+    const { error } = await supabase.from('events').delete().eq('user_id', uid)
+    if (error) return res.status(500).json({ error: error.message })
+    return res.json({ success: true, deletedAll: true })
+  }
+
   res.status(405).json({ error: 'Method not allowed' })
 })

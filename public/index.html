@@ -139,7 +139,7 @@
   window.triggerAiTag = async function (taskLocalId, title, notes) {
     if (!ONLINE || !_token) return
     try {
-      const result = await ApiClient.aiTag(null, title, notes)
+      const result = await ApiClient.aiTag(taskLocalId, title, notes)
       if (!result?.tags?.length) return
       // in-memory D 객체 직접 업데이트 (localStorage 없음)
       if (typeof D !== 'undefined') {
@@ -147,6 +147,7 @@
         if (task && !task.tags?.length) {
           task.tags     = result.tags
           task.priority = result.priority || task.priority
+          if (typeof scheduleTaskSync === 'function') scheduleTaskSync(task.id, 0)
           if (typeof render === 'function') render()
           console.log(`[AI Tag] "${title}" → ${result.tags.join(', ')}`)
         }
@@ -904,6 +905,7 @@ let tipDismissed=false;
 let searchState={q:'',filters:{}};
 let generatedContent='';
 let generatedReport='';
+let _taskSyncTimers={};
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 function todayStr(){return new Date().toISOString().slice(0,10)}
@@ -931,13 +933,16 @@ function saveD(){
           notifCoach:   D.settings.notifCoach,
           notifOverdue: D.settings.notifOverdue,
           weekStart:    D.settings.weekStart,
-          defaultPriority: D.settings.defaultPriority,
-          showDoneInToday: D.settings.showDoneInToday,
-          theme:        D.settings.theme,
-          settingsTab:  D.settings.settingsTab,
-          overdueColor: D.settings.overdueColor,
-          upcomingColor: D.settings.upcomingColor,
-        }
+        defaultPriority: D.settings.defaultPriority,
+        showDoneInToday: D.settings.showDoneInToday,
+        theme:        D.settings.theme,
+        settingsTab:  D.settings.settingsTab,
+        currentView:  D.settings.currentView,
+        folderOrder:  D.settings.folderOrder,
+        goalOrder:    D.settings.goalOrder,
+        overdueColor: D.settings.overdueColor,
+        upcomingColor: D.settings.upcomingColor,
+      }
       });
     }catch(e){console.warn('[saveD] preferences sync 실패:',e.message)}
   }, 1000);
@@ -952,7 +957,8 @@ function loadD(){
     lang:'ko',aiPersonality:'default',permission:'user',
     joinedAt:null,notifEnabled:true,notifCoach:true,notifOverdue:true,
     weekStart:1,defaultPriority:'med',showDoneInToday:false,theme:'light',
-    settingsTab:'profile',overdueColor:'#dc2626',upcomingColor:'#2563eb'
+    settingsTab:'profile',currentView:'today',folderOrder:[],goalOrder:[],
+    overdueColor:'#dc2626',upcomingColor:'#2563eb'
   }, D.settings);
   if(!D.settings.joinedAt) D.settings.joinedAt = Date.now();
   if(!D.notifications) D.notifications = [];
@@ -965,12 +971,13 @@ async function loadFromServer(){
   try{
     const auth = {headers:{Authorization:'Bearer '+ApiClient.getToken()}};
     // tasks, goals, folders, habits, profile 병렬 로드
-    const [tasksData, goalsData, foldersData, habitsData, profile] = await Promise.all([
+    const [tasksData, goalsData, foldersData, habitsData, profile, eventsData] = await Promise.all([
       fetch(window.API_BASE+'/api/tasks',   auth).then(r=>r.ok?r.json():[]).catch(()=>[]),
       fetch(window.API_BASE+'/api/goals',   auth).then(r=>r.ok?r.json():[]).catch(()=>[]),
       fetch(window.API_BASE+'/api/folders', auth).then(r=>r.ok?r.json():[]).catch(()=>[]),
       fetch(window.API_BASE+'/api/habits',  auth).then(r=>r.ok?r.json():[]).catch(()=>[]),
-      fetch(window.API_BASE+'/api/profile', auth).then(r=>r.ok?r.json():null).catch(()=>null)
+      fetch(window.API_BASE+'/api/profile', auth).then(r=>r.ok?r.json():null).catch(()=>null),
+      fetch(window.API_BASE+'/api/events?days=365&limit=2000', auth).then(r=>r.ok?r.json():{events:[]}).catch(()=>({events:[]}))
     ]);
 
     // tasks
@@ -1010,6 +1017,9 @@ async function loadFromServer(){
         completions: Object.fromEntries((h.checks||[]).map(d=>[d,true]))
       }));
     }
+    if(Array.isArray(eventsData?.events)){
+      D.events = eventsData.events.map(mapServerEvent);
+    }
     // profile / preferences
     if(profile){
       applyProfile(profile);
@@ -1021,6 +1031,11 @@ async function loadFromServer(){
       }
     }
 
+    D.folders = sortItemsBySavedOrder(D.folders, D.settings.folderOrder);
+    D.goals   = sortItemsBySavedOrder(D.goals, D.settings.goalOrder);
+
+    if(D.settings.currentView) VIEW = D.settings.currentView;
+
     console.log(`[Server] 로드 완료 — tasks:${D.tasks.length} goals:${D.goals.length} folders:${D.folders.length} habits:${D.habits.length}`);
   }catch(e){
     console.warn('[loadFromServer] 실패:', e.message);
@@ -1029,6 +1044,32 @@ async function loadFromServer(){
 
 function saveOpenState(){ /* in-memory only, no localStorage */ }
 function loadOpenState(){ openTaskIds = new Set(); }
+function sortItemsBySavedOrder(items, order=[]){
+  if(!Array.isArray(order) || !order.length) return items;
+  const indexMap=new Map(order.map((id,index)=>[id,index]));
+  return [...items].sort((a,b)=>{
+    const ai=indexMap.has(a.id)?indexMap.get(a.id):Number.MAX_SAFE_INTEGER;
+    const bi=indexMap.has(b.id)?indexMap.get(b.id):Number.MAX_SAFE_INTEGER;
+    if(ai!==bi) return ai-bi;
+    return 0;
+  });
+}
+function persistCollectionOrder(key, ids){
+  D.settings[key]=ids;
+  saveD();
+}
+function mapServerEvent(event){
+  return {
+    id:event.id || uid(),
+    type:event.type,
+    taskId:event.task_id || null,
+    timestamp:event.timestamp ? new Date(event.timestamp).getTime() : Date.now(),
+    tags:event.metadata?.tags || [],
+    priority:event.metadata?.priority || null,
+    hour:event.hour ?? null,
+    metadata:event.metadata || {}
+  };
+}
 
 // ── Notifications ──────────────────────────────────────────
 let _notifPanelOpen=false;
@@ -1124,6 +1165,98 @@ function autoDetectTags(title,notes=''){
   for(const k in AUTO_TAGS){if(text.includes(k)&&!found.includes(k))found.push(k)}
   return found.slice(0,3);
 }
+function mapServerTask(task){
+  return {
+    id:task.id,
+    title:task.title,
+    done:!!task.done,
+    priority:task.priority||'med',
+    folderId:task.folder_id||null,
+    goalId:task.goal_id||null,
+    dueDate:task.due_date||'',
+    sessionUrl:task.session_url||'',
+    notes:task.notes||'',
+    tags:task.tags||[],
+    isRecurring:!!task.is_recurring,
+    sortOrder:task.sort_order ?? null,
+    subtasks:(task.subtasks||[]).map((subtask,index)=>({
+      id:subtask.id,
+      text:subtask.text,
+      done:!!subtask.done,
+      sortOrder:subtask.sort_order ?? index
+    })),
+    links:(task.task_links||[]).map(link=>({
+      id:link.id,
+      url:link.url,
+      label:link.label
+    })),
+    createdAt:task.created_at?new Date(task.created_at).getTime():Date.now(),
+    completedAt:task.completed_at?new Date(task.completed_at).getTime():null,
+    completionHour:task.completion_hour ?? null
+  };
+}
+function buildTaskPayload(task){
+  return {
+    title:task.title,
+    done:!!task.done,
+    priority:task.priority||'med',
+    folderId:task.folderId||null,
+    goalId:task.goalId||null,
+    dueDate:task.dueDate||null,
+    sessionUrl:task.sessionUrl||null,
+    notes:task.notes||'',
+    tags:task.tags||[],
+    isRecurring:!!task.isRecurring,
+    sortOrder:task.sortOrder ?? null,
+    completedAt:task.completedAt?new Date(task.completedAt).toISOString():null,
+    completionHour:task.completionHour ?? null,
+    subtasks:(task.subtasks||[]).map((subtask,index)=>({
+      text:subtask.text,
+      done:!!subtask.done,
+      sortOrder:subtask.sortOrder ?? index
+    })),
+    links:(task.links||[]).map(link=>({
+      url:link.url,
+      label:link.label||null
+    }))
+  };
+}
+function replaceTaskFromServer(serverTask, fallbackId=null){
+  const mapped=mapServerTask(serverTask);
+  const idx=D.tasks.findIndex(task=>task.id===mapped.id||task.id===fallbackId);
+  if(idx>=0) D.tasks[idx]=mapped;
+  return mapped;
+}
+function scheduleTaskSync(taskId, delay=300){
+  clearTimeout(_taskSyncTimers[taskId]);
+  _taskSyncTimers[taskId]=setTimeout(async ()=>{
+    const task=D.tasks.find(item=>item.id===taskId);
+    if(!task||window.GUEST_MODE||!window.ApiClient?.isOnline()||!isUUID(task.id)) return;
+    try{
+      const serverTask=await ApiClient.updateTask(task.id, buildTaskPayload(task));
+      if(serverTask) replaceTaskFromServer(serverTask, taskId);
+    }catch(e){
+      console.warn('[task sync] 서버 동기화 실패:', e.message);
+    }
+  }, delay);
+}
+async function syncProfileToServer(extraUpdates={}){
+  if(window.GUEST_MODE||!window.ApiClient?.isOnline()||!window.ApiClient?.getToken()) return null;
+  try{
+    return await ApiClient.updateProfile({
+      display_name:D.settings.name||null,
+      avatar:D.settings.avatar||null,
+      avatar_img:D.settings.avatarImg||null,
+      bio:D.settings.bio||null,
+      lang:D.settings.lang||null,
+      ai_personality:D.settings.aiPersonality||null,
+      ...extraUpdates
+    });
+  }catch(e){
+    console.warn('[profile sync] 실패:', e.message);
+    return null;
+  }
+}
 /**
  * AI 3-mode 자동 감지 (백엔드 detectMode와 동일 로직)
  * @param {string} text
@@ -1155,34 +1288,32 @@ async function addTask(){
     isRecurring:false,createdAt:Date.now(),completedAt:null,completionHour:null
   };
   D.tasks.unshift(task);
-  logEvent('create',task);
+  logEvent('created',task);
   inp.value='';
   render();
   // 서버 저장 (백그라운드, 낙관적 업데이트 후)
   if(!window.GUEST_MODE && window.ApiClient?.isOnline()){
     ApiClient.createTask({
-      title, priority, folder_id:folderId, goal_id:null,
-      due_date:task.dueDate||null, tags:autoTags
+      title, priority, folderId, goalId:null,
+      dueDate:task.dueDate||null, tags:autoTags, notes:'', subtasks:[], links:[]
     }).then(srv=>{
-      if(srv?.id && task.id!==srv.id){ task.id=srv.id; }
+      if(srv?.id){
+        const savedTask=replaceTaskFromServer(srv, task.id);
+        if(window.triggerAiTag) triggerAiTag(savedTask.id, savedTask.title, savedTask.notes||'');
+        render();
+      }
     }).catch(e=>console.warn('[addTask] 서버 저장 실패:',e.message));
   }
-  // AI 자동 태깅 (백그라운드)
-  if(window.triggerAiTag) triggerAiTag(task.id, task.title, task.notes||'');
 }
 function handleAddKey(e){if(e.key==='Enter')addTask()}
 function toggleDone(id,e){
   e&&e.stopPropagation();
   const t=D.tasks.find(t=>t.id===id);if(!t)return;
   t.done=!t.done;
-  if(t.done){t.completedAt=Date.now();t.completionHour=new Date().getHours();logEvent('complete',t)}
+  if(t.done){t.completedAt=Date.now();t.completionHour=new Date().getHours();logEvent('completed',t)}
   else{t.completedAt=null;t.completionHour=null}
   render();
-  // 서버 동기화 (UUID인 경우만)
-  if(!window.GUEST_MODE && window.ApiClient?.isOnline() && isUUID(id)){
-    ApiClient.updateTask(id,{done:t.done, completed_at:t.completedAt, completion_hour:t.completionHour})
-      .catch(e=>console.warn('[toggleDone] 서버 동기화 실패:',e.message));
-  }
+  scheduleTaskSync(id,0);
 }
 const UUID_RE=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function isUUID(id){return UUID_RE.test(id||'')}
@@ -1249,7 +1380,14 @@ async function deleteAllDone(){
 }
 function updateTaskField(id,field,value){
   const t=D.tasks.find(t=>t.id===id);
-  if(t){t[field]=value;saveD();updateBadges()}
+  if(t){
+    t[field]=value;
+    saveD();
+    updateBadges();
+    if(['folderId','goalId','priority','dueDate'].includes(field)) renderDetail(id);
+    if(['folderId','priority','dueDate'].includes(field)) renderSidebar();
+    scheduleTaskSync(id);
+  }
 }
 function toggleOpen(id){
   if(openTaskIds.has(id)){openTaskIds.delete(id)}else{openTaskIds.add(id)}
@@ -1261,27 +1399,35 @@ function addSubtask(tid){
   const inp=document.getElementById('sub-inp-'+tid);
   const text=inp.value.trim();if(!text)return;
   const t=D.tasks.find(t=>t.id===tid);
-  if(t){t.subtasks.push({id:uid(),text,done:false});inp.value='';saveD();renderDetail(tid)}
+  if(t){
+    t.subtasks.push({id:uid(),text,done:false,sortOrder:t.subtasks.length});
+    inp.value='';
+    saveD();
+    renderDetail(tid);
+    document.getElementById('sub-inp-'+tid)?.focus();
+    scheduleTaskSync(tid);
+  }
 }
 function handleSubKey(e,tid){if(e.key==='Enter')addSubtask(tid)}
 function toggleSub(tid,sid){
   const t=D.tasks.find(t=>t.id===tid);if(!t)return;
-  const s=t.subtasks.find(s=>s.id===sid);if(s){s.done=!s.done;saveD();renderDetail(tid)}
+  const s=t.subtasks.find(s=>s.id===sid);if(s){s.done=!s.done;saveD();renderDetail(tid);scheduleTaskSync(tid)}
 }
 function delSub(tid,sid){
   const t=D.tasks.find(t=>t.id===tid);if(!t)return;
-  t.subtasks=t.subtasks.filter(s=>s.id!==sid);saveD();renderDetail(tid);
+  t.subtasks=t.subtasks.filter(s=>s.id!==sid).map((subtask,index)=>({...subtask,sortOrder:index}));
+  saveD();renderDetail(tid);scheduleTaskSync(tid);
 }
 
 // Tags on tasks
 function addTagToTask(tid,tag){
   const t=D.tasks.find(t=>t.id===tid);if(!t)return;
   tag=tag.replace(/^#/,'').trim();
-  if(tag&&!t.tags.includes(tag)){t.tags.push(tag);getTagColor(tag);saveD();renderDetail(tid)}
+  if(tag&&!t.tags.includes(tag)){t.tags.push(tag);getTagColor(tag);saveD();renderDetail(tid);scheduleTaskSync(tid)}
 }
 function removeTagFromTask(tid,tag){
   const t=D.tasks.find(t=>t.id===tid);if(!t)return;
-  t.tags=t.tags.filter(tg=>tg!==tag);saveD();renderDetail(tid);
+  t.tags=t.tags.filter(tg=>tg!==tag);saveD();renderDetail(tid);scheduleTaskSync(tid);
 }
 function handleTagKey(e,tid){if(e.key==='Enter'){const v=document.getElementById('tag-inp-'+tid).value.trim();if(v){addTagToTask(tid,v);document.getElementById('tag-inp-'+tid).value=''}}}
 
@@ -1291,23 +1437,30 @@ function addLink(tid){
   let url=inp.value.trim();if(!url)return;
   if(!/^https?:\/\//i.test(url))url='https://'+url;
   const t=D.tasks.find(t=>t.id===tid);
-  if(t){t.links.push({id:uid(),url,label:url.replace(/^https?:\/\//,'').slice(0,50)});inp.value='';saveD();renderDetail(tid)}
+  if(t){t.links.push({id:uid(),url,label:url.replace(/^https?:\/\//,'').slice(0,50)});inp.value='';saveD();renderDetail(tid);scheduleTaskSync(tid)}
 }
 function handleLinkKey(e,tid){if(e.key==='Enter')addLink(tid)}
 function delLink(tid,lid){
   const t=D.tasks.find(t=>t.id===tid);if(!t)return;
-  t.links=t.links.filter(l=>l.id!==lid);saveD();renderDetail(tid);
+  t.links=t.links.filter(l=>l.id!==lid);saveD();renderDetail(tid);scheduleTaskSync(tid);
 }
 
 // ═══════════════════════════════════════════════════════════
 // EVENTS (analytics log)
 // ═══════════════════════════════════════════════════════════
 function logEvent(type,task){
-  D.events.push({id:uid(),type,taskId:task.id,timestamp:Date.now(),tags:task.tags||[],priority:task.priority,hour:new Date().getHours()});
+  const localEventId=uid();
+  D.events.push({id:localEventId,type,taskId:task.id,timestamp:Date.now(),tags:task.tags||[],priority:task.priority,hour:new Date().getHours()});
   if(D.events.length>2000)D.events=D.events.slice(-2000);
-  saveD();
-  // 백엔드 이벤트 기록 (비동기, 실패해도 무시)
-  if(window.ApiClient?.isOnline()) ApiClient.logEvent(type, task.id, {tags:task.tags||[],priority:task.priority}).catch(()=>{});
+  // 백엔드 이벤트 기록 (비동기)
+  if(window.ApiClient?.isOnline()){
+    ApiClient.logEvent(type, task.id, {tags:task.tags||[],priority:task.priority}).then(evt=>{
+      if(evt?.timestamp){
+        const idx=D.events.findIndex(event=>event.id===localEventId);
+        if(idx>=0) D.events[idx]=mapServerEvent(evt);
+      }
+    }).catch(()=>{});
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1330,17 +1483,43 @@ function saveGoal(){
   const name=document.getElementById('gm-name').value.trim();if(!name)return;
   if(GOAL_EDIT){
     const g=D.goals.find(g=>g.id===GOAL_EDIT);
-    if(g){g.name=name;g.type=document.getElementById('gm-type').value;g.desc=document.getElementById('gm-desc').value;g.targetDate=document.getElementById('gm-date').value;g.color=GC}
+    if(g){
+      g.name=name;g.type=document.getElementById('gm-type').value;g.desc=document.getElementById('gm-desc').value;g.targetDate=document.getElementById('gm-date').value;g.color=GC;
+      if(!window.GUEST_MODE && window.ApiClient?.isOnline() && isUUID(g.id)){
+        ApiClient.updateGoal(g.id,{
+          name:g.name,type:g.type,description:g.desc,targetDate:g.targetDate,color:g.color
+        }).catch(e=>console.warn('[saveGoal:update]',e.message));
+      }
+    }
   }else{
-    D.goals.push({id:uid(),name,type:document.getElementById('gm-type').value,desc:document.getElementById('gm-desc').value,targetDate:document.getElementById('gm-date').value,color:GC,createdAt:Date.now()});
+    const goal={id:uid(),name,type:document.getElementById('gm-type').value,desc:document.getElementById('gm-desc').value,targetDate:document.getElementById('gm-date').value,color:GC,createdAt:Date.now()};
+    D.goals.push(goal);
+    if(!window.GUEST_MODE && window.ApiClient?.isOnline()){
+      ApiClient.createGoal({
+        name:goal.name,type:goal.type,description:goal.desc,targetDate:goal.targetDate,color:goal.color
+      }).then(saved=>{
+        if(saved?.id){
+          goal.id=saved.id;
+          persistCollectionOrder('goalOrder', D.goals.map(item=>item.id));
+          render();
+        }
+      }).catch(e=>console.warn('[saveGoal:create]',e.message));
+    }
   }
-  saveD();closeModal('goal-modal');render();
+  persistCollectionOrder('goalOrder', D.goals.map(item=>item.id));
+  closeModal('goal-modal');render();
 }
 async function deleteGoal(id){
   if(!await showConfirm(cm('deleteGoal'),cm('del')))return;
+  const affectedTaskIds=D.tasks.filter(t=>t.goalId===id).map(t=>t.id);
   D.goals=D.goals.filter(g=>g.id!==id);
   D.tasks.forEach(t=>{if(t.goalId===id)t.goalId=null});
-  saveD();render();
+  persistCollectionOrder('goalOrder', D.goals.map(item=>item.id));
+  render();
+  affectedTaskIds.forEach(taskId=>scheduleTaskSync(taskId));
+  if(!window.GUEST_MODE && window.ApiClient?.isOnline() && isUUID(id)){
+    ApiClient.deleteGoal(id).catch(e=>console.warn('[deleteGoal]',e.message));
+  }
 }
 function goalProgress(gid){
   const tasks=D.tasks.filter(t=>t.goalId===gid);
@@ -1364,17 +1543,44 @@ function openFolderModal(id){
 }
 function saveFolder(){
   const name=document.getElementById('fm-name').value.trim();if(!name)return;
-  if(FOLDER_EDIT){const f=D.folders.find(f=>f.id===FOLDER_EDIT);if(f){f.name=name;f.color=FC}}
-  else D.folders.push({id:uid(),name,color:FC});
-  saveD();closeModal('folder-modal');render();
+  if(FOLDER_EDIT){
+    const f=D.folders.find(f=>f.id===FOLDER_EDIT);
+    if(f){
+      f.name=name;f.color=FC;
+      if(!window.GUEST_MODE && window.ApiClient?.isOnline() && isUUID(f.id)){
+        ApiClient.updateFolder(f.id,{name:f.name,color:f.color}).catch(e=>console.warn('[saveFolder:update]',e.message));
+      }
+    }
+  }
+  else {
+    const folder={id:uid(),name,color:FC};
+    D.folders.push(folder);
+    if(!window.GUEST_MODE && window.ApiClient?.isOnline()){
+      ApiClient.createFolder({name:folder.name,color:folder.color}).then(saved=>{
+        if(saved?.id){
+          folder.id=saved.id;
+          persistCollectionOrder('folderOrder', D.folders.map(item=>item.id));
+          render();
+        }
+      }).catch(e=>console.warn('[saveFolder:create]',e.message));
+    }
+  }
+  persistCollectionOrder('folderOrder', D.folders.map(item=>item.id));
+  closeModal('folder-modal');render();
 }
 async function deleteFolder(id,e){
   e.stopPropagation();
   if(!await showConfirm(cm('deleteFolder'),cm('del')))return;
+  const affectedTaskIds=D.tasks.filter(t=>t.folderId===id).map(t=>t.id);
   D.folders=D.folders.filter(f=>f.id!==id);
   D.tasks.forEach(t=>{if(t.folderId===id)t.folderId=null});
   if(VIEW===id)VIEW='today';
-  saveD();render();
+  persistCollectionOrder('folderOrder', D.folders.map(item=>item.id));
+  render();
+  affectedTaskIds.forEach(taskId=>scheduleTaskSync(taskId));
+  if(!window.GUEST_MODE && window.ApiClient?.isOnline() && isUUID(id)){
+    ApiClient.deleteFolder(id).catch(err=>console.warn('[deleteFolder]',err.message));
+  }
 }
 function renderColorPicker(containerId,selected,onChange){
   const el=document.getElementById(containerId);
@@ -1408,19 +1614,19 @@ function computeCoachData(){
   const todayCount=D.tasks.filter(t=>!t.done&&(!t.dueDate||t.dueDate<=today)).length;
   // Peak hour
   const hourMap={};
-  D.events.filter(e=>e.type==='complete').forEach(e=>{if(e.hour!=null)hourMap[e.hour]=(hourMap[e.hour]||0)+1});
+  D.events.filter(e=>e.type==='completed'||e.type==='complete').forEach(e=>{if(e.hour!=null)hourMap[e.hour]=(hourMap[e.hour]||0)+1});
   let peakHour=null,peakCount=0;
   for(const h in hourMap){if(hourMap[h]>peakCount){peakHour=parseInt(h);peakCount=hourMap[h]}}
   // 7-day rate
   const week7ago=Date.now()-7*86400000;
-  const created7=D.events.filter(e=>e.type==='create'&&e.timestamp>week7ago).length;
-  const done7=D.events.filter(e=>e.type==='complete'&&e.timestamp>week7ago).length;
+  const created7=D.events.filter(e=>(e.type==='created'||e.type==='create')&&e.timestamp>week7ago).length;
+  const done7=D.events.filter(e=>(e.type==='completed'||e.type==='complete')&&e.timestamp>week7ago).length;
   const rate7d=created7?Math.min(done7/created7,1):0;
   // Streak (days with ≥1 completion)
   let streak=0;
   for(let i=0;i<30;i++){
     const d=new Date();d.setDate(d.getDate()-i);const ds=d.toISOString().slice(0,10);
-    const hasCompletion=D.events.some(e=>e.type==='complete'&&new Date(e.timestamp).toISOString().slice(0,10)===ds);
+    const hasCompletion=D.events.some(e=>(e.type==='completed'||e.type==='complete')&&new Date(e.timestamp).toISOString().slice(0,10)===ds);
     if(hasCompletion)streak++;else if(i>0)break;
   }
   // Weak tag (lowest completion among tags with ≥3 tasks)
@@ -1534,7 +1740,7 @@ function computeAnalytics(){
   }));
   // Hour heatmap
   const hourMap=Array(24).fill(0);
-  D.events.filter(e=>e.type==='complete').forEach(e=>{if(e.hour!=null)hourMap[e.hour]++});
+  D.events.filter(e=>e.type==='completed'||e.type==='complete').forEach(e=>{if(e.hour!=null)hourMap[e.hour]++});
   const maxHour=Math.max(...hourMap,1);
   return{total,done,rate,overdue,daily,high,med,low,tagStats,hourMap,maxHour};
 }
@@ -2201,6 +2407,7 @@ function setAvatar(emoji){
   document.querySelectorAll('.ep-item').forEach(el=>el.classList.toggle('sel',el.textContent===emoji));
   const prev=document.getElementById('big-avatar-preview');
   if(prev&&!D.settings.avatarImg)prev.textContent=emoji;
+  syncProfileToServer({ avatar: emoji });
 }
 function setAvatarBg(idx,grad){
   D.settings.avatarBg=idx;D.settings.avatarBgGrad=grad;saveD();
@@ -2218,19 +2425,23 @@ function onAvatarFileChange(e){
   const file=e.target.files?.[0];if(!file)return;
   if(file.size>2*1024*1024){showToast('이미지는 2MB 이하만 가능해요');return}
   const reader=new FileReader();
-  reader.onload=ev=>{
+  reader.onload=async ev=>{
     D.settings.avatarImg=ev.target.result;saveD();
     const prev=document.getElementById('big-avatar-preview');
     if(prev)prev.innerHTML=`<img src="${D.settings.avatarImg}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-    renderSidebar();showToast('✅ 프로필 사진 적용됨');
+    renderSidebar();
+    await syncProfileToServer();
+    showToast('✅ 프로필 사진 적용됨');
   };
   reader.readAsDataURL(file);
 }
-function clearAvatarImg(){
+async function clearAvatarImg(){
   D.settings.avatarImg='';saveD();
   const prev=document.getElementById('big-avatar-preview');
   if(prev)prev.innerHTML=D.settings.avatar||'😊';
-  renderSidebar();setView('settings');
+  renderSidebar();
+  await syncProfileToServer({ avatar_img: null });
+  setView('settings');
 }
 function setPersonality(id){
   D.settings.aiPersonality=id;saveD();
@@ -2239,6 +2450,7 @@ function setPersonality(id){
   const cur=PERSONALITIES[id];
   const prev=document.getElementById('ai-preview-msg');
   if(prev)prev.textContent=applyPersonality('오늘 할일 3개 완료! 이 페이스면 이번 주 목표 달성 가능해요.');
+  syncProfileToServer({ ai_personality: id });
   showToast(`${cur.icon} ${cur.name} 설정됨`);
 }
 function setLang(lang){
@@ -2246,6 +2458,7 @@ function setLang(lang){
   document.querySelectorAll('.lang-card').forEach(el=>el.classList.remove('sel'));
   event.currentTarget.classList.add('sel');
   const _names={ko:'한국어',en:'English',zh:'中文'};
+  syncProfileToServer({ lang });
   showToast((_names[lang]||lang)+' ✓');setTimeout(()=>render(),400);
 }
 function saveSetting(key,val){D.settings[key]=val;saveD();}
@@ -2257,7 +2470,18 @@ function saveSettings(){
   s.bio=document.getElementById('st-bio')?.value.trim()||'';
   s.goal=document.getElementById('st-goal')?.value.trim()||s.goal;
   // avatarImg is managed by onAvatarFileChange/clearAvatarImg — don't overwrite here
-  saveD();showToast('✅ 프로필 저장됨');renderSidebar();
+  saveD();
+  syncProfileToServer({
+    display_name:s.name||null,
+    bio:s.bio||null,
+    avatar:s.avatar||null,
+    ...(s.userTag ? { user_tag:s.userTag } : {})
+  }).then(profile=>{
+    if(profile) applyProfile(profile);
+    renderSidebar();
+    render();
+    showToast('✅ 프로필 저장됨');
+  });
 }
 function saveNotionSettings(){
   D.settings.notionKey=document.getElementById('st-nkey')?.value.trim()||'';
@@ -2279,9 +2503,125 @@ function importDataPrompt(){
   input.onchange=e=>{
     const f=e.target.files[0];if(!f)return;
     const r=new FileReader();
-    r.onload=ev=>{
+    r.onload=async ev=>{
       try{
         const d=JSON.parse(ev.target.result);
+        if(!window.GUEST_MODE && window.ApiClient?.isOnline()){
+          const auth={headers:{Authorization:'Bearer '+ApiClient.getToken()}};
+          await Promise.allSettled([
+            fetch(window.API_BASE+'/api/tasks',  {...auth,method:'DELETE'}).catch(()=>{}),
+            fetch(window.API_BASE+'/api/goals',  {...auth,method:'DELETE'}).catch(()=>{}),
+            fetch(window.API_BASE+'/api/folders',{...auth,method:'DELETE'}).catch(()=>{}),
+            fetch(window.API_BASE+'/api/habits', {...auth,method:'DELETE'}).catch(()=>{}),
+            fetch(window.API_BASE+'/api/events', {...auth,method:'DELETE'}).catch(()=>{}),
+          ]);
+
+          const folderIdMap=new Map();
+          const goalIdMap=new Map();
+          const folders=Array.isArray(d.folders)?d.folders:[];
+          const goals=Array.isArray(d.goals)?d.goals:[];
+          const tasks=Array.isArray(d.tasks)?d.tasks:[];
+          const habits=Array.isArray(d.habits)?d.habits:[];
+
+          for(const folder of folders){
+            const saved=await ApiClient.createFolder({name:folder.name,color:folder.color}).catch(()=>null);
+            if(saved?.id) folderIdMap.set(folder.id,saved.id);
+          }
+
+          for(const goal of goals){
+            const saved=await ApiClient.createGoal({
+              name:goal.name,type:goal.type,description:goal.desc,targetDate:goal.targetDate,color:goal.color
+            }).catch(()=>null);
+            if(saved?.id) goalIdMap.set(goal.id,saved.id);
+          }
+
+          for(const [index,task] of tasks.entries()){
+            const created=await ApiClient.createTask({
+              title:task.title,
+              priority:task.priority||'med',
+              folderId:folderIdMap.get(task.folderId)||null,
+              goalId:goalIdMap.get(task.goalId)||null,
+              dueDate:task.dueDate||null,
+              sessionUrl:task.sessionUrl||null,
+              notes:task.notes||'',
+              tags:task.tags||[],
+              isRecurring:!!task.isRecurring,
+              sortOrder:task.sortOrder ?? index,
+              subtasks:task.subtasks||[],
+              links:task.links||[]
+            }).catch(()=>null);
+            if(created?.id && (task.done || task.completedAt || task.completionHour != null)){
+              await ApiClient.updateTask(created.id,{
+                done:!!task.done,
+                completedAt:task.completedAt?new Date(task.completedAt).toISOString():null,
+                completionHour:task.completionHour ?? null,
+                priority:task.priority||'med',
+                folderId:folderIdMap.get(task.folderId)||null,
+                goalId:goalIdMap.get(task.goalId)||null,
+                dueDate:task.dueDate||null,
+                sessionUrl:task.sessionUrl||null,
+                notes:task.notes||'',
+                tags:task.tags||[],
+                isRecurring:!!task.isRecurring,
+                sortOrder:task.sortOrder ?? index,
+                subtasks:task.subtasks||[],
+                links:task.links||[]
+              }).catch(()=>null);
+            }
+          }
+
+          for(const [index,habit] of habits.entries()){
+            const created=await ApiClient.createHabit({name:habit.name,sortOrder:habit.sortOrder ?? index}).catch(()=>null);
+            if(created?.id){
+              await ApiClient.updateHabit(created.id,{
+                sortOrder:habit.sortOrder ?? index,
+                checks:habit.checks || Object.keys(habit.completions||{}).filter(date=>habit.completions[date]),
+                streak:habit.streak||0
+              }).catch(()=>null);
+            }
+          }
+
+          const importedSettings=d.settings||{};
+          D.tagReg= d.tagReg || {};
+          D.notifications = importedSettings.notifications || d.notifications || [];
+          Object.assign(D.settings, importedSettings);
+          await syncProfileToServer({
+            display_name: importedSettings.name || D.settings.name || null,
+            avatar: importedSettings.avatar || D.settings.avatar || null,
+            avatar_img: importedSettings.avatarImg || D.settings.avatarImg || null,
+            bio: importedSettings.bio || D.settings.bio || null,
+            lang: importedSettings.lang || D.settings.lang || null,
+            ai_personality: importedSettings.aiPersonality || D.settings.aiPersonality || null,
+            ...((importedSettings.userTag || D.settings.userTag) ? { user_tag: importedSettings.userTag || D.settings.userTag } : {}),
+            preferences: {
+              tagReg: d.tagReg || {},
+              notifications: d.notifications || [],
+              settings: {
+                notionKey: importedSettings.notionKey || '',
+                notionDb: importedSettings.notionDb || '',
+                notifEnabled: importedSettings.notifEnabled ?? true,
+                notifCoach: importedSettings.notifCoach ?? true,
+                notifOverdue: importedSettings.notifOverdue ?? true,
+                weekStart: importedSettings.weekStart ?? 1,
+                defaultPriority: importedSettings.defaultPriority ?? 'med',
+                showDoneInToday: importedSettings.showDoneInToday ?? false,
+                theme: importedSettings.theme || 'light',
+                settingsTab: importedSettings.settingsTab || 'profile',
+                currentView: importedSettings.currentView || 'today',
+                folderOrder: folders.map(folder=>folderIdMap.get(folder.id)).filter(Boolean),
+                goalOrder: goals.map(goal=>goalIdMap.get(goal.id)).filter(Boolean),
+                overdueColor: importedSettings.overdueColor || '#dc2626',
+                upcomingColor: importedSettings.upcomingColor || '#2563eb'
+              }
+            }
+          });
+
+          await loadFromServer();
+          render();
+          showToast('✅ 데이터를 서버로 복원했어요');
+          return;
+        }
+
         if(d.tasks)  D.tasks=d.tasks;
         if(d.goals)  D.goals=d.goals;
         if(d.folders)D.folders=d.folders;
@@ -2305,7 +2645,10 @@ async function resetAllData(){
         fetch(window.API_BASE+'/api/tasks',  {...auth,method:'DELETE'}).catch(()=>{}),
         fetch(window.API_BASE+'/api/goals',  {...auth,method:'DELETE'}).catch(()=>{}),
         fetch(window.API_BASE+'/api/folders',{...auth,method:'DELETE'}).catch(()=>{}),
+        fetch(window.API_BASE+'/api/habits', {...auth,method:'DELETE'}).catch(()=>{}),
+        fetch(window.API_BASE+'/api/events', {...auth,method:'DELETE'}).catch(()=>{}),
       ]);
+      await syncProfileToServer({ preferences: {} });
     }catch(e){console.warn('[resetAll]',e.message)}
   }
   location.reload();
@@ -2429,7 +2772,9 @@ function onTaskDrop(e,id){
   const [moved]=D.tasks.splice(fi,1);
   D.tasks.splice(ti,0,moved);
   D.tasks.forEach((t,i)=>t.sortOrder=i);
-  saveD();render();
+  saveD();
+  D.tasks.forEach(task=>scheduleTaskSync(task.id));
+  render();
 }
 // Subtask drag
 function onSubDragStart(e,tid,sid){e.dataTransfer.setData('sub',sid+'|'+tid);e.dataTransfer.effectAllowed='move';}
@@ -2442,7 +2787,8 @@ function onSubDrop(e,tid,sid){
   const fi=t.subtasks.findIndex(s=>s.id===fromSid),ti=t.subtasks.findIndex(s=>s.id===sid);
   if(fi<0||ti<0)return;
   const[m]=t.subtasks.splice(fi,1);t.subtasks.splice(ti,0,m);
-  saveD();renderDetail(tid);
+  t.subtasks=t.subtasks.map((subtask,index)=>({...subtask,sortOrder:index}));
+  saveD();renderDetail(tid);scheduleTaskSync(tid);
 }
 
 // ── Folder drag reorder ─────────────────────────────────────
@@ -2464,7 +2810,8 @@ function onFolderDrop(e,id){
   const fi=D.folders.findIndex(f=>f.id===_folderDragId),ti=D.folders.findIndex(f=>f.id===id);
   if(fi<0||ti<0)return;
   const[moved]=D.folders.splice(fi,1);D.folders.splice(ti,0,moved);
-  saveD();renderSidebar();
+  persistCollectionOrder('folderOrder', D.folders.map(item=>item.id));
+  renderSidebar();
 }
 function onFolderDragEnd(e){
   document.querySelectorAll('.folder-row.dragging,.folder-row.drag-over').forEach(el=>el.classList.remove('dragging','drag-over'));
@@ -2490,7 +2837,8 @@ function onGoalDrop(e,id){
   const fi=D.goals.findIndex(g=>g.id===_goalDragId),ti=D.goals.findIndex(g=>g.id===id);
   if(fi<0||ti<0)return;
   const[moved]=D.goals.splice(fi,1);D.goals.splice(ti,0,moved);
-  saveD();render();
+  persistCollectionOrder('goalOrder', D.goals.map(item=>item.id));
+  render();
 }
 function onGoalDragEnd(e){
   document.querySelectorAll('.goal-card.dragging,.goal-card.drag-over').forEach(el=>el.classList.remove('dragging','drag-over'));
@@ -2647,6 +2995,8 @@ function renderHeader(){
 // ═══════════════════════════════════════════════════════════
 function setView(v){
   VIEW=v;
+  D.settings.currentView=v;
+  saveD();
   // 다른 뷰로 이동 시 선택 모드 초기화
   if(v!=='done'){_doneSelectMode=false;_selectedDoneIds.clear();}
   // 알림 패널 닫기
@@ -3054,7 +3404,13 @@ function onHabitDrop(e,id){
   const[moved]=D.habits.splice(fi,1);
   D.habits.splice(ti,0,moved);
   _habitDragId=null;
-  saveD();document.getElementById('view-area').innerHTML=renderHabits();
+  D.habits.forEach((habit,index)=>habit.sortOrder=index);
+  document.getElementById('view-area').innerHTML=renderHabits();
+  if(!window.GUEST_MODE && window.ApiClient?.isOnline()){
+    D.habits.filter(habit=>isUUID(habit.id)).forEach(habit=>{
+      ApiClient.updateHabit(habit.id,{sortOrder:habit.sortOrder}).catch(err=>console.warn('[habit reorder]',err.message));
+    });
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -3283,14 +3639,14 @@ async function submitOnboarding(){
 // ── 프로필 적용 ───────────────────────────────────────────
 function applyProfile(profile){
   if(!profile) return
-  D.settings.name        = profile.display_name || D.settings.name
-  D.settings.userTag     = profile.user_tag     || D.settings.userTag
-  D.settings.avatar      = profile.avatar       || D.settings.avatar
-  D.settings.avatarImg   = profile.avatar_img   || D.settings.avatarImg
-  D.settings.bio         = profile.bio          || D.settings.bio
-  D.settings.permission  = profile.permission   || 'user'
-  D.settings.aiPersonality = profile.ai_personality || D.settings.aiPersonality
-  D.settings.lang        = profile.lang         || D.settings.lang
+  if(profile.display_name !== undefined) D.settings.name = profile.display_name || ''
+  if(profile.user_tag !== undefined) D.settings.userTag = profile.user_tag || ''
+  if(profile.avatar !== undefined) D.settings.avatar = profile.avatar || '😊'
+  if(profile.avatar_img !== undefined) D.settings.avatarImg = profile.avatar_img || ''
+  if(profile.bio !== undefined) D.settings.bio = profile.bio || ''
+  if(profile.permission !== undefined) D.settings.permission = profile.permission || 'user'
+  if(profile.ai_personality !== undefined) D.settings.aiPersonality = profile.ai_personality || D.settings.aiPersonality
+  if(profile.lang !== undefined) D.settings.lang = profile.lang || D.settings.lang
   // saveD() 는 여기서 호출하지 않음 — loadFromServer()에서 호출되므로 순환 방지
 }
 
@@ -3357,7 +3713,7 @@ function signInAsGuest(){
       lang:'ko',aiPersonality:'default',permission:'user',
       joinedAt:Date.now(),notifEnabled:true,notifCoach:true,notifOverdue:true,
       weekStart:1,defaultPriority:'med',showDoneInToday:false,theme:'light',
-      settingsTab:'profile',overdueColor:'#dc2626',upcomingColor:'#2563eb'
+      settingsTab:'profile',currentView:'today',overdueColor:'#dc2626',upcomingColor:'#2563eb'
     }}
   document.getElementById('auth-screen').classList.add('hidden')
   // 샘플 데이터로 시작
@@ -3466,7 +3822,8 @@ function startApp(){
   if(!D.notifications) D.notifications = [];
   // 뷰 기본값
   const valid=['today','all','done','high','dashboard','goals','habits','search','settings'];
-  if(!valid.includes(VIEW)) VIEW='today';
+  const preferredView=D.settings.currentView||VIEW;
+  VIEW=valid.includes(preferredView)?preferredView:'today';
 
   // ── 기한 초과 알림 ──────────────────────────────────────
   const today=todayStr();

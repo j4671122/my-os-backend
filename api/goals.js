@@ -45,10 +45,10 @@ export default withCors(async (req, res) => {
   }
 
   if (req.method === 'DELETE') {
-    if (!id) return res.status(400).json({ error: 'id required' })
-    const { error } = await supabase.from('goals').delete().eq('id', id).eq('user_id', uid)
+    const q = supabase.from('goals').delete().eq('user_id', uid)
+    const { error } = id ? await q.eq('id', id) : await q
     if (error) return res.status(500).json({ error: error.message })
-    return res.json({ success: true })
+    return res.json({ success: true, deletedAll: !id })
   }
 
   res.status(405).json({ error: 'Method not allowed' })

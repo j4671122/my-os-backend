@@ -56,14 +56,14 @@ export default withCors(async (req, res) => {
         title:            body.title,
         done:             false,
         priority:         body.priority   || 'med',
-        folder_id:        body.folderId   || null,
-        goal_id:          body.goalId     || null,
-        due_date:         body.dueDate    || null,
-        session_url:      body.sessionUrl || null,
+        folder_id:        body.folderId   || body.folder_id || null,
+        goal_id:          body.goalId     || body.goal_id || null,
+        due_date:         body.dueDate    || body.due_date || null,
+        session_url:      body.sessionUrl || body.session_url || null,
         notes:            body.notes      || null,
         tags:             body.tags       || [],
-        is_recurring:     body.isRecurring || false,
-        sort_order:       body.sortOrder  || null,
+        is_recurring:     body.isRecurring || body.is_recurring || false,
+        sort_order:       body.sortOrder  || body.sort_order || null,
         attempt_count:    0,
         delay_days:       0,
         ai_tagged:        false
@@ -73,13 +73,48 @@ export default withCors(async (req, res) => {
 
     if (error) return res.status(500).json({ error: error.message })
 
+    const subtasks = Array.isArray(body.subtasks) ? body.subtasks : []
+    const links = Array.isArray(body.links) ? body.links : []
+
+    if (subtasks.length) {
+      const { error: subtasksError } = await supabase.from('subtasks').insert(
+        subtasks.map((subtask, index) => ({
+          task_id: task.id,
+          text: subtask.text,
+          done: !!subtask.done,
+          sort_order: subtask.sort_order ?? subtask.sortOrder ?? index
+        }))
+      )
+      if (subtasksError) return res.status(500).json({ error: subtasksError.message })
+    }
+
+    if (links.length) {
+      const { error: linksError } = await supabase.from('task_links').insert(
+        links.map(link => ({
+          task_id: task.id,
+          url: link.url,
+          label: link.label || null
+        }))
+      )
+      if (linksError) return res.status(500).json({ error: linksError.message })
+    }
+
+    const { data: fullTask, error: fullTaskError } = await supabase
+      .from('tasks')
+      .select('*, subtasks(id,text,done,sort_order), task_links(id,url,label)')
+      .eq('id', task.id)
+      .eq('user_id', uid)
+      .single()
+
+    if (fullTaskError) return res.status(500).json({ error: fullTaskError.message })
+
     // 이벤트 기록
     await logEvent(uid, 'created', task.id, {
       priority: task.priority,
       tags:     task.tags
     }, now)
 
-    return res.status(201).json(task)
+    return res.status(201).json(fullTask)
   }
 
   // ── PUT (수정) ───────────────────────────────────────────
@@ -141,25 +176,81 @@ export default withCors(async (req, res) => {
 
     if (error) return res.status(500).json({ error: error.message })
 
+    if (Array.isArray(body.subtasks)) {
+      const { error: deleteSubtasksError } = await supabase
+        .from('subtasks')
+        .delete()
+        .eq('task_id', id)
+      if (deleteSubtasksError) return res.status(500).json({ error: deleteSubtasksError.message })
+
+      if (body.subtasks.length) {
+        const { error: insertSubtasksError } = await supabase.from('subtasks').insert(
+          body.subtasks.map((subtask, index) => ({
+            task_id: id,
+            text: subtask.text,
+            done: !!subtask.done,
+            sort_order: subtask.sort_order ?? subtask.sortOrder ?? index
+          }))
+        )
+        if (insertSubtasksError) return res.status(500).json({ error: insertSubtasksError.message })
+      }
+    }
+
+    const links = Array.isArray(body.links) ? body.links : Array.isArray(body.task_links) ? body.task_links : null
+    if (Array.isArray(links)) {
+      const { error: deleteLinksError } = await supabase
+        .from('task_links')
+        .delete()
+        .eq('task_id', id)
+      if (deleteLinksError) return res.status(500).json({ error: deleteLinksError.message })
+
+      if (links.length) {
+        const { error: insertLinksError } = await supabase.from('task_links').insert(
+          links.map(link => ({
+            task_id: id,
+            url: link.url,
+            label: link.label || null
+          }))
+        )
+        if (insertLinksError) return res.status(500).json({ error: insertLinksError.message })
+      }
+    }
+
+    const { data: fullUpdated, error: fullUpdatedError } = await supabase
+      .from('tasks')
+      .select('*, subtasks(id,text,done,sort_order), task_links(id,url,label)')
+      .eq('id', id)
+      .eq('user_id', uid)
+      .single()
+
+    if (fullUpdatedError) return res.status(500).json({ error: fullUpdatedError.message })
+
     // 완료 이벤트
     if (body.done === true && prev?.done === false) {
       await logEvent(uid, 'completed', id, {
-        priority:       updated.priority,
-        tags:           updated.tags,
-        delay_days:     updated.delay_days,
-        attempt_count:  updated.attempt_count,
+        priority:       fullUpdated.priority,
+        tags:           fullUpdated.tags,
+        delay_days:     fullUpdated.delay_days,
+        attempt_count:  fullUpdated.attempt_count,
         completion_hour: new Date().getHours()
       }, now)
     } else if (body.done === false && prev?.done === true) {
       await logEvent(uid, 'uncompleted', id, {}, now)
     }
 
-    return res.json(updated)
+    return res.json(fullUpdated)
   }
 
   // ── DELETE ───────────────────────────────────────────────
   if (req.method === 'DELETE') {
-    if (!id) return res.status(400).json({ error: 'id required' })
+    if (!id) {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('user_id', uid)
+      if (error) return res.status(500).json({ error: error.message })
+      return res.json({ success: true, deletedAll: true })
+    }
     const { error } = await supabase
       .from('tasks')
       .delete()

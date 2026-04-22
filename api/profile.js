@@ -69,12 +69,28 @@ export default withCors(async (req, res) => {
 
   // ── PUT (프로필 수정) ────────────────────────────────────
   if (req.method === 'PUT') {
-    const allowed = ['display_name','avatar','avatar_img','bio','ai_personality','lang','preferences']
+    const allowed = ['display_name','avatar','avatar_img','bio','ai_personality','lang','preferences','user_tag']
     const updates = {}
     for (const k of allowed) {
       if (req.body?.[k] !== undefined) updates[k] = req.body[k]
     }
     if (!Object.keys(updates).length) return res.status(400).json({ error: '수정할 항목 없음' })
+
+    if (updates.user_tag !== undefined) {
+      const tag = String(updates.user_tag || '').replace(/^@/, '').toLowerCase().trim()
+      if (!tag || !/^[a-z0-9_]{3,20}$/.test(tag)) {
+        return res.status(400).json({ error: '유저 태그: 영문 소문자, 숫자, _ 만 사용 (3~20자)' })
+      }
+      const { data: existing, error: existingError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_tag', tag)
+        .neq('id', user.id)
+        .maybeSingle()
+      if (existingError) return res.status(500).json({ error: existingError.message })
+      if (existing) return res.status(409).json({ error: '이미 사용 중인 태그입니다' })
+      updates.user_tag = tag
+    }
 
     const { data, error } = await supabase
       .from('profiles').update(updates).eq('id', user.id).select().single()
