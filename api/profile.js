@@ -69,7 +69,7 @@ export default withCors(async (req, res) => {
 
   // ── PUT (프로필 수정) ────────────────────────────────────
   if (req.method === 'PUT') {
-    const allowed = ['display_name','avatar','avatar_img','bio','ai_personality','lang']
+    const allowed = ['display_name','avatar','avatar_img','bio','ai_personality','lang','preferences']
     const updates = {}
     for (const k of allowed) {
       if (req.body?.[k] !== undefined) updates[k] = req.body[k]
