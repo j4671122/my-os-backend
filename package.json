@@ -1,0 +1,17 @@
+{
+  "name": "my-os-backend",
+  "version": "1.0.0",
+  "description": "내 운영체제 — Backend API",
+  "private": true,
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.43.0"
+  },
+  "devDependencies": {
+    "vercel": "^34.0.0"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  }
+}
