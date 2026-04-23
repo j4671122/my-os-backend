@@ -404,6 +404,80 @@ canvas{max-width:100%}
 .filter-btn{font-size:11.5px;padding:4px 11px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .12s}
 .filter-btn:hover,.filter-btn.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent);font-weight:600}
 
+/* ── Home widgets ── */
+.home-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+.home-card{background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(246,242,236,.82));backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border:1px solid rgba(255,255,255,.7);border-radius:18px;box-shadow:0 10px 32px rgba(67,55,40,.08);padding:16px;position:relative;min-height:160px}
+.home-card.dragging{opacity:.45}
+.home-card.drag-over{outline:2px dashed var(--accent);outline-offset:3px}
+.home-card.tall{grid-row:span 2;min-height:340px}
+.home-card.wide{grid-column:span 2}
+.home-card-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.home-card-title{font-size:13px;font-weight:800;letter-spacing:-.2px}
+.home-card-sub{font-size:11px;color:var(--text3)}
+.home-card-grab{margin-left:auto;color:var(--text3);cursor:grab;font-size:13px}
+.home-empty{padding:34px 18px;text-align:center;color:var(--text3);background:rgba(255,255,255,.45);border:1px dashed var(--border2);border-radius:16px}
+.home-profile{display:flex;gap:14px;align-items:center}
+.home-avatar{width:88px;height:88px;border-radius:24px;overflow:hidden;flex-shrink:0;background:linear-gradient(135deg,var(--accent),#4a9f4d);display:flex;align-items:center;justify-content:center;font-size:40px;color:#fff;box-shadow:0 10px 26px rgba(44,95,46,.22)}
+.home-avatar img{width:100%;height:100%;object-fit:cover}
+.home-profile-meta{display:flex;flex-direction:column;gap:5px}
+.home-badge-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.clock-big{font-size:42px;font-weight:800;letter-spacing:-1.6px;line-height:1}
+.clock-date{font-size:12px;color:var(--text3);margin-top:8px}
+.home-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.home-stat{padding:12px;border-radius:14px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.6)}
+.home-stat strong{font-size:22px;display:block;line-height:1.1;color:var(--accent)}
+.goal-chip-list{display:flex;flex-direction:column;gap:10px}
+.goal-chip{padding:12px 13px;border-radius:14px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.6)}
+.goal-chip-head{display:flex;justify-content:space-between;gap:10px;font-size:12px;font-weight:700}
+.goal-chip-track{height:7px;background:var(--surface2);border-radius:999px;overflow:hidden;margin-top:8px}
+.goal-chip-fill{height:100%;border-radius:999px}
+.home-fab{position:fixed;right:28px;bottom:28px;width:58px;height:58px;border:none;border-radius:50%;background:linear-gradient(135deg,rgba(255,255,255,.82),rgba(255,255,255,.56));box-shadow:0 18px 30px rgba(59,47,37,.15);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);font-size:28px;color:var(--accent);cursor:pointer;z-index:500;display:none}
+.home-fab.show{display:flex;align-items:center;justify-content:center}
+.widget-picker{width:520px;max-width:92vw;background:rgba(250,247,242,.82);backdrop-filter:blur(26px) saturate(150%);-webkit-backdrop-filter:blur(26px) saturate(150%);border:1px solid rgba(255,255,255,.85)}
+.widget-picker-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.widget-option{padding:14px;border-radius:16px;background:rgba(255,255,255,.68);border:1px solid rgba(255,255,255,.85);cursor:pointer;transition:transform .12s,box-shadow .12s}
+.widget-option:hover{transform:translateY(-1px);box-shadow:0 12px 24px rgba(67,55,40,.08)}
+.widget-option-icon{font-size:20px;margin-bottom:8px}
+.widget-option-title{font-size:12.5px;font-weight:800;margin-bottom:4px}
+.widget-option-sub{font-size:11px;color:var(--text3);line-height:1.5}
+
+/* ── Time tracker ── */
+.tt-layout{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:16px;align-items:start}
+.tt-board,.tt-side{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)}
+.tt-board{overflow:hidden}
+.tt-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,var(--surface),#faf7f2)}
+.tt-nav{display:flex;align-items:center;gap:8px}
+.tt-nav button{width:30px;height:30px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer}
+.tt-nav-title{font-size:14px;font-weight:800}
+.tt-grid-wrap{overflow:auto;padding:0 12px 12px}
+.tt-grid{display:grid;grid-template-columns:72px repeat(6,minmax(70px,1fr));min-width:520px}
+.tt-cell,.tt-time,.tt-min{border-right:1px solid var(--border);border-bottom:1px solid var(--border);min-height:28px;display:flex;align-items:center;justify-content:center;font-size:11px;position:relative}
+.tt-min{background:#faf8f4;color:var(--text3);font-weight:700;position:sticky;top:0;z-index:3}
+.tt-time{background:#faf8f4;color:var(--text2);font-weight:700;position:sticky;left:0;z-index:2}
+.tt-cell{cursor:pointer;background:var(--surface);padding:0 4px}
+.tt-cell:hover{outline:1px solid var(--accent-light);outline-offset:-1px}
+.tt-cell-label{font-size:10px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.tt-side{padding:14px}
+.tt-side h4{font-size:12px;font-weight:800;margin-bottom:10px}
+.tt-selected{padding:10px 12px;border-radius:12px;margin-bottom:12px;font-size:12px;font-weight:700;border:1px solid var(--border)}
+.tt-label-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.tt-label{display:flex;align-items:center;gap:8px;padding:10px 11px;border-radius:12px;border:1px solid var(--border);cursor:pointer;background:var(--surface)}
+.tt-label.active{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light)}
+.tt-label-color{width:14px;height:14px;border-radius:50%}
+.tt-label-name{flex:1;font-size:12px;font-weight:700}
+.tt-label-acts{display:flex;gap:4px}
+.tt-label-acts button{border:none;background:none;color:var(--text3);cursor:pointer}
+.tt-summary{display:flex;flex-direction:column;gap:8px}
+.tt-summary-row{display:flex;align-items:center;gap:8px}
+.tt-summary-bar{height:8px;flex:1;background:var(--surface2);border-radius:999px;overflow:hidden}
+.tt-summary-fill{height:100%;border-radius:999px}
+.tt-modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width: 1100px){
+  .home-grid{grid-template-columns:1fr}
+  .home-card.wide{grid-column:span 1}
+  .tt-layout{grid-template-columns:1fr}
+}
+
 /* ── Report / Content gen ── */
 .report-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px}
 .report-title{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:7px}
@@ -730,6 +804,7 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
     <span class="profile-settings-ico">⚙️</span>
   </div>
   <div class="sb-label">스마트 목록</div>
+  <div class="sb-item" id="nav-home" onclick="setView('home')"><span class="ico">🏠</span>홈</div>
   <div class="sb-item" id="nav-today" onclick="setView('today')"><span class="ico">☀️</span>오늘<span class="sb-badge" id="b-today">0</span></div>
   <div class="sb-item" id="nav-all" onclick="setView('all')"><span class="ico">📋</span>전체<span class="sb-badge gray" id="b-all">0</span></div>
   <div class="sb-item" id="nav-done" onclick="setView('done')"><span class="ico">✔️</span>완료<span class="sb-badge gray" id="b-done">0</span></div>
@@ -745,6 +820,7 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
   <div class="sb-label" style="margin-top:6px">태그</div>
   <div class="tag-cloud" id="sb-tags"></div>
   <button class="sb-add-btn" onclick="openGoalModal()"><span style="font-size:14px">＋</span> 목표 추가</button>
+  <div class="sb-item" id="nav-time" onclick="setView('time')"><span class="ico">🕒</span>Time Tracker</div>
 </aside>
 
 <!-- Main -->
@@ -776,6 +852,8 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
+
+<button class="home-fab" id="home-fab" onclick="openWidgetPicker()">+</button>
 
 <!-- Custom Confirm Modal -->
 <div class="confirm-overlay" id="confirm-overlay">
@@ -854,6 +932,36 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
   </div>
 </div>
 
+<div class="overlay" id="widget-picker-modal">
+  <div class="modal widget-picker">
+    <h3>홈 위젯 추가</h3>
+    <div class="widget-picker-grid" id="widget-picker-grid"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('widget-picker-modal')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="tracker-label-modal">
+  <div class="modal">
+    <h3 id="ttm-title">라벨 추가</h3>
+    <div class="tt-modal-grid">
+      <div class="modal-field">
+        <label>이름</label>
+        <input id="ttm-name" placeholder="예: 공부"/>
+      </div>
+      <div class="modal-field">
+        <label>색상</label>
+        <input id="ttm-color" type="color" value="#d97706" style="height:40px;padding:4px"/>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('tracker-label-modal')">취소</button>
+      <button class="btn btn-primary" onclick="saveTrackerLabel()">저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- Settings Modal -->
 <div class="overlay" id="settings-modal">
   <div class="modal" style="width:420px">
@@ -910,10 +1018,40 @@ const AI_COACH_HOURS=[9,14,21];
 const AI_COACH_WINDOW_MINUTES=90;
 const AI_COACH_RETRY_MS=60*60*1000;
 const AI_BADGE_RETRY_MS=60*60*1000;
+const DEFAULT_HOME_WIDGETS=[
+  {id:'w-profile',type:'profile',variant:'wide'},
+  {id:'w-clock',type:'clock',variant:'normal'},
+  {id:'w-tracker',type:'tracker',variant:'tall'},
+  {id:'w-goals',type:'goals',variant:'normal'}
+];
+const HOME_WIDGET_LIBRARY=[
+  {type:'profile',icon:'👤',title:'프로필 카드',sub:'큰 프로필과 칭호를 보여줘요',variant:'wide'},
+  {type:'clock',icon:'🕒',title:'현재 시간',sub:'큰 시계와 날짜를 보여줘요',variant:'normal'},
+  {type:'tracker',icon:'📊',title:'데일리 트래커',sub:'오늘 10분 블록 요약을 보여줘요',variant:'tall'},
+  {type:'goals',icon:'🎯',title:'목표 진행',sub:'핵심 목표의 달성률을 요약해요',variant:'normal'}
+];
+const DEFAULT_TRACKER_LABELS=[
+  {id:'rest',name:'쉼',color:'#f6f4ef',text:'#6f675f'},
+  {id:'study',name:'공부',color:'#f4a261',text:'#5b3410'},
+  {id:'hobby',name:'취미',color:'#8bcf9b',text:'#173c20'},
+  {id:'work',name:'일',color:'#6aa8ff',text:'#0f2b5f'}
+];
+let _homeWidgetDragId=null;
+let _trackerRangeStart=null;
+let _trackerLabelEditId=null;
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 function todayStr(){return new Date().toISOString().slice(0,10)}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function trackerDateKey(date=new Date()){
+  const d=new Date(date);
+  d.setHours(d.getHours()-4,0,0,0);
+  return d.toISOString().slice(0,10);
+}
+function trackerDateLabel(dateKey){
+  const d=new Date(dateKey+'T04:00:00');
+  return d.toLocaleDateString(({ko:'ko-KR',en:'en-US',zh:'zh-CN'})[D.settings?.lang||'ko']||'ko-KR',{month:'long',day:'numeric',weekday:'short'});
+}
 
 // ── 서버 기반 저장/로드 ────────────────────────────────────
 // localStorage 완전 제거 — 모든 데이터는 서버에 저장
@@ -941,12 +1079,17 @@ function saveD(){
         showDoneInToday: D.settings.showDoneInToday,
         theme:        D.settings.theme,
         settingsTab:  D.settings.settingsTab,
-        currentView:  D.settings.currentView,
-        folderOrder:  D.settings.folderOrder,
-        goalOrder:    D.settings.goalOrder,
-        overdueColor: D.settings.overdueColor,
-        upcomingColor: D.settings.upcomingColor,
-      }
+          currentView:  D.settings.currentView,
+          folderOrder:  D.settings.folderOrder,
+          goalOrder:    D.settings.goalOrder,
+          homeWidgets:  D.settings.homeWidgets,
+          timeTrackerLabels: D.settings.timeTrackerLabels,
+          timeTrackerData: D.settings.timeTrackerData,
+          timeTrackerDate: D.settings.timeTrackerDate,
+          timeTrackerSelectedLabel: D.settings.timeTrackerSelectedLabel,
+          overdueColor: D.settings.overdueColor,
+          upcomingColor: D.settings.upcomingColor,
+        }
       });
     }catch(e){console.warn('[saveD] preferences sync 실패:',e.message)}
   }, 1000);
@@ -962,9 +1105,23 @@ function loadD(){
     joinedAt:null,notifEnabled:true,notifCoach:true,notifOverdue:true,
     weekStart:1,defaultPriority:'med',showDoneInToday:false,theme:'light',
     settingsTab:'profile',currentView:'today',folderOrder:[],goalOrder:[],
+    homeWidgets:DEFAULT_HOME_WIDGETS.map(widget=>({...widget})),
+    timeTrackerLabels:DEFAULT_TRACKER_LABELS.map(label=>({...label})),
+    timeTrackerData:{},
+    timeTrackerDate:'',
+    timeTrackerSelectedLabel:'study',
     overdueColor:'#dc2626',upcomingColor:'#2563eb',
     _aiCoachCache:null,_aiCoachLastAttemptAt:0,_aiCoachRetryAfter:0,_badgeRetryAfter:0
   }, D.settings);
+  if(!Array.isArray(D.settings.homeWidgets)||!D.settings.homeWidgets.length){
+    D.settings.homeWidgets=DEFAULT_HOME_WIDGETS.map(widget=>({...widget}));
+  }
+  if(!Array.isArray(D.settings.timeTrackerLabels)||!D.settings.timeTrackerLabels.length){
+    D.settings.timeTrackerLabels=DEFAULT_TRACKER_LABELS.map(label=>({...label}));
+  }
+  if(!D.settings.timeTrackerData||typeof D.settings.timeTrackerData!=='object') D.settings.timeTrackerData={};
+  if(!D.settings.timeTrackerDate) D.settings.timeTrackerDate=trackerDateKey();
+  if(!D.settings.timeTrackerSelectedLabel) D.settings.timeTrackerSelectedLabel=D.settings.timeTrackerLabels[0]?.id||'study';
   if(!D.settings.joinedAt) D.settings.joinedAt = Date.now();
   if(!D.notifications) D.notifications = [];
   if(!D.events) D.events = [];
