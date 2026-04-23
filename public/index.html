@@ -375,7 +375,7 @@ canvas{max-width:100%}
 .goal-acts{display:flex;gap:5px}
 
 /* ── Habits ── */
-.habit-grid{display:flex;flex-direction:column;gap:10px}
+.habit-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
 .habit-row{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;transition:box-shadow .15s,border-color .15s}
 .habit-row:hover{border-color:var(--border2);box-shadow:var(--shadow)}
 .habit-row.dragging{opacity:.4;border:2px dashed var(--accent)}
@@ -476,6 +476,10 @@ canvas{max-width:100%}
   .home-grid{grid-template-columns:1fr}
   .home-card.wide{grid-column:span 1}
   .tt-layout{grid-template-columns:1fr}
+  .habit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width: 700px){
+  .habit-grid{grid-template-columns:1fr}
 }
 
 /* ── Report / Content gen ── */
@@ -2966,6 +2970,8 @@ function applyDateColors(){
 // ── Drag & drop ────────────────────────────────────────────
 function onTaskDragStart(e,id){
   dragId=id;e.dataTransfer.effectAllowed='move';
+  // 드래그 데이터 설정 (Firefox 필수)
+  e.dataTransfer.setData('text/plain',id);
   setTimeout(()=>document.getElementById('card-'+id)?.classList.add('dragging'),0);
 }
 function onTaskDragEnd(e,id){
@@ -2994,7 +3000,10 @@ function onTaskDrop(e,id){
   render();
 }
 // Subtask drag
-function onSubDragStart(e,tid,sid){e.dataTransfer.setData('sub',sid+'|'+tid);e.dataTransfer.effectAllowed='move';}
+function onSubDragStart(e,tid,sid){
+  e.stopPropagation(); // 상위 task drag 이벤트 차단
+  e.dataTransfer.setData('sub',sid+'|'+tid);e.dataTransfer.effectAllowed='move';
+}
 function onSubDrop(e,tid,sid){
   e.preventDefault();
   const raw=e.dataTransfer.getData('sub');if(!raw)return;
@@ -3285,12 +3294,12 @@ function taskCardHTML(task){
   const pLabel={high:`<span class="ttag pr-high">${t('prHighLabel')}</span>`,med:'',low:`<span class="ttag pr-low">${t('prLowLabel')}</span>`}[task.priority]||'';
   const selMode=_doneSelectMode&&task.done;
   const isSel=_selectedDoneIds.has(task.id);
-  const dragAttrs=selMode?'draggable="false"':`draggable="true" ondragstart="onTaskDragStart(event,'${task.id}')" ondragend="onTaskDragEnd(event,'${task.id}')" ondragover="onTaskDragOver(event,'${task.id}')" ondrop="onTaskDrop(event,'${task.id}')"`;
+  const dragAttrs=selMode?'':`ondragover="onTaskDragOver(event,'${task.id}')" ondrop="onTaskDrop(event,'${task.id}')"`;
   const headClick=selMode?`toggleDoneSel('${task.id}',event)`:`toggleOpen('${task.id}')`;
   const checkClick=selMode?`toggleDoneSel('${task.id}',event)`:`toggleDone('${task.id}',event)`;
   const leftEl=selMode
     ?`<input type="checkbox" class="done-cb" id="dcb-${task.id}" ${isSel?'checked':''} onclick="toggleDoneSel('${task.id}',event)">`
-    :`<span class="drag-handle" onclick="event.stopPropagation()" title="${t('dragTitle')}">⠿</span>`;
+    :`<span class="drag-handle" draggable="true" ondragstart="onTaskDragStart(event,'${task.id}')" ondragend="onTaskDragEnd(event,'${task.id}')" onclick="event.stopPropagation()" title="${t('dragTitle')}">⠿</span>`;
   return`<div class="task-card${task.done?' done-card':''}${isOpen?' open':''}${selMode?' sel-mode':''}${selMode&&isSel?' selected':''}" id="card-${task.id}" ${dragAttrs}>
     <div class="task-head" onclick="${headClick}">
       ${leftEl}
@@ -3339,7 +3348,7 @@ function renderDetail(tid){
     </div>
     <div>
       <div class="ds-label">${t('checklist')}</div>
-      <div class="sub-list">${task.subtasks.map(s=>`<div class="sub-item" draggable="true" ondragstart="onSubDragStart(event,'${task.id}','${s.id}')" ondragover="event.preventDefault()" ondrop="onSubDrop(event,'${task.id}','${s.id}')"><span style="cursor:grab;color:var(--text3);font-size:11px;padding:0 3px">⠿</span><button class="sub-ck${s.done?' chk':''}" onclick="toggleSub('${task.id}','${s.id}')">${s.done?'✓':''}</button><span class="sub-text${s.done?' dk':''}">${esc(s.text)}</span><button class="sub-del" onclick="delSub('${task.id}','${s.id}')">✕</button></div>`).join('')}</div>
+      <div class="sub-list">${task.subtasks.map(s=>`<div class="sub-item" ondragover="event.preventDefault()" ondrop="onSubDrop(event,'${task.id}','${s.id}')"><span draggable="true" ondragstart="onSubDragStart(event,'${task.id}','${s.id}')" style="cursor:grab;color:var(--text3);font-size:11px;padding:0 3px">⠿</span><button class="sub-ck${s.done?' chk':''}" onclick="toggleSub('${task.id}','${s.id}');event.stopPropagation()">${s.done?'✓':''}</button><span class="sub-text${s.done?' dk':''}">${esc(s.text)}</span><button class="sub-del" onclick="delSub('${task.id}','${s.id}');event.stopPropagation()">✕</button></div>`).join('')}</div>
       <div class="add-sub"><input id="sub-inp-${task.id}" placeholder="${t('addItem')}" onkeydown="handleSubKey(event,'${task.id}')" onclick="event.stopPropagation()"/><button class="btn btn-ghost btn-sm" onclick="addSubtask('${task.id}');event.stopPropagation()">${t('addBtn')}</button></div>
     </div>
     <div>
