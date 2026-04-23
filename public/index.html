@@ -906,6 +906,10 @@ let searchState={q:'',filters:{}};
 let generatedContent='';
 let generatedReport='';
 let _taskSyncTimers={};
+const AI_COACH_HOURS=[9,14,21];
+const AI_COACH_WINDOW_MINUTES=90;
+const AI_COACH_RETRY_MS=60*60*1000;
+const AI_BADGE_RETRY_MS=60*60*1000;
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 function todayStr(){return new Date().toISOString().slice(0,10)}
@@ -958,7 +962,8 @@ function loadD(){
     joinedAt:null,notifEnabled:true,notifCoach:true,notifOverdue:true,
     weekStart:1,defaultPriority:'med',showDoneInToday:false,theme:'light',
     settingsTab:'profile',currentView:'today',folderOrder:[],goalOrder:[],
-    overdueColor:'#dc2626',upcomingColor:'#2563eb'
+    overdueColor:'#dc2626',upcomingColor:'#2563eb',
+    _aiCoachCache:null,_aiCoachLastAttemptAt:0,_aiCoachRetryAfter:0,_badgeRetryAfter:0
   }, D.settings);
   if(!D.settings.joinedAt) D.settings.joinedAt = Date.now();
   if(!D.notifications) D.notifications = [];
@@ -1655,6 +1660,41 @@ function getCoachTip(){
   }
   return null;
 }
+function getCurrentAiCoachSlot(now=new Date()){
+  for(const hour of AI_COACH_HOURS){
+    const slotStart=new Date(now);
+    slotStart.setHours(hour,0,0,0);
+    const slotEnd=new Date(slotStart.getTime()+AI_COACH_WINDOW_MINUTES*60000);
+    if(now>=slotStart&&now<=slotEnd){
+      return {
+        key:`${slotStart.toISOString().slice(0,10)}-${String(hour).padStart(2,'0')}`,
+        hour
+      };
+    }
+  }
+  return null;
+}
+function shouldUseAiCoach(){
+  if(!window.ApiClient?.isOnline()) return false;
+  if(!D.settings?.notifEnabled || !D.settings?.notifCoach) return false;
+  const now=Date.now();
+  if(D.settings._aiCoachRetryAfter && now < D.settings._aiCoachRetryAfter) return false;
+  return !!getCurrentAiCoachSlot(new Date(now));
+}
+function applyAiCoachMessage(result, slotKey, el){
+  if(!result?.message) return false;
+  const rawMsg=result.message+(result.action?` → ${result.action}`:'');
+  const personalMsg=applyPersonality(rawMsg);
+  el.textContent=personalMsg;
+  el.style.display='block';
+  D.settings._aiCoachCache={slotKey,message:rawMsg};
+  D.settings._aiCoachLastAttemptAt=Date.now();
+  D.settings._aiCoachRetryAfter=0;
+  saveD();
+  const dup=(D.notifications||[]).find(n=>n.msg===rawMsg&&Date.now()-n.time<3600000);
+  if(!dup)pushNotification(rawMsg,'tip');
+  return true;
+}
 function showCoachTip(){
   if(tipDismissed)return;
   const tip=getCoachTip();
@@ -1668,17 +1708,29 @@ function showCoachTip(){
     if(!already){pushNotification(tip.msg,'tip');}
   }
   else{el.style.display='none'}
-  // AI 코칭 메시지 (온라인 모드 — 로컬 팁 표시 후 AI 결과로 교체 + 성격 적용)
-  if(window.ApiClient?.isOnline()){
-    ApiClient.aiSuggest().then(r=>{
-      if(tipDismissed||!r?.message)return;
-      const rawMsg=r.message+(r.action?` → ${r.action}`:'');
-      const personalMsg=applyPersonality(rawMsg);   // ← 성격 적용 수정
-      el.textContent=personalMsg;el.style.display='block';
-      const dup=(D.notifications||[]).find(n=>n.msg===rawMsg&&Date.now()-n.time<3600000);
-      if(!dup)pushNotification(rawMsg,'tip');
-    }).catch(()=>{});
+  if(!shouldUseAiCoach()) return;
+  const slot=getCurrentAiCoachSlot(new Date());
+  if(!slot) return;
+  const cached=D.settings._aiCoachCache;
+  if(cached?.slotKey===slot.key && cached.message){
+    const personalMsg=applyPersonality(cached.message);
+    el.textContent=personalMsg;
+    el.style.display='block';
+    return;
   }
+  if(D.settings._aiCoachLastAttemptAt && Date.now()-D.settings._aiCoachLastAttemptAt<10*60*1000){
+    return;
+  }
+  D.settings._aiCoachLastAttemptAt=Date.now();
+  saveD();
+  ApiClient.aiSuggest().then(r=>{
+    if(tipDismissed) return;
+    applyAiCoachMessage(r, slot.key, el);
+  }).catch(e=>{
+    console.warn('[AI Coach]', e.message);
+    D.settings._aiCoachRetryAfter=Date.now()+AI_COACH_RETRY_MS;
+    saveD();
+  });
 }
 function dismissTip(){
   const el=document.getElementById('coach-tip');
@@ -2489,7 +2541,7 @@ function saveNotionSettings(){
   saveD();showToast('✅ Notion 설정 저장됨');
 }
 function bindSettingsEvents(){
-  // 설정 뷰 열릴 때 AI 배지 비동기 로드 (캐시 없거나 만료 시 Gemini 호출)
+  // 설정 뷰 열릴 때 AI 배지 비동기 로드 (일 단위 캐시 + 실패 시 backoff)
   const tab=D.settings.settingsTab||'profile';
   if(tab==='profile') loadAndShowBadges();
 }
@@ -2695,6 +2747,9 @@ async function loadAIBadges(force=false){
   if(!window.ApiClient?.isOnline())return null;
   const today=todayStr();
   const cached=D.settings._badgeCache;
+  if(!force && D.settings._badgeRetryAfter && Date.now() < D.settings._badgeRetryAfter){
+    return cached?.badges || null;
+  }
   // 캐시 유효하면 바로 반환 (같은 날, 같은 성격)
   if(!force&&cached&&cached.date===today&&cached.personality===(D.settings.aiPersonality||'default')){
     return cached.badges;
@@ -2704,10 +2759,15 @@ async function loadAIBadges(force=false){
     const result=await ApiClient.aiBadges(stats,D.settings.aiPersonality||'default');
     if(result?.badges?.length){
       D.settings._badgeCache={date:today,badges:result.badges,personality:D.settings.aiPersonality||'default'};
+      D.settings._badgeRetryAfter=0;
       saveD();
       return result.badges;
     }
-  }catch(e){console.warn('[AI Badges]',e.message);}
+  }catch(e){
+    console.warn('[AI Badges]',e.message);
+    D.settings._badgeRetryAfter=Date.now()+AI_BADGE_RETRY_MS;
+    saveD();
+  }
   return null;
 }
 
