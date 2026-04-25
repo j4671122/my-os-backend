@@ -1449,7 +1449,10 @@ function buildTaskPayload(task){
 function replaceTaskFromServer(serverTask, fallbackId=null){
   const mapped=mapServerTask(serverTask);
   const idx=D.tasks.findIndex(task=>task.id===mapped.id||task.id===fallbackId);
-  if(idx>=0) D.tasks[idx]=mapped;
+  if(idx>=0){
+    D.tasks[idx]=mapped;
+    if(openTaskIds?.has(mapped.id)) renderDetail(mapped.id);
+  }
   return mapped;
 }
 function scheduleTaskSync(taskId, delay=300){
@@ -1633,7 +1636,7 @@ function addSubtask(tid){
     scheduleTaskSync(tid);
   }
 }
-function handleSubKey(e,tid){if(e.key==='Enter')addSubtask(tid)}
+function handleSubKey(e,tid){if(e.key==='Enter'&&!e.isComposing)addSubtask(tid)}
 function toggleSub(tid,sid){
   const t=D.tasks.find(t=>t.id===tid);if(!t)return;
   const s=t.subtasks.find(s=>s.id===sid);if(s){s.done=!s.done;saveD();renderDetail(tid);scheduleTaskSync(tid)}
