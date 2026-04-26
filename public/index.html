@@ -132,7 +132,15 @@
     async savePreferences(prefs) {
       if (!ONLINE) return null
       return put('/api/profile', { preferences: prefs }).catch(() => null)
-    }
+    },
+
+    // ── Community ──────────────────────────────────────────
+    async getCommunityPosts()             { if (!ONLINE) return []; return get('/api/community') },
+    async createCommunityPost(data)       { if (!ONLINE) return null; return post('/api/community', data) },
+    async likeCommunityPost(id)           { if (!ONLINE) return null; return api('PATCH', `/api/community?id=${id}&action=like`) },
+    async commentCommunityPost(id, data)  { if (!ONLINE) return null; return api('PATCH', `/api/community?id=${id}&action=comment`, data) },
+    async uncommentCommunityPost(id, cid) { if (!ONLINE) return null; return api('PATCH', `/api/community?id=${id}&action=uncomment`, { commentId: cid }) },
+    async deleteCommunityPost(id)         { if (!ONLINE) return null; return del(`/api/community?id=${id}`) },
   }
 
   // ── 자동 태깅 훅 ───────────────────────────────────────
@@ -1282,6 +1290,8 @@ const TAG_COLORS=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#
 
 let D={tasks:[],folders:[],goals:[],habits:[],tagReg:{},events:[],settings:{name:'',goal:'',notionKey:'',notionDb:''}};
 let VIEW='today';
+let _communityPosts=[];
+let _communityLoading=false;
 let openTaskIds=new Set();
 let dragId=null,dragOver=null;
 let FOLDER_EDIT=null;
@@ -3641,7 +3651,7 @@ function render(){
   if(VIEW==='memo'){va.innerHTML=renderMemos();return}
   if(VIEW==='pomodoro'){va.innerHTML=renderPomodoro();return}
   if(VIEW==='routine'){va.innerHTML=renderRoutine();return}
-  if(VIEW==='community'){va.innerHTML=renderCommunity();return}
+  if(VIEW==='community'){va.innerHTML=renderCommunity();loadCommunityPosts();return}
   va.innerHTML=renderTaskView();
   openTaskIds.forEach(id=>{
     const card=document.getElementById('card-'+id);
@@ -4303,12 +4313,16 @@ function _commTimeAgo(ts){
 
 function renderCommunity(){
   const s=D.settings;
-  const posts=(s.communityPosts||[]).slice().reverse();
+  const posts=_communityPosts;
   const myAv=_commAv(s);
-  const feedHTML=posts.length===0
+
+  const feedHTML=_communityLoading&&!posts.length
+    ?`<div class="comm-empty"><div class="comm-empty-ico" style="font-size:28px;margin-bottom:8px">⏳</div><div class="comm-empty-txt">불러오는 중...</div></div>`
+    :posts.length===0
     ?`<div class="comm-empty"><div class="comm-empty-ico">🌐</div><div class="comm-empty-txt">아직 게시물이 없어요</div><div class="comm-empty-sub">첫 번째 생각을 공유해 보세요!</div></div>`
     :posts.map(p=>{
       const av=_commAv(p);
+      const ts=p.created_at?_commTimeAgo(new Date(p.created_at).getTime()):_commTimeAgo(p.createdAt||0);
       const commHTML=p.showComments?`<div class="comm-comments">
         <div class="comm-comment-input-row">
           ${_commAv(s,28)}
@@ -4329,8 +4343,9 @@ function renderCommunity(){
           ${av}
           <div class="comm-author">
             <div class="comm-author-name">${esc(p.author)}</div>
-            <div class="comm-author-meta">${p.handle?'@'+esc(p.handle)+' · ':''} ${_commTimeAgo(p.createdAt)}</div>
+            <div class="comm-author-meta">${p.handle?'@'+esc(p.handle)+' · ':''} ${ts}</div>
           </div>
+          <button onclick="refreshCommunity()" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:13px;color:var(--text3);padding:2px 6px" title="새로고침">↻</button>
         </div>
         <div class="comm-card-body">${esc(p.content)}</div>
         <div class="comm-actions">
@@ -4353,9 +4368,26 @@ function renderCommunity(){
         <button class="comm-post-btn" onclick="communityPost()">게시</button>
       </div>
     </div>
-    <div class="comm-feed">${feedHTML}</div>
+    <div class="comm-feed" id="comm-feed-area">${feedHTML}</div>
   </div>`;
 }
+
+async function loadCommunityPosts(force=false){
+  if(_communityLoading)return;
+  if(!force&&_communityPosts.length>0)return;
+  if(window.GUEST_MODE||!ApiClient.isOnline())return;
+  _communityLoading=true;
+  try{
+    const posts=await ApiClient.getCommunityPosts();
+    if(Array.isArray(posts)){
+      _communityPosts=posts;
+      if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
+    }
+  }catch(e){console.warn('[Community] 로드 실패:',e.message)}
+  _communityLoading=false;
+}
+
+function refreshCommunity(){ _communityPosts=[];loadCommunityPosts(true); }
 
 function communityCharCount(el){
   const rem=280-el.value.length;
@@ -4363,70 +4395,82 @@ function communityCharCount(el){
   if(c){c.textContent=rem;c.className='comm-char'+(rem<20?' warn':'');}
 }
 
-function communityPost(){
+async function communityPost(){
   const inp=document.getElementById('comm-compose-input');
   const content=(inp?.value||'').trim();
   if(!content)return;
   const s=D.settings;
-  if(!Array.isArray(s.communityPosts))s.communityPosts=[];
-  s.communityPosts.push({
-    id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),
-    author:s.name||'나',handle:s.userTag||'',
-    avatar:s.avatar||'😊',avatarBg:s.avatarBg||0,
-    avatarBgGrad:s.avatarBgGrad||null,avatarImg:s.avatarImg||'',
-    content,createdAt:Date.now(),
-    likes:0,liked:false,isOwn:true,comments:[],showComments:false,
-  });
-  saveD();
+  // 낙관적 추가
+  const tempId='tmp_'+Date.now();
+  const tempPost={id:tempId,user_id:'me',author:s.name||'나',handle:s.userTag||'',
+    avatar:s.avatar||'😊',avatar_bg:s.avatarBg||0,avatar_img:s.avatarImg||'',
+    content,created_at:new Date().toISOString(),likes:0,liked:false,isOwn:true,comments:[],showComments:false};
+  _communityPosts=[tempPost,..._communityPosts];
+  inp.value='';
   if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
+  if(!window.GUEST_MODE&&ApiClient.isOnline()){
+    try{
+      const srv=await ApiClient.createCommunityPost({content,author:s.name||'나',handle:s.userTag||'',avatar:s.avatar||'😊',avatarBg:s.avatarBg||0,avatarImg:s.avatarImg||''});
+      if(srv){_communityPosts=_communityPosts.map(p=>p.id===tempId?srv:p);}
+      else{_communityPosts=_communityPosts.filter(p=>p.id!==tempId);}
+    }catch(e){console.warn('[Community] 게시 실패:',e.message);_communityPosts=_communityPosts.filter(p=>p.id!==tempId);}
+    if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
+  }
 }
 
-function communityLike(id){
-  const p=(D.settings.communityPosts||[]).find(p=>p.id===id);
-  if(!p)return;
-  p.liked=!p.liked;p.likes=(p.likes||0)+(p.liked?1:-1);
-  saveD();
+async function communityLike(id){
+  const p=_communityPosts.find(p=>p.id===id);if(!p)return;
+  // 낙관적 업데이트
+  p.liked=!p.liked;p.likes=Math.max(0,(p.likes||0)+(p.liked?1:-1));
   if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
+  if(!window.GUEST_MODE&&ApiClient.isOnline()){
+    try{
+      const srv=await ApiClient.likeCommunityPost(id);
+      if(srv){_communityPosts=_communityPosts.map(x=>x.id===id?{...srv,showComments:x.showComments}:x);}
+    }catch(e){console.warn('[Community] 좋아요 실패:',e.message);}
+    if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
+  }
 }
 
 function communityToggleComments(id){
-  const p=(D.settings.communityPosts||[]).find(p=>p.id===id);
-  if(!p)return;
+  const p=_communityPosts.find(p=>p.id===id);if(!p)return;
   p.showComments=!p.showComments;
   if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
   if(p.showComments)setTimeout(()=>document.getElementById('comm-ci-'+id)?.focus(),50);
 }
 
-function communityComment(postId){
-  const p=(D.settings.communityPosts||[]).find(p=>p.id===postId);
-  if(!p)return;
+async function communityComment(postId){
+  const p=_communityPosts.find(p=>p.id===postId);if(!p)return;
   const inp=document.getElementById('comm-ci-'+postId);
-  const content=(inp?.value||'').trim();
-  if(!content)return;
+  const content=(inp?.value||'').trim();if(!content)return;
   const s=D.settings;
-  if(!Array.isArray(p.comments))p.comments=[];
-  p.comments.push({
-    id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),
-    author:s.name||'나',avatar:s.avatar||'😊',
-    avatarBg:s.avatarBg||0,avatarBgGrad:s.avatarBgGrad||null,avatarImg:s.avatarImg||'',
-    content,createdAt:Date.now(),isOwn:true,
-  });
-  saveD();
+  if(!window.GUEST_MODE&&ApiClient.isOnline()){
+    try{
+      const srv=await ApiClient.commentCommunityPost(postId,{content,author:s.name||'나',avatar:s.avatar||'😊',avatarBg:s.avatarBg||0,avatarImg:s.avatarImg||''});
+      if(srv){_communityPosts=_communityPosts.map(x=>x.id===postId?{...srv,showComments:true}:x);}
+    }catch(e){console.warn('[Community] 댓글 실패:',e.message);}
+  }else{
+    if(!Array.isArray(p.comments))p.comments=[];
+    p.comments.push({id:Date.now().toString(36),user_id:'me',author:s.name||'나',avatar:s.avatar||'😊',content,isOwn:true});
+  }
   if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
 }
 
-function communityDelete(id){
-  D.settings.communityPosts=(D.settings.communityPosts||[]).filter(p=>p.id!==id);
-  saveD();
+async function communityDelete(id){
+  _communityPosts=_communityPosts.filter(p=>p.id!==id);
   if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
+  if(!window.GUEST_MODE&&ApiClient.isOnline()){
+    ApiClient.deleteCommunityPost(id).catch(e=>console.warn('[Community] 삭제 실패:',e.message));
+  }
 }
 
-function communityDeleteComment(postId,commentId){
-  const p=(D.settings.communityPosts||[]).find(p=>p.id===postId);
-  if(!p)return;
+async function communityDeleteComment(postId,commentId){
+  const p=_communityPosts.find(p=>p.id===postId);if(!p)return;
   p.comments=(p.comments||[]).filter(c=>c.id!==commentId);
-  saveD();
   if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
+  if(!window.GUEST_MODE&&ApiClient.isOnline()){
+    ApiClient.uncommentCommunityPost(postId,commentId).catch(e=>console.warn('[Community] 댓글삭제 실패:',e.message));
+  }
 }
 
 // RENDER: POMODORO
