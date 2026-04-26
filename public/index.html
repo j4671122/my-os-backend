@@ -209,6 +209,21 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;b
 .topbar h1{font-size:19px;font-weight:800;letter-spacing:-.4px}
 .topbar .sub{font-size:12px;color:var(--text3);margin-left:4px}
 .topbar-right{margin-left:auto;display:flex;gap:6px;align-items:center}
+/* ── Mobile header (desktop에서 숨김) ── */
+.mobile-header{display:none;align-items:center;gap:10px;padding:11px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.mob-menu-btn{background:none;border:none;font-size:22px;cursor:pointer;padding:2px 5px;color:var(--text);line-height:1;flex-shrink:0}
+.mob-title{flex:1;font-size:16px;font-weight:800;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mob-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
+/* ── Sidebar 드로어 backdrop ── */
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:290}
+.sidebar-overlay.show{display:block}
+/* ── 바텀 네비게이션 ── */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:56px;background:var(--surface);border-top:1px solid var(--border);z-index:200;justify-content:space-around;align-items:center;padding:0 2px;box-shadow:0 -2px 10px rgba(0,0,0,.07)}
+.bn-item{display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 4px;cursor:pointer;border-radius:8px;flex:1;min-width:0;border:none;background:none;font-family:inherit;transition:background .1s}
+.bn-item:hover{background:var(--surface2)}
+.bn-item.active .bn-ico,.bn-item.active .bn-lbl{color:var(--accent)}
+.bn-ico{font-size:18px;line-height:1.2;display:block}
+.bn-lbl{font-size:9px;font-weight:600;color:var(--text3);white-space:nowrap;display:block}
 .coach-tip{background:linear-gradient(135deg,#1a3d1c,#2c5f2e);color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;max-width:320px;cursor:pointer;transition:all .2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .coach-tip:hover{max-width:480px}
 .bell-btn{position:relative;background:none;border:1px solid var(--border);border-radius:50%;width:32px;height:32px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s}
@@ -545,8 +560,23 @@ canvas{max-width:100%}
   .tt-layout{grid-template-columns:1fr}
   .habit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
-@media (max-width: 700px){
+@media (max-width: 768px){
+  .sidebar{position:fixed;top:0;left:-240px;height:100%;z-index:300;transition:left .25s ease;box-shadow:4px 0 20px rgba(0,0,0,.12);width:230px;min-width:230px;overflow-y:auto}
+  .sidebar.open{left:0}
+  .topbar{display:none}
+  .mobile-header{display:flex}
   .habit-grid{grid-template-columns:1fr}
+  .home-grid{grid-template-columns:1fr}
+  .home-card.wide{grid-column:span 1}
+  .tt-layout{grid-template-columns:1fr}
+  .view-area{padding:14px}
+  .dash-grid{grid-template-columns:1fr 1fr!important}
+  .chart-row{display:flex;flex-direction:column!important}
+}
+@media (max-width: 480px){
+  .bottom-nav{display:flex}
+  .view-area{padding-bottom:70px}
+  .dash-grid{grid-template-columns:1fr!important}
 }
 
 /* ── Report / Content gen ── */
@@ -1029,6 +1059,14 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
 
 <!-- Main -->
 <main class="main">
+  <!-- 모바일 헤더 (768px 이하에서만 표시) -->
+  <div class="mobile-header" id="mobile-header">
+    <button class="mob-menu-btn" onclick="toggleMobileSidebar()" aria-label="메뉴">☰</button>
+    <span class="mob-title" id="mob-view-title">오늘</span>
+    <div class="mob-actions">
+      <button class="bell-btn" id="mob-bell-btn" onclick="toggleNotifPanel(event)" title="알림">🔔<span class="bell-badge" id="b-mob-notif" style="display:none"></span></button>
+    </div>
+  </div>
   <div class="topbar">
     <div><h1 id="view-title">오늘</h1><span class="sub" id="view-sub"></span></div>
     <div class="topbar-right">
@@ -1040,6 +1078,18 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
   </div>
   <div class="view-area" id="view-area"></div>
 </main>
+
+<!-- 사이드바 드로어 backdrop (모바일) -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+
+<!-- 바텀 네비게이션 (480px 이하) -->
+<div class="bottom-nav" id="bottom-nav">
+  <button class="bn-item" id="bn-home" onclick="setView('home')"><span class="bn-ico">🏠</span><span class="bn-lbl">홈</span></button>
+  <button class="bn-item" id="bn-today" onclick="setView('today')"><span class="bn-ico">☀️</span><span class="bn-lbl">오늘</span></button>
+  <button class="bn-item" id="bn-goals" onclick="setView('goals')"><span class="bn-ico">🎯</span><span class="bn-lbl">목표</span></button>
+  <button class="bn-item" id="bn-habits" onclick="setView('habits')"><span class="bn-ico">💪</span><span class="bn-lbl">습관</span></button>
+  <button class="bn-item" id="bn-more" onclick="toggleMobileSidebar()"><span class="bn-ico">≡</span><span class="bn-lbl">더보기</span></button>
+</div>
 
 <!-- Notification Panel Overlay + Panel -->
 <div class="notif-overlay" id="notif-overlay" onclick="closeNotifPanel()"></div>
@@ -1500,6 +1550,8 @@ function updateNotifBadge(){
   const unread=(D.notifications||[]).filter(n=>!n.read&&new Date(n.time).toISOString().slice(0,10)===today).length;
   const el=document.getElementById('b-topbar-notif');
   if(el){el.textContent=unread||'';el.style.display=unread?'flex':'none'}
+  const el2=document.getElementById('b-mob-notif');
+  if(el2){el2.textContent=unread||'';el2.style.display=unread?'flex':'none'}
 }
 function toggleNotifPanel(e){
   e&&e.stopPropagation();
@@ -3527,6 +3579,7 @@ function renderHeader(){
   else{const f=D.folders.find(f=>f.id===VIEW);title=f?f.name:t('taskFallback');sub=''}
   document.getElementById('view-title').textContent=title;
   document.getElementById('view-sub').textContent=sub;
+  const _mTtl=document.getElementById('mob-view-title');if(_mTtl)_mTtl.textContent=title;
   // Update topbar buttons for current language
   const _bell=document.getElementById('bell-btn');
   if(_bell)_bell.title=t('bellTitle');
@@ -3540,17 +3593,40 @@ function renderHeader(){
 // ═══════════════════════════════════════════════════════════
 // RENDER: VIEWS
 // ═══════════════════════════════════════════════════════════
+// ── 모바일 사이드바 드로어 ──────────────────────────────
+function toggleMobileSidebar(){
+  const sb=document.querySelector('.sidebar');
+  const ov=document.getElementById('sidebar-overlay');
+  if(!sb||!ov)return;
+  const isOpen=sb.classList.contains('open');
+  sb.classList.toggle('open',!isOpen);
+  ov.classList.toggle('show',!isOpen);
+}
+function closeMobileSidebar(){
+  document.querySelector('.sidebar')?.classList.remove('open');
+  document.getElementById('sidebar-overlay')?.classList.remove('show');
+}
+function updateBottomNav(){
+  const ids=['home','today','goals','habits'];
+  ids.forEach(id=>{
+    document.getElementById('bn-'+id)?.classList.toggle('active',VIEW===id);
+  });
+  // '더보기' 버튼: 위 4개 외의 뷰일 때 활성화
+  document.getElementById('bn-more')?.classList.toggle('active',!ids.includes(VIEW));
+}
+
 function setView(v){
   VIEW=v;
   D.settings.currentView=v;
   saveD();
   if(v!=='done'){_doneSelectMode=false;_selectedDoneIds.clear();}
   closeNotifPanel();
+  closeMobileSidebar();
   // 포모도로 타이머 떠나도 유지 (인터벌 유지)
   render();
 }
 function render(){
-  renderSidebar();renderHeader();updateBadges();
+  renderSidebar();renderHeader();updateBadges();updateBottomNav();
   // FAB: home 뷰에서만 표시
   const fab=document.getElementById('home-fab');
   if(fab)fab.classList.toggle('show',VIEW==='home');
