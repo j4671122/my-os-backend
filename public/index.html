@@ -1104,7 +1104,8 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
   </div>
   <div class="sb-label">스마트 목록</div>
   <div class="sb-item" id="nav-home" onclick="setView('home')"><span class="ico">🏠</span>홈</div>
-  <div class="sb-item" id="nav-today" onclick="setView('today')"><span class="ico">☀️</span>오늘<span class="sb-badge" id="b-today">0</span></div>
+  <div class="sb-item" id="nav-today" onclick="setView('today')"><span class="ico">📋</span>Todo<span class="sb-badge" id="b-today">0</span></div>
+  <div class="sb-item" id="nav-todayonly" onclick="setView('todayonly')"><span class="ico">☀️</span>오늘<span class="sb-badge" id="b-todayonly">0</span></div>
   <div class="sb-item" id="nav-all" onclick="setView('all')"><span class="ico">📋</span>전체<span class="sb-badge gray" id="b-all">0</span></div>
   <div class="sb-item" id="nav-done" onclick="setView('done')"><span class="ico">✔️</span>완료<span class="sb-badge gray" id="b-done">0</span></div>
   <div class="sb-item" id="nav-high" onclick="setView('high')"><span class="ico">🔴</span>중요<span class="sb-badge gray" id="b-high">0</span></div>
@@ -1153,7 +1154,8 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
 <!-- 바텀 네비게이션 (480px 이하) -->
 <div class="bottom-nav" id="bottom-nav">
   <button class="bn-item" id="bn-home" onclick="setView('home')"><span class="bn-ico">🏠</span><span class="bn-lbl">홈</span></button>
-  <button class="bn-item" id="bn-today" onclick="setView('today')"><span class="bn-ico">☀️</span><span class="bn-lbl">오늘</span></button>
+  <button class="bn-item" id="bn-today" onclick="setView('today')"><span class="bn-ico">📋</span><span class="bn-lbl">Todo</span></button>
+  <button class="bn-item" id="bn-todayonly" onclick="setView('todayonly')"><span class="bn-ico">☀️</span><span class="bn-lbl">오늘</span></button>
   <button class="bn-item" id="bn-goals" onclick="setView('goals')"><span class="bn-ico">🎯</span><span class="bn-lbl">목표</span></button>
   <button class="bn-item" id="bn-habits" onclick="setView('habits')"><span class="bn-ico">💪</span><span class="bn-lbl">습관</span></button>
   <button class="bn-item" id="bn-more" onclick="toggleMobileSidebar()"><span class="bn-ico">≡</span><span class="bn-lbl">더보기</span></button>
@@ -1844,7 +1846,7 @@ async function addTask(){
   const autoTags=autoDetectTags(title);
   const task={
     id:uid(),title,done:false,priority,folderId,goalId:null,
-    dueDate:todayStr(),sessionUrl:'',
+    dueDate:document.getElementById('new-task-date')?.value||'',sessionUrl:'',
     notes:'',subtasks:[],links:[],tags:autoTags,
     isRecurring:false,createdAt:Date.now(),completedAt:null,completionHour:null
   };
@@ -2558,7 +2560,7 @@ async function notionUploadContent(){
 const LANG_DATA={
   ko:{
     // Nav
-    today:'오늘',all:'전체',done:'완료',high:'중요',dashboard:'대시보드',goals:'목표',habits:'습관',search:'검색',settings:'설정',
+    today:'Todo',todayonly:'오늘',all:'전체',done:'완료',high:'중요',dashboard:'대시보드',goals:'목표',habits:'습관',search:'검색',settings:'설정',
     // Sidebar labels
     smartList:'스마트 목록',folderLabel:'폴더',tagLabel:'태그',addFolder:'폴더 추가',addGoalBtn:'목표 추가',profileSub:'설정',
     // Header
@@ -2571,7 +2573,7 @@ const LANG_DATA={
     // Done toolbar
     cancel:'취소',selectedCount:'개 선택됨',deleteSelected:'🗑 선택 삭제',selectDelete:'☑️ 선택 삭제',deleteAll:'🗑 전체 삭제',
     // Today groups
-    todayGroup:'오늘',overdue:'⚠️ 기한 초과',upcoming:'📅 예정',
+    anytime:'📌 언제든 할 일',todayGroup:'☀️ 오늘',overdue:'⚠️ 기한 초과',upcoming:'📅 예정',
     // Task card
     dragTitle:'드래그해서 순서 변경',prHighLabel:'중요',prLowLabel:'낮음',
     // Task detail
@@ -3578,6 +3580,7 @@ function onGoalDragEnd(e){
 function filteredTasks(){
   let tasks=[...D.tasks];
   if(VIEW==='today'){tasks=tasks.filter(tk=>!tk.done)}
+  else if(VIEW==='todayonly'){tasks=tasks.filter(tk=>!tk.done&&tk.dueDate===todayStr())}
   else if(VIEW==='done')tasks=tasks.filter(tk=>tk.done);
   else if(VIEW==='high')tasks=tasks.filter(tk=>!tk.done&&tk.priority==='high');
   else if(VIEW==='all')tasks=tasks.filter(tk=>!tk.done);
@@ -3623,7 +3626,7 @@ document.getElementById('confirm-overlay').addEventListener('click',function(e){
 // RENDER: SIDEBAR
 // ═══════════════════════════════════════════════════════════
 function renderSidebar(){
-  ['today','all','done','high','dashboard','goals','habits','search','settings','home','time','memo','pomodoro','routine','community'].forEach(v=>{
+  ['today','todayonly','all','done','high','dashboard','goals','habits','search','settings','home','time','memo','pomodoro','routine','community'].forEach(v=>{
     document.getElementById('nav-'+v)?.classList.toggle('active',VIEW===v);
   });
   // Profile section highlight when in settings
@@ -3664,7 +3667,8 @@ function renderSidebar(){
   }).join('');
   // Update nav labels for current language
   const _navDefs=[
-    {id:'today',ico:'☀️',key:'today',badge:'b-today',badgeCls:''},
+    {id:'today',ico:'📋',key:'today',badge:'b-today',badgeCls:''},
+    {id:'todayonly',ico:'☀️',key:'todayonly',badge:'b-todayonly',badgeCls:''},
     {id:'all',ico:'📋',key:'all',badge:'b-all',badgeCls:' gray'},
     {id:'done',ico:'✔️',key:'done',badge:'b-done',badgeCls:' gray'},
     {id:'high',ico:'🔴',key:'high',badge:'b-high',badgeCls:' gray'},
@@ -3699,7 +3703,8 @@ function renderHeader(){
   const locales={ko:'ko-KR',en:'en-US',zh:'zh-CN'};
   const todaySub=new Date().toLocaleDateString(locales[lang]||'ko-KR',{month:'long',day:'numeric',weekday:'long'});
   const titles={
-    today:[t('today'),todaySub],
+    today:['📋 Todo','할일 전체 목록'],
+    todayonly:['☀️ '+t('todayonly'),todaySub],
     all:[t('allTitle'),''],done:[t('doneTitle'),''],high:[t('highTitle'),''],
     dashboard:['📊 '+t('dashboard'),t('dashSub')],goals:['🎯 '+t('goals'),t('goalsSub')],
     habits:['💪 '+t('habits'),t('habitsSub')],search:['🔍 '+t('search'),''],
@@ -3744,11 +3749,11 @@ function closeMobileSidebar(){
   document.getElementById('sidebar-overlay')?.classList.remove('show');
 }
 function updateBottomNav(){
-  const ids=['home','today','goals','habits'];
+  const ids=['home','today','todayonly','goals','habits'];
   ids.forEach(id=>{
     document.getElementById('bn-'+id)?.classList.toggle('active',VIEW===id);
   });
-  // '더보기' 버튼: 위 4개 외의 뷰일 때 활성화
+  // '더보기' 버튼: 위 5개 외의 뷰일 때 활성화
   document.getElementById('bn-more')?.classList.toggle('active',!ids.includes(VIEW));
 }
 
@@ -5077,6 +5082,7 @@ function renderTaskView(){
   const tasks=filteredTasks();
   const addBar=`<div class="add-bar">
     <input id="new-task-input" placeholder="${t('addTask')}" onkeydown="handleAddKey(event)"/>
+    <input type="date" id="new-task-date" title="마감일 (비워두면 언제든 할 일)" style="border:1px solid var(--border);border-radius:8px;padding:4px 6px;font-size:11px;color:var(--text2);background:var(--surface);cursor:pointer;max-width:120px"/>
     <select id="new-task-priority"><option value="med">${t('normal')}</option><option value="high">${t('important')}</option><option value="low">${t('lowP')}</option></select>
     <select id="new-task-folder"><option value="">${t('folderDefault')}</option>${D.folders.map(f=>`<option value="${f.id}">${esc(f.name)}</option>`).join('')}</select>
     <button class="add-btn" onclick="addTask()">+</button></div>`;
@@ -5104,16 +5110,27 @@ function renderTaskView(){
   }
   if(VIEW==='today'){
     const today=todayStr();
-    const todayT=tasks.filter(t=>!t.dueDate||t.dueDate===today);
+    const anytime=tasks.filter(t=>!t.dueDate);
     const overdue=tasks.filter(t=>t.dueDate&&t.dueDate<today);
+    const todayT=tasks.filter(t=>t.dueDate===today);
     const upcoming=tasks.filter(t=>t.dueDate&&t.dueDate>today);
     html+=`<div style="display:flex;gap:6px;margin-bottom:8px">
       <button class="btn btn-ghost btn-sm" onclick="expandAllTasks()" title="전체 열기">⬇ 전체 열기</button>
       <button class="btn btn-ghost btn-sm" onclick="collapseAllTasks()" title="전체 닫기">⬆ 전체 닫기</button>
     </div>`;
-    if(todayT.length||!overdue.length){html+=`<div class="task-group"><div class="tg-header">${t('todayGroup')} (${todayT.length})</div>`;todayT.forEach(t=>html+=taskCardHTML(t));html+='</div>';}
+    if(anytime.length){html+=`<div class="task-group"><div class="tg-header">${t('anytime')} (${anytime.length})</div>`;anytime.forEach(t=>html+=taskCardHTML(t));html+='</div>';}
     if(overdue.length){html+=`<div class="task-group"><div class="tg-header" style="color:var(--red)">${t('overdue')} (${overdue.length})</div>`;overdue.forEach(t=>html+=taskCardHTML(t));html+='</div>';}
+    if(todayT.length){html+=`<div class="task-group"><div class="tg-header">${t('todayGroup')} (${todayT.length})</div>`;todayT.forEach(t=>html+=taskCardHTML(t));html+='</div>';}
     if(upcoming.length){html+=`<div class="task-group"><div class="tg-header" style="color:var(--blue)">${t('upcoming')} (${upcoming.length})</div>`;upcoming.forEach(t=>html+=taskCardHTML(t));html+='</div>';}
+    if(!anytime.length&&!overdue.length&&!todayT.length&&!upcoming.length){html+=`<div class="empty"><div class="ei">🎉</div><p>모든 할일 완료!</p></div>`;}
+  }else if(VIEW==='todayonly'){
+    const today=todayStr();
+    html+=`<div style="display:flex;gap:6px;margin-bottom:8px">
+      <button class="btn btn-ghost btn-sm" onclick="expandAllTasks()">⬇ 전체 열기</button>
+      <button class="btn btn-ghost btn-sm" onclick="collapseAllTasks()">⬆ 전체 닫기</button>
+    </div>`;
+    if(tasks.length){html+=`<div class="task-group"><div class="tg-header">${t('todayGroup')} (${tasks.length})</div>`;tasks.forEach(t=>html+=taskCardHTML(t));html+='</div>';}
+    else{html+=`<div class="empty"><div class="ei">☀️</div><p>오늘 마감 할일이 없어요</p></div>`;}
   }else{tasks.forEach(t=>html+=taskCardHTML(t))}
   return html;
 }
@@ -5720,12 +5737,13 @@ function toggleFilter(key,val){
 // ═══════════════════════════════════════════════════════════
 function updateBadges(){
   const today=todayStr();
-  const todayT=D.tasks.filter(t=>!t.done&&(!t.dueDate||t.dueDate<=today)).length;
+  const todoAll=D.tasks.filter(t=>!t.done).length;
+  const todayOnly=D.tasks.filter(t=>!t.done&&t.dueDate===today).length;
   const all=D.tasks.filter(t=>!t.done).length;
   const done=D.tasks.filter(t=>t.done).length;
   const high=D.tasks.filter(t=>!t.done&&t.priority==='high').length;
   const set=(id,v)=>{const el=document.getElementById(id);if(el){el.textContent=v;el.style.display=v?'':'none'}};
-  set('b-today',todayT);set('b-all',all);set('b-done',done);set('b-high',high);
+  set('b-today',todoAll);set('b-todayonly',todayOnly);set('b-all',all);set('b-done',done);set('b-high',high);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -6096,7 +6114,7 @@ function startApp(){
   loadD();
   if(!D.notifications) D.notifications = [];
   // 뷰 기본값
-  const valid=['today','all','done','high','dashboard','goals','habits','search','settings','home','time','memo','pomodoro','routine','community'];
+  const valid=['today','todayonly','all','done','high','dashboard','goals','habits','search','settings','home','time','memo','pomodoro','routine','community'];
   const preferredView=D.settings.currentView||VIEW;
   VIEW=valid.includes(preferredView)?preferredView:'today';
 
