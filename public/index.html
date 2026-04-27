@@ -4479,21 +4479,26 @@ async function communityPost(){
   const content=(inp?.value||'').trim();
   if(!content)return;
   const s=D.settings;
-  // 낙관적 추가
   const tempId='tmp_'+Date.now();
   const tempPost={id:tempId,user_id:'me',author:s.name||'나',handle:s.userTag||'',
     avatar:s.avatar||'😊',avatar_bg:s.avatarBg||0,avatar_img:s.avatarImg||'',
     content,created_at:new Date().toISOString(),likes:0,liked:false,isOwn:true,comments:[],showComments:false};
   _communityPosts=[tempPost,..._communityPosts];
   inp.value='';
+  communityCharCount({value:''});
   if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
-  if(!window.GUEST_MODE&&ApiClient.isOnline()){
+  if(!window.GUEST_MODE&&ApiClient.isOnline()&&ApiClient.getToken()){
     try{
       const srv=await ApiClient.createCommunityPost({content,author:s.name||'나',handle:s.userTag||'',avatar:s.avatar||'😊',avatarBg:s.avatarBg||0,avatarImg:s.avatarImg||''});
-      if(srv){_communityPosts=_communityPosts.map(p=>p.id===tempId?srv:p);}
-      else{_communityPosts=_communityPosts.filter(p=>p.id!==tempId);}
-    }catch(e){console.warn('[Community] 게시 실패:',e.message);_communityPosts=_communityPosts.filter(p=>p.id!==tempId);}
-    if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
+      if(srv){
+        _communityPosts=_communityPosts.map(p=>p.id===tempId?{...srv,showComments:false}:p);
+        if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
+      }
+      // srv가 없어도 temp post는 유지 (사라지지 않음)
+    }catch(e){
+      console.warn('[Community] 게시 실패:',e.message);
+      // 에러가 나도 temp post를 삭제하지 않음 — 유저에게 글이 보임
+    }
   }
 }
 
