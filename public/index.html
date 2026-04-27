@@ -1454,6 +1454,7 @@ const DEFAULT_TRACKER_LABELS=[
 let _homeWidgetDragId=null;
 let _trackerRangeStart=null;
 let _trackerLabelEditId=null;
+let _trackerDate=null; // 세션 변수 — 앱 시작 시마다 오늘로 초기화
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 function todayStr(){return new Date().toISOString().slice(0,10)}
@@ -3915,7 +3916,7 @@ function renderHomeClock(){
 }
 
 function renderHomeTracker(){
-  const dateKey=D.settings.timeTrackerDate||trackerDateKey();
+  const dateKey=_trackerDate||trackerDateKey();
   const data=D.settings.timeTrackerData?.[dateKey]||{};
   const labels=D.settings.timeTrackerLabels||DEFAULT_TRACKER_LABELS;
   const total=24*6; // 144 blocks
@@ -4068,7 +4069,7 @@ function addHomeWidget(type,variant){
 // RENDER: TIME TRACKER
 // ═══════════════════════════════════════════════════════════
 function renderTimeTracker(){
-  const dateKey=D.settings.timeTrackerDate||trackerDateKey();
+  const dateKey=_trackerDate||trackerDateKey();
   const data=D.settings.timeTrackerData?.[dateKey]||{};
   const labels=D.settings.timeTrackerLabels||DEFAULT_TRACKER_LABELS;
   const selId=D.settings.timeTrackerSelectedLabel||labels[0]?.id||'study';
@@ -4233,9 +4234,8 @@ function ttClearAll(dateKey){
 function ttNavDate(dir,currentKey){
   const d=new Date(currentKey+'T04:00:00');
   d.setDate(d.getDate()+dir);
-  D.settings.timeTrackerDate=d.toISOString().slice(0,10);
+  _trackerDate=d.toISOString().slice(0,10);
   _trackerRangeStart=null;
-  saveD();
   document.getElementById('view-area').innerHTML=renderTimeTracker();
 }
 
