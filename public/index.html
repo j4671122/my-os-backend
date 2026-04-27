@@ -779,50 +779,67 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
 .routine-add-btn{width:100%;padding:11px;border-radius:12px;border:1.5px dashed var(--border);background:none;cursor:pointer;font-size:12.5px;font-weight:600;color:var(--text3);transition:all .12s}
 .routine-add-btn:hover{border-color:var(--accent);color:var(--accent)}
 /* ── Community ── */
-.comm-wrap{max-width:560px;margin:0 auto;padding:0 0 40px}
-.comm-compose{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:18px}
-.comm-compose-row{display:flex;gap:12px;align-items:flex-start}
-.comm-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;overflow:hidden;background:var(--surface2)}
-.comm-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
-.comm-textarea{flex:1;border:none;outline:none;background:transparent;font-size:14px;font-family:inherit;resize:none;min-height:60px;color:var(--text);line-height:1.55}
-.comm-textarea::placeholder{color:var(--text3)}
-.comm-compose-footer{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
-.comm-char{font-size:11px;color:var(--text3);font-variant-numeric:tabular-nums}
-.comm-char.warn{color:#dc2626}
-.comm-post-btn{padding:7px 18px;border-radius:20px;border:none;background:var(--accent);color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;transition:background .12s}
-.comm-post-btn:hover{background:#234f25}
-.comm-post-btn:disabled{opacity:.4;cursor:not-allowed}
-.comm-feed{}
-.comm-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px;transition:box-shadow .15s}
-.comm-card:hover{box-shadow:var(--shadow-sm)}
-.comm-card-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.comm-author{flex:1;min-width:0}
-.comm-author-name{font-size:13.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.comm-author-meta{font-size:11px;color:var(--text3);margin-top:1px}
-.comm-card-body{font-size:14px;color:var(--text);line-height:1.6;white-space:pre-wrap;word-break:break-word;margin-bottom:12px}
-.comm-actions{display:flex;align-items:center;gap:4px}
-.comm-act{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;border:none;background:none;cursor:pointer;font-size:12px;color:var(--text3);font-weight:600;transition:all .12s}
-.comm-act:hover{background:var(--surface2)}
-.comm-act.liked{color:#e11d48}
-.comm-act.liked svg path{fill:#e11d48}
-.comm-act-del{margin-left:auto;color:var(--text3)}
-.comm-act-del:hover{color:#dc2626;background:rgba(220,38,38,.07)}
-.comm-comments{margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
-.comm-comment-input-row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
-.comm-comment-input{flex:1;border:1.5px solid var(--border);border-radius:20px;padding:7px 14px;font-size:12.5px;font-family:inherit;outline:none;background:var(--surface2);color:var(--text)}
-.comm-comment-input:focus{border-color:var(--accent)}
-.comm-comment-send{padding:7px 14px;border-radius:20px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:pointer}
-.comm-comment{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px}
-.comm-comment-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;background:var(--surface2)}
-.comm-comment-bubble{flex:1;background:var(--surface2);border-radius:12px;padding:8px 12px}
-.comm-comment-name{font-size:11.5px;font-weight:700;color:var(--text);margin-bottom:2px}
-.comm-comment-text{font-size:12.5px;color:var(--text2);line-height:1.5;white-space:pre-wrap;word-break:break-word}
-.comm-comment-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;padding:2px 6px;border-radius:8px;margin-left:4px;opacity:.6}
-.comm-comment-del:hover{opacity:1;color:#dc2626}
-.comm-empty{text-align:center;padding:48px 0;color:var(--text3)}
-.comm-empty-ico{font-size:40px;margin-bottom:10px}
-.comm-empty-txt{font-size:13.5px;font-weight:600}
-.comm-empty-sub{font-size:12px;margin-top:4px;opacity:.7}
+/* ── Community / Twitter style ── */
+.tw-wrap{max-width:600px;margin:0 auto;padding-bottom:40px}
+.tw-header{position:sticky;top:0;z-index:10;background:var(--surface);border-bottom:1px solid var(--border)}
+.tw-tabs{display:flex}
+.tw-tab{flex:1;padding:14px;text-align:center;font-size:14px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.tw-tab.active{color:var(--text);border-bottom-color:var(--accent)}
+.tw-tab:hover:not(.active){background:var(--surface2)}
+.tw-compose{padding:12px 16px;border-bottom:1px solid var(--border)}
+.tw-compose-row{display:flex;gap:12px;align-items:flex-start}
+.tw-av{border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;background:var(--surface2)}
+.tw-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.tw-compose-right{flex:1;min-width:0}
+.tw-textarea{width:100%;border:none;outline:none;background:transparent;font-size:18px;font-family:inherit;resize:none;min-height:52px;color:var(--text);line-height:1.5;padding:8px 0}
+.tw-textarea::placeholder{color:var(--text3)}
+.tw-compose-footer{display:flex;align-items:center;gap:8px;padding-top:10px;border-top:1px solid var(--border);margin-top:4px}
+.tw-compose-tools{display:flex;gap:2px;flex:1}
+.tw-tool-btn{background:none;border:none;cursor:pointer;padding:7px;border-radius:50%;font-size:16px;color:var(--accent);transition:background .12s;line-height:1}
+.tw-tool-btn:hover{background:var(--accent-light)}
+.tw-char-wrap{position:relative;width:28px;height:28px;flex-shrink:0}
+.tw-char-svg{transform:rotate(-90deg)}
+.tw-char-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--text3)}
+.tw-char-num.warn{color:#dc2626}
+.tw-post-btn{padding:7px 18px;border-radius:20px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:background .12s;white-space:nowrap}
+.tw-post-btn:hover{background:#234f25}
+.tw-post-btn:disabled{opacity:.4;cursor:not-allowed}
+.tw-tweet{display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);transition:background .12s}
+.tw-tweet:hover{background:var(--surface2)}
+.tw-tweet-left{flex-shrink:0}
+.tw-tweet-right{flex:1;min-width:0}
+.tw-tweet-meta{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:3px}
+.tw-tweet-name{font-size:14px;font-weight:700;color:var(--text)}
+.tw-tweet-handle{font-size:13px;color:var(--text3)}
+.tw-tweet-dot{font-size:13px;color:var(--text3)}
+.tw-tweet-time{font-size:13px;color:var(--text3);flex:1}
+.tw-tweet-body{font-size:15px;color:var(--text);line-height:1.55;white-space:pre-wrap;word-break:break-word;margin-bottom:10px}
+.tw-actions{display:flex;align-items:center;gap:0;margin:0 -8px}
+.tw-act{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;border:none;background:none;cursor:pointer;font-size:12.5px;color:var(--text3);font-weight:500;transition:all .12s;min-width:52px}
+.tw-act:hover{background:var(--accent-light);color:var(--accent)}
+.tw-act.liked{color:#e11d48}
+.tw-act.liked:hover{background:rgba(225,29,72,.08);color:#e11d48}
+.tw-act-del{min-width:0;color:var(--text3)}
+.tw-act-del:hover{color:#dc2626;background:rgba(220,38,38,.07)}
+.tw-replies{padding:8px 16px 8px 68px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.tw-reply{display:flex;gap:8px;padding:7px 0;border-top:1px solid var(--border)}
+.tw-reply:first-child{border-top:none}
+.tw-reply-right{flex:1;min-width:0}
+.tw-reply-meta{display:flex;gap:5px;align-items:center;margin-bottom:2px}
+.tw-reply-name{font-size:12.5px;font-weight:700;color:var(--text)}
+.tw-reply-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:11px;padding:2px 5px;border-radius:8px;margin-left:auto;opacity:.5}
+.tw-reply-del:hover{opacity:1;color:#dc2626}
+.tw-reply-text{font-size:13px;color:var(--text2);line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.tw-reply-row{display:flex;gap:8px;align-items:center;padding:8px 0 4px;border-top:1px solid var(--border);margin-top:6px}
+.tw-reply-inp{flex:1;border:1.5px solid var(--border);border-radius:20px;padding:7px 14px;font-size:12.5px;font-family:inherit;outline:none;background:var(--surface);color:var(--text);transition:border-color .15s}
+.tw-reply-inp:focus{border-color:var(--accent)}
+.tw-reply-send{padding:7px 14px;border-radius:20px;border:none;background:var(--accent);color:#fff;font-size:12.5px;font-weight:700;cursor:pointer}
+.tw-empty{text-align:center;padding:60px 0;color:var(--text3)}
+.tw-empty-ico{font-size:44px;margin-bottom:12px}
+.tw-empty-txt{font-size:14px;font-weight:600}
+.tw-empty-sub{font-size:12.5px;margin-top:4px;opacity:.7}
+.tw-refresh-btn{margin:12px auto;display:block;padding:7px 18px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--accent);font-size:13px;cursor:pointer;font-family:inherit}
+.tw-refresh-btn:hover{background:var(--accent-light)}
 
 .pomo-center{cursor:pointer}
 .pomo-center:hover .pomo-time{opacity:.85}
@@ -4307,10 +4324,10 @@ function _commGrad(o){
   return _COMM_GRADS[o.avatarBg||0]||_COMM_GRADS[0];
 }
 
-function _commAv(o,size=38){
+function _commAv(o,size=40){
   const sz=`width:${size}px;height:${size}px;font-size:${Math.round(size*.45)}px`;
-  if(o.avatarImg)return`<div class="comm-av" style="${sz}"><img src="${esc(o.avatarImg)}" alt=""></div>`;
-  return`<div class="comm-av" style="${sz};background:${_commGrad(o)};color:#fff">${esc(o.avatar||'😊')}</div>`;
+  if(o.avatarImg)return`<div class="tw-av" style="${sz}"><img src="${esc(o.avatarImg)}" alt=""></div>`;
+  return`<div class="tw-av" style="${sz};background:${_commGrad(o)};color:#fff">${esc(o.avatar||'😊')}</div>`;
 }
 
 function _commTimeAgo(ts){
@@ -4324,68 +4341,110 @@ function _commTimeAgo(ts){
 function renderCommunity(){
   const s=D.settings;
   const posts=_communityPosts;
-  const myAv=_commAv(s);
 
-  const feedHTML=_communityLoading&&!posts.length
-    ?`<div class="comm-empty"><div class="comm-empty-ico" style="font-size:28px;margin-bottom:8px">⏳</div><div class="comm-empty-txt">불러오는 중...</div></div>`
-    :posts.length===0
-    ?`<div class="comm-empty"><div class="comm-empty-ico">🌐</div><div class="comm-empty-txt">아직 게시물이 없어요</div><div class="comm-empty-sub">첫 번째 생각을 공유해 보세요!</div></div>`
-    :posts.map(p=>{
-      const av=_commAv(p);
-      const ts=p.created_at?_commTimeAgo(new Date(p.created_at).getTime()):_commTimeAgo(p.createdAt||0);
-      const commHTML=p.showComments?`<div class="comm-comments">
-        <div class="comm-comment-input-row">
-          ${_commAv(s,28)}
-          <input class="comm-comment-input" id="comm-ci-${p.id}" placeholder="댓글 달기..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();communityComment('${p.id}')}">
-          <button class="comm-comment-send" onclick="communityComment('${p.id}')">↵</button>
-        </div>
-        ${(p.comments||[]).map(c=>`<div class="comm-comment">
-          ${_commAv(c,28)}
-          <div class="comm-comment-bubble">
-            <div class="comm-comment-name">${esc(c.author)}</div>
-            <div class="comm-comment-text">${esc(c.content)}</div>
+  const compose=`<div class="tw-compose">
+    <div class="tw-compose-row">
+      ${_commAv(s,40)}
+      <div class="tw-compose-right">
+        <textarea class="tw-textarea" id="comm-compose-input" placeholder="무슨 생각을 하고 있나요?" maxlength="280" rows="2"
+          oninput="communityCharCount(this)"
+          onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();communityPost()}"></textarea>
+        <div class="tw-compose-footer">
+          <div class="tw-compose-tools">
+            <button class="tw-tool-btn" title="이미지">🖼</button>
+            <button class="tw-tool-btn" title="이모지">😊</button>
           </div>
-          ${c.isOwn?`<button class="comm-comment-del" onclick="communityDeleteComment('${p.id}','${c.id}')">×</button>`:''}
-        </div>`).join('')}
-      </div>`:'';
-      return`<div class="comm-card" id="commcard-${p.id}">
-        <div class="comm-card-header">
-          ${av}
-          <div class="comm-author">
-            <div class="comm-author-name">${esc(p.author)}</div>
-            <div class="comm-author-meta">${p.handle?'@'+esc(p.handle)+' · ':''} ${ts}</div>
+          <div class="tw-char-wrap">
+            <svg class="tw-char-svg" width="28" height="28" viewBox="0 0 28 28">
+              <circle cx="14" cy="14" r="11" fill="none" stroke="var(--border)" stroke-width="2.5"/>
+              <circle id="tw-char-fg" cx="14" cy="14" r="11" fill="none" stroke="var(--accent)" stroke-width="2.5"
+                stroke-dasharray="69.1" stroke-dashoffset="69.1" stroke-linecap="round"/>
+            </svg>
+            <div class="tw-char-num" id="tw-char-num" style="display:none"></div>
           </div>
-          <button onclick="refreshCommunity()" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:13px;color:var(--text3);padding:2px 6px" title="새로고침">↻</button>
+          <button class="tw-post-btn" onclick="communityPost()">게시하기</button>
         </div>
-        <div class="comm-card-body">${esc(p.content)}</div>
-        <div class="comm-actions">
-          <button class="comm-act" onclick="communityToggleComments('${p.id}')">💬 <span>${(p.comments||[]).length}</span></button>
-          <button class="comm-act${p.liked?' liked':''}" onclick="communityLike('${p.id}')">${p.liked?'❤️':'🤍'} <span>${p.likes||0}</span></button>
-          ${p.isOwn?`<button class="comm-act comm-act-del" onclick="communityDelete('${p.id}')">🗑</button>`:''}
-        </div>
-        ${commHTML}
-      </div>`;
-    }).join('');
-
-  return`<div class="comm-wrap">
-    <div class="comm-compose">
-      <div class="comm-compose-row">
-        ${myAv}
-        <textarea class="comm-textarea" id="comm-compose-input" placeholder="무슨 생각을 하고 있나요?" maxlength="280" oninput="communityCharCount(this)"></textarea>
-      </div>
-      <div class="comm-compose-footer">
-        <span class="comm-char" id="comm-char-count">280</span>
-        <button class="comm-post-btn" onclick="communityPost()">게시</button>
       </div>
     </div>
-    <div class="comm-feed" id="comm-feed-area">${feedHTML}</div>
+  </div>`;
+
+  let feedHTML;
+  if(_communityLoading&&!posts.length){
+    feedHTML=`<div class="tw-empty"><div class="tw-empty-ico">⏳</div><div class="tw-empty-txt">불러오는 중...</div></div>`;
+  }else if(posts.length===0){
+    feedHTML=`<div class="tw-empty">
+      <div class="tw-empty-ico">🌐</div>
+      <div class="tw-empty-txt">아직 게시물이 없어요</div>
+      <div class="tw-empty-sub">첫 번째 생각을 공유해 보세요!</div>
+      <button class="tw-refresh-btn" onclick="refreshCommunity()">↻ 새로고침</button>
+    </div>`;
+  }else{
+    feedHTML=posts.map(p=>{
+      const ts=p.created_at?_commTimeAgo(new Date(p.created_at).getTime()):_commTimeAgo(p.createdAt||0);
+      const cCount=(p.comments||[]).length;
+      const repliesHTML=p.showComments?`<div class="tw-replies">
+        ${(p.comments||[]).map(c=>`<div class="tw-reply">
+          ${_commAv(c,32)}
+          <div class="tw-reply-right">
+            <div class="tw-reply-meta">
+              <span class="tw-reply-name">${esc(c.author)}</span>
+              ${c.isOwn?`<button class="tw-reply-del" onclick="communityDeleteComment('${p.id}','${c.id}')">×</button>`:''}
+            </div>
+            <div class="tw-reply-text">${esc(c.content)}</div>
+          </div>
+        </div>`).join('')}
+        <div class="tw-reply-row">
+          ${_commAv(s,32)}
+          <input class="tw-reply-inp" id="comm-ci-${p.id}" placeholder="답글 달기..."
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();communityComment('${p.id}')}">
+          <button class="tw-reply-send" onclick="communityComment('${p.id}')">↵</button>
+        </div>
+      </div>`:'';
+      return`<article>
+        <div class="tw-tweet" id="commcard-${p.id}">
+          <div class="tw-tweet-left">${_commAv(p,40)}</div>
+          <div class="tw-tweet-right">
+            <div class="tw-tweet-meta">
+              <span class="tw-tweet-name">${esc(p.author)}</span>
+              ${p.handle?`<span class="tw-tweet-handle">@${esc(p.handle)}</span>`:''}
+              <span class="tw-tweet-dot">·</span>
+              <span class="tw-tweet-time">${ts}</span>
+              ${p.isOwn?`<button class="tw-act tw-act-del" onclick="communityDelete('${p.id}')" title="삭제">🗑</button>`:''}
+            </div>
+            <div class="tw-tweet-body">${esc(p.content)}</div>
+            <div class="tw-actions">
+              <button class="tw-act" onclick="communityToggleComments('${p.id}')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01z"/></svg>
+                ${cCount?`<span>${cCount}</span>`:''}
+              </button>
+              <button class="tw-act${p.liked?' liked':''}" onclick="communityLike('${p.id}')">
+                <svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="${p.liked?'#e11d48':'none'}"><path d="M20.884 13.19c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>
+                ${p.likes?`<span>${p.likes}</span>`:''}
+              </button>
+              <button class="tw-act" onclick="refreshCommunity()" title="새로고침" style="margin-left:auto;min-width:0">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v5h5M20 20v-5h-5M4 9a8 8 0 0114.93-2.69M20 15a8 8 0 01-14.93 2.69"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        ${repliesHTML}
+      </article>`;
+    }).join('');
+  }
+
+  return`<div class="tw-wrap">
+    <div class="tw-header">
+      <div class="tw-tabs"><div class="tw-tab active">전체 피드</div></div>
+    </div>
+    ${compose}
+    <div class="tw-feed" id="comm-feed-area">${feedHTML}</div>
   </div>`;
 }
 
 async function loadCommunityPosts(force=false){
   if(_communityLoading)return;
   if(!force&&_communityPosts.length>0)return;
-  if(window.GUEST_MODE||!ApiClient.isOnline())return;
+  if(window.GUEST_MODE||!ApiClient.isOnline()||!ApiClient.getToken())return;
   _communityLoading=true;
   try{
     const posts=await ApiClient.getCommunityPosts();
@@ -4401,9 +4460,18 @@ async function loadCommunityPosts(force=false){
 function refreshCommunity(){ _communityPosts=[];loadCommunityPosts(true); }
 
 function communityCharCount(el){
-  const rem=280-el.value.length;
-  const c=document.getElementById('comm-char-count');
-  if(c){c.textContent=rem;c.className='comm-char'+(rem<20?' warn':'');}
+  const used=el.value.length;
+  const rem=280-used;
+  const r=11,circ=2*Math.PI*r;
+  const offset=circ*(1-used/280);
+  const color=rem<=20?'#dc2626':rem<=40?'#f59e0b':'var(--accent)';
+  const fg=document.getElementById('tw-char-fg');
+  const num=document.getElementById('tw-char-num');
+  if(fg){fg.setAttribute('stroke-dashoffset',offset.toFixed(2));fg.style.stroke=color;}
+  if(num){
+    if(rem<=20){num.textContent=rem;num.style.display='flex';num.className='tw-char-num'+(rem<=10?' warn':'');}
+    else num.style.display='none';
+  }
 }
 
 async function communityPost(){
