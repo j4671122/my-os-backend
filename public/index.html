@@ -779,6 +779,7 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
 .routine-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px;transition:box-shadow .15s}
 .routine-card:hover{box-shadow:var(--shadow-sm)}
 .routine-card.disabled{opacity:.5}
+.routine-card.skipped{opacity:.6;border-style:dashed;background:repeating-linear-gradient(135deg,var(--surface),var(--surface) 6px,var(--surface2) 6px,var(--surface2) 8px)}
 .routine-row1{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .routine-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;transition:all .15s}
 .routine-check.done{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -5399,6 +5400,82 @@ function renderDashboard(){
       </div>
     </div>
   </div>
+  ${(()=>{
+    // ── 습관 7일 현황 ──
+    const habits=D.habits||[];
+    if(!habits.length)return '';
+    const emojis=D.settings.habitEmojis||{};
+    const last7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return d.toISOString().slice(0,10);});
+    const dayLabels=['일','월','화','수','목','금','토'];
+    const headerCells=last7.map(dt=>{const d=new Date(dt+'T00:00:00');return`<div style="width:22px;text-align:center;font-size:9px;color:var(--text3)">${dayLabels[d.getDay()]}</div>`;}).join('');
+    const habitRows=habits.map(h=>{
+      const comp=h.completions||{};
+      const emoji=emojis[h.id]||h.emoji||'💪';
+      let streak=0;for(let i=last7.length-1;i>=0;i--){if(comp[last7[i]])streak++;else break;}
+      const dots=last7.map(dt=>{const done=!!comp[dt];return`<div style="width:22px;height:22px;border-radius:50%;background:${done?'var(--accent)':'var(--surface2)'};border:1.5px solid ${done?'var(--accent)':'var(--border)'}"></div>`;}).join('');
+      return`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:18px;width:26px;text-align:center">${emoji}</span>
+        <span style="flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(h.name)}</span>
+        <div style="display:flex;gap:3px">${dots}</div>
+        <span style="font-size:11px;color:#f59e0b;white-space:nowrap;min-width:36px;text-align:right">${streak?`🔥${streak}일`:'--'}</span>
+      </div>`;
+    }).join('');
+    return`<div class="chart-card" style="margin-bottom:14px">
+      <div class="chart-title">💪 습관 7일 현황</div>
+      <div style="display:flex;align-items:center;gap:8px;padding:0 0 4px;margin-bottom:4px">
+        <span style="width:26px"></span><span style="flex:1"></span>
+        <div style="display:flex;gap:3px">${headerCells}</div>
+        <span style="min-width:36px"></span>
+      </div>
+      ${habitRows}
+    </div>`;
+  })()}
+  ${(()=>{
+    // ── 타임 트래커 7일 요약 ──
+    const ttData=D.settings.timeTrackerData||{};
+    const labels=D.settings.timeTrackerLabels||[];
+    const last7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return d.toISOString().slice(0,10);});
+    const days=last7.map(dt=>{
+      const dayData=ttData[dt]||{};
+      const cellCount=Object.values(dayData).filter(Boolean).length;
+      const mins=cellCount*10;
+      const d=new Date(dt+'T00:00:00');
+      const label=['일','월','화','수','목','금','토'][d.getDay()];
+      // breakdown by label
+      const breakdown={};
+      Object.values(dayData).forEach(lid=>{if(lid)breakdown[lid]=(breakdown[lid]||0)+1;});
+      return{dt,mins,label,breakdown,isToday:dt===todayStr()};
+    });
+    const maxMins=Math.max(...days.map(d=>d.mins),1);
+    if(!days.some(d=>d.mins>0))return '';
+    const bars=days.map(d=>{
+      const h=Math.floor(d.mins/60),m=d.mins%60;
+      const timeStr=h?`${h}h${m?m+'m':''}`:(d.mins?`${d.mins}m`:'');
+      const pct=Math.round(d.mins/maxMins*90)+5;
+      // stacked bar by labels
+      let barContent='';
+      if(labels.length&&Object.keys(d.breakdown).length){
+        const total=Object.values(d.breakdown).reduce((s,v)=>s+v,0)||1;
+        let cumPct=0;
+        labels.forEach(lbl=>{
+          const cnt=d.breakdown[lbl.id]||0;if(!cnt)return;
+          const lPct=Math.round(cnt/total*pct);
+          barContent+=`<div style="height:${lPct}px;background:${lbl.color};width:100%"></div>`;
+          cumPct+=lPct;
+        });
+      }else{barContent=`<div style="height:${pct}px;background:var(--accent);width:100%"></div>`;}
+      return`<div class="bar-col">
+        <div class="bar-val">${timeStr}</div>
+        <div style="display:flex;flex-direction:column-reverse;align-items:center;width:28px;min-height:100px;background:var(--surface2);border-radius:4px;overflow:hidden">${barContent}</div>
+        <div class="bar-label" style="${d.isToday?'color:var(--accent);font-weight:700':''}">${d.label}</div>
+      </div>`;
+    }).join('');
+    return`<div class="chart-card" style="margin-bottom:14px">
+      <div class="chart-title">🕒 타임 트래커 7일 요약</div>
+      <div class="bar-chart-area" style="align-items:flex-end">${bars}</div>
+      ${labels.length?`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">${labels.map(l=>`<div style="display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--text2)"><div style="width:10px;height:10px;border-radius:50%;background:${l.color}"></div>${esc(l.name)}</div>`).join('')}</div>`:''}
+    </div>`;
+  })()}
   <div class="chart-card" style="margin-bottom:14px">
     <div class="chart-title">🧠 목표 마인드맵</div>
     ${renderMindmap()}
