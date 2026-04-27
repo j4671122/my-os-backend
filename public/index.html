@@ -1311,7 +1311,15 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
     <div class="modal-field"><label>제목</label><input id="memo-title-inp" placeholder="메모 제목 (선택)" onkeydown="if(event.key==='Tab'){event.preventDefault();document.getElementById('memo-body-inp').focus()}"/></div>
     <div class="modal-field"><label>본문</label><textarea id="memo-body-inp" class="memo-modal-body" placeholder="내용을 입력하세요..."></textarea></div>
     <div class="modal-field"><label>폴더 (선택)</label><select id="memo-folder-inp"><option value="">폴더 없음</option></select></div>
-    <div class="modal-field"><label>태그 (콤마 구분)</label><input id="memo-tags-inp" placeholder="예: 아이디어, 공부"/></div>
+    <div class="modal-field"><label>태그 (콤마 구분)</label><input id="memo-tags-inp" placeholder="예: 아이디어, 공부" list="memo-tag-datalist" autocomplete="off"/><datalist id="memo-tag-datalist"></datalist></div>
+    <div class="modal-field">
+      <label>사진 첨부</label>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <label style="cursor:pointer;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text2)">📷 사진 선택<input type="file" id="memo-photo-inp" accept="image/*" style="display:none" onchange="previewMemoPhoto(this)"/></label>
+        <button class="btn btn-ghost btn-sm" onclick="clearMemoPhoto()" style="font-size:11px">✕ 제거</button>
+      </div>
+      <img id="memo-photo-preview" src="" style="display:none;max-width:100%;max-height:160px;border-radius:8px;margin-top:8px;object-fit:cover"/>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('memo-modal')">취소</button>
       <button class="btn btn-primary" onclick="saveMemo()">저장</button>
@@ -2955,6 +2963,19 @@ function renderSettings(){
         <div class="toggle-info"><div class="toggle-label">기한 초과 알림</div><div class="toggle-sub">마감일 지난 할일 경고</div></div>
         <label class="tog"><input type="checkbox" id="tog-overdue" ${s.notifOverdue?'checked':''} onchange="saveSetting('notifOverdue',this.checked)"><span class="tog-slider"></span></label>
       </div>
+      <div class="select-row" style="margin-top:8px">
+        <div class="toggle-info"><div class="toggle-label">알람 소리</div><div class="toggle-sub">포모도로·루틴 알람 효과음</div></div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <select onchange="saveSetting('alarmSound',this.value)" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:8px;background:var(--surface)">
+            <option value="beep"${(s.alarmSound||'beep')==='beep'?' selected':''}>📣 비프</option>
+            <option value="chime"${s.alarmSound==='chime'?' selected':''}>🎵 차임</option>
+            <option value="bell"${s.alarmSound==='bell'?' selected':''}>🔔 벨</option>
+            <option value="alarm"${s.alarmSound==='alarm'?' selected':''}>🚨 알람</option>
+            <option value="none"${s.alarmSound==='none'?' selected':''}>🔇 없음</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="playPomoAlarm()" style="font-size:11px">▶ 미리듣기</button>
+        </div>
+      </div>
     </div>
     <div class="settings-card">
       <h4>알람 히스토리</h4>
@@ -4253,12 +4274,14 @@ function renderMemos(){
     const dateStr=new Date(m.updatedAt||m.createdAt).toLocaleDateString(({ko:'ko-KR',en:'en-US',zh:'zh-CN'})[D.settings?.lang||'ko']||'ko-KR',{month:'short',day:'numeric'});
     return`<div class="memo-card" onclick="openMemoModal('${m.id}')">
       <button class="memo-del-btn" onclick="deleteMemo('${m.id}',event)">✕</button>
+      ${m.photo?`<img src="${m.photo}" style="width:100%;height:100px;object-fit:cover;border-radius:7px;margin-bottom:8px" loading="lazy"/>`:''}
       <div class="memo-card-title">${esc(m.title||'제목 없음')}</div>
       <div class="memo-card-body">${esc(m.body||'')}</div>
       <div class="memo-card-meta">
         <span>${dateStr}</span>
         ${folder?`<span class="ttag" style="background:${folder.color}22;color:${folder.color};font-size:10px">${esc(folder.name)}</span>`:''}
         ${(m.tags||[]).slice(0,2).map(tg=>tagHTML(tg)).join('')}
+        ${m.photo?'<span style="font-size:10px">📷</span>':''}
       </div>
     </div>`;
   }).join('')}</div>`;
@@ -4275,22 +4298,46 @@ function openMemoModal(id){
   const sel=document.getElementById('memo-folder-inp');
   sel.innerHTML='<option value="">폴더 없음</option>'+D.folders.map(f=>`<option value="${f.id}"${m?.folderId===f.id?' selected':''}>${esc(f.name)}</option>`).join('');
   if(m?.folderId)sel.value=m.folderId;
+  // 태그 자동완성 datalist 갱신
+  const dl=document.getElementById('memo-tag-datalist');
+  if(dl)dl.innerHTML=Object.keys(D.tagReg||{}).map(tg=>`<option value="${esc(tg)}">`).join('');
+  // 사진 미리보기 복원
+  const prev=document.getElementById('memo-photo-preview');
+  const inp=document.getElementById('memo-photo-inp');
+  if(prev&&inp){prev.src=m?.photo||'';prev.style.display=m?.photo?'block':'none';inp.value='';}
   document.getElementById('memo-modal').classList.add('show');
   setTimeout(()=>document.getElementById(m?'memo-body-inp':'memo-title-inp').focus(),50);
 }
 
+function previewMemoPhoto(inp){
+  const file=inp.files?.[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const prev=document.getElementById('memo-photo-preview');
+    if(prev){prev.src=e.target.result;prev.style.display='block';}
+  };
+  reader.readAsDataURL(file);
+}
+function clearMemoPhoto(){
+  const prev=document.getElementById('memo-photo-preview');
+  const inp=document.getElementById('memo-photo-inp');
+  if(prev){prev.src='';prev.style.display='none';}
+  if(inp)inp.value='';
+}
 function saveMemo(){
   const title=document.getElementById('memo-title-inp').value.trim();
   const body=document.getElementById('memo-body-inp').value;
   const folderId=document.getElementById('memo-folder-inp').value||null;
   const tagsRaw=document.getElementById('memo-tags-inp').value;
   const tags=tagsRaw.split(',').map(t=>t.trim()).filter(Boolean);
+  const photo=document.getElementById('memo-photo-preview')?.src||'';
+  const photoData=photo.startsWith('data:')?photo:'';
   if(!D.settings.memos)D.settings.memos=[];
   if(_memoEditId){
     const m=D.settings.memos.find(x=>x.id===_memoEditId);
-    if(m){m.title=title;m.body=body;m.folderId=folderId;m.tags=tags;m.updatedAt=Date.now();}
+    if(m){m.title=title;m.body=body;m.folderId=folderId;m.tags=tags;m.photo=photoData;m.updatedAt=Date.now();}
   } else {
-    D.settings.memos.push({id:uid(),title,body,folderId,tags,createdAt:Date.now(),updatedAt:Date.now()});
+    D.settings.memos.push({id:uid(),title,body,folderId,tags,photo:photoData,createdAt:Date.now(),updatedAt:Date.now()});
   }
   saveD();
   closeModal('memo-modal');
@@ -4330,18 +4377,23 @@ function renderRoutine(){
 
   function routineCardHTML(r){
     const checked=!!(r.checkedDates&&r.checkedDates[today]);
+    const skipped=!!(r.skippedDates&&r.skippedDates[today]);
     const days=r.days||[false,false,false,false,false,false,false];
     const daysHTML=DAY_LABELS.map((d,i)=>`<div class="routine-day${days[i]?' on':''}" onclick="toggleRoutineDay('${r.id}',${i})">${d}</div>`).join('');
     const periodIcon={morning:'🌅',lunch:'☀️',evening:'🌙'}[r.period]||'⏰';
-    return`<div class="routine-card${r.enabled===false?' disabled':''}" id="rc-${r.id}">
+    const skipBtn=(!checked&&r.enabled!==false)
+      ?`<button onclick="skipRoutineToday('${r.id}')" style="background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:10px;color:var(--text3);padding:2px 7px;white-space:nowrap" title="오늘만 건너뛰기">${skipped?'↩ 취소':'⏭ 건너뛰기'}</button>`
+      :'';
+    return`<div class="routine-card${r.enabled===false?' disabled':''}${skipped?' skipped':''}" id="rc-${r.id}">
       <div class="routine-row1">
         <button class="routine-check${checked?' done':''}" onclick="checkRoutine('${r.id}')">${checked?'✓':''}</button>
         <span class="routine-name" contenteditable="true" onblur="renameRoutineInline('${r.id}',this.textContent)" onclick="event.stopPropagation()">${esc(r.name)}</span>
         <span class="routine-time" onclick="openRoutineTimeModal('${r.id}')" style="cursor:pointer" title="시간 변경">${periodIcon} ${r.time||'--:--'}</span>
+        ${skipBtn}
         <label class="routine-toggle"><input type="checkbox" ${r.enabled!==false?'checked':''} onchange="toggleRoutineEnabled('${r.id}',this.checked)"><span class="routine-slider"></span></label>
         <button onclick="deleteRoutine('${r.id}')" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--text3);padding:2px 6px;margin-left:4px" title="삭제">✕</button>
       </div>
-      <div class="routine-days">${daysHTML}</div>
+      <div class="routine-days">${daysHTML}${skipped?`<span style="font-size:10px;color:var(--text3);margin-left:8px">오늘 건너뜀</span>`:''}</div>
     </div>`;
   }
 
@@ -4482,6 +4534,15 @@ function deleteRoutine(rid){
   saveD();
   if(VIEW==='routine')document.getElementById('view-area').innerHTML=renderRoutine();
 }
+function skipRoutineToday(rid){
+  const r=(D.settings.routines||[]).find(x=>x.id===rid);if(!r)return;
+  const today=todayStr();
+  if(!r.skippedDates)r.skippedDates={};
+  r.skippedDates[today]=!r.skippedDates[today]; // 토글 (취소 가능)
+  if(!r.skippedDates[today])delete r.skippedDates[today];
+  saveD();
+  if(VIEW==='routine')document.getElementById('view-area').innerHTML=renderRoutine();
+}
 
 // 루틴 알람 체커 (매분 실행)
 let _routineAlarmInterval=null;
@@ -4495,6 +4556,7 @@ function startRoutineAlarmChecker(){
     routines.forEach(r=>{
       if(r.enabled===false||r.time!==hhmm)return;
       if(r.days&&!r.days[dayIdx])return;
+      if(r.skippedDates?.[todayStr()])return;
       const icon=r.period==='morning'?'🌅':r.period==='lunch'?'☀️':'🌙';
       pushNotification(`${icon} ${r.name} 시간이에요!`,'tip');
       sendNativeNotif(`${icon} ${r.name} 시간이에요!`,`${r.time} — 루틴을 시작할 시간입니다`);
@@ -5039,17 +5101,31 @@ function applyPomoTime(){
 }
 
 function playPomoAlarm(){
+  const sound=D.settings?.alarmSound||'beep';
+  if(sound==='none')return;
   try{
     const ctx=new(window.AudioContext||window.webkitAudioContext)();
-    [[0,.22],[.32,.22],[.64,.28]].forEach(([t,dur])=>{
+    function tone(freq,start,dur,vol=.3,type='sine'){
       const o=ctx.createOscillator();const g=ctx.createGain();
       o.connect(g);g.connect(ctx.destination);
-      o.type='sine';o.frequency.value=t===.64?880:660;
-      g.gain.setValueAtTime(0,ctx.currentTime+t);
-      g.gain.linearRampToValueAtTime(.3,ctx.currentTime+t+.02);
-      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+t+dur);
-      o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+dur+.05);
-    });
+      o.type=type;o.frequency.value=freq;
+      g.gain.setValueAtTime(0,ctx.currentTime+start);
+      g.gain.linearRampToValueAtTime(vol,ctx.currentTime+start+.02);
+      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+start+dur);
+      o.start(ctx.currentTime+start);o.stop(ctx.currentTime+start+dur+.05);
+    }
+    if(sound==='beep'){
+      [[0,.22,660],[.32,.22,660],[.64,.28,880]].forEach(([t,d,f])=>tone(f,t,d));
+    }else if(sound==='chime'){
+      // 부드러운 상승 차임 (C5→E5→G5→C6)
+      [[523,0,.5],[659,.35,.5],[784,.7,.5],[1047,1.05,.8,.2]].forEach(([f,t,d,v=.25])=>tone(f,t,d,v));
+    }else if(sound==='bell'){
+      // 단일 벨 + 배음
+      tone(880,0,1.5,.35);tone(1760,0,0.8,.1);tone(2637,0,0.4,.05);
+    }else if(sound==='alarm'){
+      // 긴급 알람 (비프 4번 반복)
+      [0,.25,.5,.75].forEach(t=>tone(1000,t,.2,.4,'square'));
+    }
   }catch(e){}
 }
 
