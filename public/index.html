@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
 <title>My OS TODO</title>
 <!-- Supabase JS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -226,7 +226,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;b
 .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:290}
 .sidebar-overlay.show{display:block}
 /* ── 바텀 네비게이션 ── */
-.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:56px;background:var(--surface);border-top:1px solid var(--border);z-index:200;justify-content:space-around;align-items:center;padding:0 2px;box-shadow:0 -2px 10px rgba(0,0,0,.07)}
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:calc(56px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--border);z-index:200;justify-content:space-around;align-items:flex-start;padding:4px 2px 0;padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -2px 10px rgba(0,0,0,.07)}
 .bn-item{display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 4px;cursor:pointer;border-radius:8px;flex:1;min-width:0;border:none;background:none;font-family:inherit;transition:background .1s}
 .bn-item:hover{background:var(--surface2)}
 .bn-item.active .bn-ico,.bn-item.active .bn-lbl{color:var(--accent)}
@@ -543,6 +543,7 @@ canvas{max-width:100%}
 
 /* ── Time tracker ── */
 .tt-layout{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:16px;align-items:start}
+.tt-side-toggle{display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:10px}
 .tt-board,.tt-side{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)}
 .tt-board{overflow:hidden}
 .tt-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,var(--surface),#faf7f2)}
@@ -566,7 +567,8 @@ canvas{max-width:100%}
 .tt-label-color{width:14px;height:14px;border-radius:50%}
 .tt-label-name{flex:1;font-size:12px;font-weight:700}
 .tt-label-acts{display:flex;gap:4px}
-.tt-label-acts button{border:none;background:none;color:var(--text3);cursor:pointer}
+.tt-label-acts button{border:none;background:none;color:var(--text3);cursor:pointer;min-width:28px;min-height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:background .12s}
+.tt-label-acts button:hover{background:var(--surface2)}
 .tt-summary{display:flex;flex-direction:column;gap:8px}
 .tt-summary-row{display:flex;align-items:center;gap:8px}
 .tt-summary-bar{height:8px;flex:1;background:var(--surface2);border-radius:999px;overflow:hidden}
@@ -590,10 +592,26 @@ canvas{max-width:100%}
   .view-area{padding:14px}
   .dash-grid{grid-template-columns:1fr 1fr!important}
   .chart-row{display:flex;flex-direction:column!important}
+  /* 타임 트래커 모바일: 셀 작게, 라벨 패널 토글 */
+  .tt-side-toggle{display:block}
+  .tt-grid{grid-template-columns:44px repeat(6,minmax(42px,1fr));min-width:0}
+  .tt-cell,.tt-time,.tt-min{min-height:22px;font-size:9px}
+  .tt-cell-label{font-size:8px}
+  .tt-side{transition:max-height .3s ease,opacity .25s ease;overflow:hidden;max-height:2000px}
+  .tt-side.collapsed{max-height:0!important;opacity:0;padding:0;border:none}
+  .tt-label-acts button{min-width:36px;min-height:36px;font-size:15px}
 }
 @media (max-width: 480px){
   .bottom-nav{display:flex}
-  .view-area{padding-bottom:70px}
+  .view-area{padding-bottom:calc(70px + env(safe-area-inset-bottom))}
+  /* 태그가 많아 세로로 밀릴 때: 제목 위, 태그 아래 */
+  .task-head{flex-wrap:wrap}
+  .task-title-text{order:1;min-width:0;flex:1 1 50%}
+  .task-tags{order:4;width:100%;padding-top:3px}
+  .task-right{order:2}
+  .check-btn{order:0}
+  .drag-handle{order:0}
+  .chevron{order:3}
   .dash-grid{grid-template-columns:1fr!important}
 }
 
@@ -844,14 +862,28 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
 .pomo-center{cursor:pointer}
 .pomo-center:hover .pomo-time{opacity:.85}
 .pomo-edit-hint{font-size:9px;color:var(--text3);letter-spacing:.3px;margin-top:1px;opacity:.7}
-.pomo-time-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2000}
+.pomo-time-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2000;background:rgba(0,0,0,.4);backdrop-filter:blur(4px)}
 .pomo-time-modal.show{display:flex}
-.pomo-time-modal-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px 24px;width:300px;box-shadow:var(--shadow-md)}
-.pomo-time-modal-box h3{font-size:14px;font-weight:700;margin-bottom:16px}
+.pomo-time-modal-box{background:var(--surface);border-radius:20px;padding:24px;width:320px;max-width:94vw;box-shadow:0 24px 60px rgba(0,0,0,.2)}
+.pomo-time-modal-box h3{font-size:15px;font-weight:800;margin-bottom:20px;text-align:center}
 .pomo-time-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .pomo-time-row label{font-size:12px;font-weight:600;color:var(--text2)}
 .pomo-time-row input{width:70px;border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font-size:13px;font-weight:700;text-align:center;font-family:inherit;outline:none;background:var(--surface2)}
 .pomo-time-row input:focus{border-color:var(--accent)}
+/* 드럼롤 피커 */
+.picker-wrap{display:flex;justify-content:center;gap:24px;margin-bottom:16px}
+.picker-col{display:flex;flex-direction:column;align-items:center;gap:6px}
+.picker-col label{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.5px}
+.picker-drum{position:relative;width:68px;height:150px;overflow:hidden;border-radius:12px;background:var(--surface2)}
+.picker-drum::before,.picker-drum::after{content:'';position:absolute;left:0;right:0;height:50px;z-index:2;pointer-events:none}
+.picker-drum::before{top:0;background:linear-gradient(to bottom,var(--surface2) 20%,transparent)}
+.picker-drum::after{bottom:0;background:linear-gradient(to top,var(--surface2) 20%,transparent)}
+.picker-selector{position:absolute;top:50px;left:6px;right:6px;height:50px;border-top:2px solid var(--accent);border-bottom:2px solid var(--accent);border-radius:4px;pointer-events:none;z-index:3}
+.picker-scroll{height:150px;overflow-y:scroll;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.picker-scroll::-webkit-scrollbar{display:none}
+.picker-pad{height:50px;flex-shrink:0}
+.picker-item{height:50px;scroll-snap-align:center;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--text2);cursor:pointer;transition:color .1s,font-size .1s}
+.picker-item.sel{color:var(--accent);font-size:24px}
 .pomo-tool-row{display:flex;gap:8px;justify-content:center;width:100%}
 .pomo-tool-btn{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);font-size:11.5px;font-weight:600;cursor:pointer;transition:all .12s;color:var(--text2);display:flex;align-items:center;gap:4px}
 .pomo-tool-btn.on{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
@@ -1016,7 +1048,8 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
     <!-- 이메일/비밀번호 폼 -->
     <div class="auth-field">
       <label>이메일</label>
-      <input type="email" id="auth-email" placeholder="이메일 주소" autocomplete="email"/>
+      <input type="email" id="auth-email" placeholder="이메일 주소" autocomplete="email"
+        onkeydown="if(event.key==='Enter')submitAuth()"/>
     </div>
     <div class="auth-field">
       <label>비밀번호</label>
@@ -1155,14 +1188,41 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
   </div>
 </div>
 
-<!-- Pomodoro Custom Time Modal -->
+<!-- Pomodoro Custom Time Modal (드럼롤 피커) -->
 <div class="pomo-time-modal" id="pomo-time-modal" onclick="if(event.target===this)closePomoTimeModal()">
   <div class="pomo-time-modal-box">
     <h3>⏱ 타이머 시간 설정</h3>
-    <div class="pomo-time-row"><label>🎯 집중</label><div style="display:flex;align-items:center;gap:5px"><input type="number" id="pt-work" min="1" max="180" value="25"/><span style="font-size:12px;color:var(--text3)">분</span></div></div>
-    <div class="pomo-time-row"><label>☕ 짧은 휴식</label><div style="display:flex;align-items:center;gap:5px"><input type="number" id="pt-break" min="1" max="60" value="5"/><span style="font-size:12px;color:var(--text3)">분</span></div></div>
-    <div class="pomo-time-row"><label>🌿 긴 휴식</label><div style="display:flex;align-items:center;gap:5px"><input type="number" id="pt-long" min="1" max="120" value="15"/><span style="font-size:12px;color:var(--text3)">분</span></div></div>
-    <div class="modal-actions" style="margin-top:16px">
+    <!-- 숨김 input (하위 호환) -->
+    <input type="hidden" id="pt-work" value="25"/>
+    <input type="hidden" id="pt-break" value="5"/>
+    <input type="hidden" id="pt-long" value="15"/>
+    <div class="picker-wrap">
+      <div class="picker-col">
+        <label>🎯 집중</label>
+        <div class="picker-drum" id="drum-work">
+          <div class="picker-selector"></div>
+          <div class="picker-scroll" id="ps-work" onscroll="onDrumScroll('work',this)"></div>
+        </div>
+        <span style="font-size:11px;color:var(--text3)">분</span>
+      </div>
+      <div class="picker-col">
+        <label>☕ 짧은 휴식</label>
+        <div class="picker-drum" id="drum-break">
+          <div class="picker-selector"></div>
+          <div class="picker-scroll" id="ps-break" onscroll="onDrumScroll('break',this)"></div>
+        </div>
+        <span style="font-size:11px;color:var(--text3)">분</span>
+      </div>
+      <div class="picker-col">
+        <label>🌿 긴 휴식</label>
+        <div class="picker-drum" id="drum-long">
+          <div class="picker-selector"></div>
+          <div class="picker-scroll" id="ps-long" onscroll="onDrumScroll('long',this)"></div>
+        </div>
+        <span style="font-size:11px;color:var(--text3)">분</span>
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:4px">
       <button class="btn btn-ghost" onclick="closePomoTimeModal()">취소</button>
       <button class="btn btn-primary" onclick="applyPomoTime()">적용</button>
     </div>
@@ -1562,6 +1622,10 @@ function mapServerEvent(event){
 // ── Notifications ──────────────────────────────────────────
 let _notifPanelOpen=false;
 
+function sendNativeNotif(title, body=''){
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  try{new Notification(title,{body,icon:'/favicon.ico',badge:'/favicon.ico'})}catch(e){}
+}
 function pushNotification(msg,type='info'){
   if(!D.notifications)D.notifications=[];
   D.notifications.unshift({id:uid(),msg,type,time:Date.now(),read:false});
@@ -1889,6 +1953,15 @@ function updateTaskField(id,field,value){
 function toggleOpen(id){
   if(openTaskIds.has(id)){openTaskIds.delete(id)}else{openTaskIds.add(id)}
   saveOpenState();render();
+}
+function expandAllTasks(){
+  filteredTasks().forEach(t=>openTaskIds.add(t.id));
+  render();
+  openTaskIds.forEach(id=>renderDetail(id));
+}
+function collapseAllTasks(){
+  openTaskIds.clear();
+  render();
 }
 
 // Subtasks
@@ -2666,7 +2739,8 @@ function getSettingTabs(){return[
   {id:'lang',label:'🌐 '+t('tabLang')},
   {id:'notif',label:'🔔 '+t('tabNotif')},
   {id:'general',label:'⚙️ '+t('tabGeneral')},
-  {id:'notion',label:'🔗 Notion'}
+  {id:'linked',label:'🔗 연동'},
+  {id:'notion',label:'📓 Notion'}
 ]}
 
 // ═══════════════════════════════════════════════════════════
@@ -2952,6 +3026,32 @@ function renderSettings(){
         Supabase + Vercel + Gemini 2.5 Flash<br>
         곧 추가 예정: 로그인 · Slack 연동 · 앱 버전 · 팀 기능
       </p>
+    </div>`;
+  }
+  else if(tab==='linked'){
+    const identities=window._currentUser?.identities||[];
+    const googleLinked=identities.some(i=>i.provider==='google');
+    const githubLinked=identities.some(i=>i.provider==='github');
+    function providerRow(icon,name,linked,providerKey,comingSoon){
+      const badge=linked
+        ?`<span style="font-size:11px;background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:20px;font-weight:600">✓ 연동됨</span>`
+        :comingSoon
+          ?`<span style="font-size:11px;background:var(--surface2);color:var(--text3);padding:3px 10px;border-radius:20px;font-weight:600">준비 중</span>`
+          :`<button class="btn btn-ghost btn-sm" onclick="linkProvider('${providerKey}')">연동하기</button>`;
+      return`<div style="display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border);${comingSoon?'opacity:.5':''}">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:24px;line-height:1">${icon}</span>
+          <div><div style="font-size:13px;font-weight:600">${name}</div><div style="font-size:11px;color:var(--text3)">${linked?'연동됨':comingSoon?'준비 중':'미연동'}</div></div>
+        </div>${badge}</div>`;
+    }
+    content=`
+    <div class="settings-card">
+      <h4>연동된 계정</h4>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:4px">소셜 계정을 연동하면 해당 계정으로도 로그인할 수 있어요.</p>
+      ${providerRow('<svg width="22" height="22" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>','Google',googleLinked,'google',false)}
+      ${providerRow('🐱','GitHub',githubLinked,'github',false)}
+      ${providerRow('📷','Instagram',false,'instagram',true)}
+      ${providerRow('👥','Facebook',false,'facebook',true)}
     </div>`;
   }
   else if(tab==='notion'){
@@ -3979,6 +4079,7 @@ function renderTimeTracker(){
       </div>
       <button class="btn btn-ghost btn-sm" onclick="ttClearAll('${dateKey}')" style="margin-top:8px;width:100%;font-size:11px;color:var(--red)">🗑 오늘 전체 삭제</button>
     </div>
+    <button class="tt-side-toggle" onclick="document.querySelector('.tt-side').classList.toggle('collapsed');this.textContent=document.querySelector('.tt-side').classList.contains('collapsed')?'📋 라벨 열기':'📋 라벨 닫기'">📋 라벨 닫기</button>
     <div class="tt-side">
       <div class="tt-selected" style="background:${selLabel?.color||'var(--surface)'};border-color:${selLabel?.color||'var(--border)'};color:${selLabel?.text||'var(--text)'}">
         ✓ 선택됨: ${esc(selLabel?.name||'없음')}
@@ -4201,64 +4302,151 @@ async function deleteMemo(id,e){
 
 // ═══════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════
-// RENDER: ROUTINE (아침/저녁 루틴)
+// RENDER: ROUTINE (아침/점심/저녁 루틴)
 // ═══════════════════════════════════════════════════════════
 const DAY_LABELS=['일','월','화','수','목','금','토'];
+let _routineTab='all'; // 'all' | 'morning' | 'lunch' | 'evening'
 
 function renderRoutine(){
   const routines=D.settings.routines||[];
   const today=todayStr();
-  const morning=routines.filter(r=>r.period==='morning');
-  const evening=routines.filter(r=>r.period==='evening');
+  const tabs=[
+    {id:'all',label:'전체'},
+    {id:'morning',label:'🌅 아침'},
+    {id:'lunch',label:'☀️ 점심'},
+    {id:'evening',label:'🌙 저녁'},
+  ];
+  const tabsHTML=tabs.map(tb=>`<button class="pomo-preset${_routineTab===tb.id?' active':''}" onclick="_routineTab='${tb.id}';document.getElementById('view-area').innerHTML=renderRoutine()" style="padding:6px 12px">${tb.label}</button>`).join('');
+
+  function filtered(){
+    if(_routineTab==='all') return routines;
+    return routines.filter(r=>r.period===_routineTab);
+  }
 
   function routineCardHTML(r){
     const checked=!!(r.checkedDates&&r.checkedDates[today]);
     const days=r.days||[false,false,false,false,false,false,false];
     const daysHTML=DAY_LABELS.map((d,i)=>`<div class="routine-day${days[i]?' on':''}" onclick="toggleRoutineDay('${r.id}',${i})">${d}</div>`).join('');
+    const periodIcon={morning:'🌅',lunch:'☀️',evening:'🌙'}[r.period]||'⏰';
     return`<div class="routine-card${r.enabled===false?' disabled':''}" id="rc-${r.id}">
       <div class="routine-row1">
         <button class="routine-check${checked?' done':''}" onclick="checkRoutine('${r.id}')">${checked?'✓':''}</button>
-        <span class="routine-name">${esc(r.name)}</span>
-        <span class="routine-time">⏰ ${r.time||'--:--'}</span>
+        <span class="routine-name" contenteditable="true" onblur="renameRoutineInline('${r.id}',this.textContent)" onclick="event.stopPropagation()">${esc(r.name)}</span>
+        <span class="routine-time" onclick="openRoutineTimeModal('${r.id}')" style="cursor:pointer" title="시간 변경">${periodIcon} ${r.time||'--:--'}</span>
         <label class="routine-toggle"><input type="checkbox" ${r.enabled!==false?'checked':''} onchange="toggleRoutineEnabled('${r.id}',this.checked)"><span class="routine-slider"></span></label>
+        <button onclick="deleteRoutine('${r.id}')" style="background:none;border:none;cursor:pointer;font-size:14px;color:var(--text3);padding:2px 6px;margin-left:4px" title="삭제">✕</button>
       </div>
       <div class="routine-days">${daysHTML}</div>
-      <div class="routine-acts">
-        <button class="btn btn-ghost btn-sm" onclick="editRoutineTime('${r.id}')">⏱ 시간</button>
-        <button class="btn btn-ghost btn-sm" onclick="renameRoutine('${r.id}')">✏️</button>
-        <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="deleteRoutine('${r.id}')">✕</button>
-      </div>
     </div>`;
   }
 
+  const periodSections=_routineTab==='all'
+    ?[{id:'morning',icon:'🌅',label:'아침 루틴'},{id:'lunch',icon:'☀️',label:'점심 루틴'},{id:'evening',icon:'🌙',label:'저녁 루틴'}]
+    :[{id:_routineTab,icon:{morning:'🌅',lunch:'☀️',evening:'🌙'}[_routineTab]||'⏰',label:{morning:'아침',lunch:'점심',evening:'저녁'}[_routineTab]+' 루틴'}];
+
+  let content='';
+  periodSections.forEach(sec=>{
+    const list=routines.filter(r=>r.period===sec.id);
+    if(_routineTab==='all'||_routineTab===sec.id){
+      content+=`<div class="routine-section">
+        <div class="routine-section-title">${sec.icon} ${sec.label}</div>
+        ${list.map(routineCardHTML).join('')}
+        <button class="routine-add-btn" onclick="openAddRoutineModal('${sec.id}')">＋ ${sec.label} 추가</button>
+      </div>`;
+    }
+  });
+
   return`<div class="routine-page">
-    <div class="routine-section">
-      <div class="routine-section-title">🌅 아침 루틴</div>
-      ${morning.map(routineCardHTML).join('')}
-      <button class="routine-add-btn" onclick="addRoutine('morning')">＋ 아침 루틴 추가</button>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">${tabsHTML}</div>
+    ${content}
+  </div>
+  <!-- 루틴 추가 모달 -->
+  <div id="routine-add-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:3000;align-items:center;justify-content:center">
+    <div style="background:var(--surface);border-radius:20px;padding:28px;width:340px;max-width:92vw;box-shadow:0 24px 60px rgba(0,0,0,.2)">
+      <div style="font-size:16px;font-weight:800;margin-bottom:20px" id="routine-modal-title">루틴 추가</div>
+      <div class="sf"><label>루틴 이름</label><input id="routine-inp-name" placeholder="예: 스트레칭 10분" style="width:100%"/></div>
+      <div class="sf" style="margin-top:12px"><label>알람 시간</label>
+        <input id="routine-inp-time" type="time" value="07:00" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:9px;font-size:15px;font-family:inherit"/>
+      </div>
+      <div style="margin-top:12px">
+        <label style="font-size:11px;font-weight:600;color:var(--text3);display:block;margin-bottom:6px">반복 요일</label>
+        <div id="routine-inp-days" style="display:flex;gap:6px">
+          ${DAY_LABELS.map((d,i)=>`<div id="rdday-${i}" class="routine-day${[1,2,3,4,5].includes(i)?' on':''}" onclick="toggleModalDay(${i})" style="cursor:pointer">${d}</div>`).join('')}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:20px">
+        <button class="btn btn-ghost" style="flex:1" onclick="closeAddRoutineModal()">취소</button>
+        <button class="btn btn-primary" style="flex:1" onclick="submitAddRoutine()">추가</button>
+      </div>
     </div>
-    <div class="routine-section">
-      <div class="routine-section-title">🌙 저녁 루틴</div>
-      ${evening.map(routineCardHTML).join('')}
-      <button class="routine-add-btn" onclick="addRoutine('evening')">＋ 저녁 루틴 추가</button>
+  </div>
+  <!-- 루틴 시간 변경 모달 -->
+  <div id="routine-time-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:3000;align-items:center;justify-content:center">
+    <div style="background:var(--surface);border-radius:20px;padding:28px;width:300px;max-width:92vw;box-shadow:0 24px 60px rgba(0,0,0,.2)">
+      <div style="font-size:15px;font-weight:800;margin-bottom:16px">⏰ 알람 시간 변경</div>
+      <input id="routine-time-inp" type="time" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:9px;font-size:18px;font-family:inherit"/>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn btn-ghost" style="flex:1" onclick="document.getElementById('routine-time-modal').style.display='none'">취소</button>
+        <button class="btn btn-primary" style="flex:1" onclick="saveRoutineTime()">저장</button>
+      </div>
     </div>
   </div>`;
 }
 
-function addRoutine(period){
-  const name=prompt(`${period==='morning'?'🌅 아침':'🌙 저녁'} 루틴 이름:`);
-  if(!name?.trim())return;
-  const time=prompt('알람 시간 (예: 07:00)','07:00');
-  if(!D.settings.routines)D.settings.routines=[];
-  D.settings.routines.push({
-    id:uid(),name:name.trim(),period,
-    time:time||'07:00',
-    days:[false,true,true,true,true,true,false], // 기본: 월~금
-    enabled:true,checkedDates:{}
+let _addRoutinePeriod='morning';
+let _editRoutineTimeId=null;
+function openAddRoutineModal(period){
+  _addRoutinePeriod=period;
+  const labels={morning:'🌅 아침 루틴 추가',lunch:'☀️ 점심 루틴 추가',evening:'🌙 저녁 루틴 추가'};
+  document.getElementById('routine-modal-title').textContent=labels[period]||'루틴 추가';
+  document.getElementById('routine-inp-name').value='';
+  document.getElementById('routine-inp-time').value=period==='morning'?'07:00':period==='lunch'?'12:00':'22:00';
+  // 요일 기본값 초기화
+  DAY_LABELS.forEach((_,i)=>{
+    const el=document.getElementById('rdday-'+i);
+    if(el)el.classList.toggle('on',[1,2,3,4,5].includes(i));
   });
+  const modal=document.getElementById('routine-add-modal');
+  if(modal){modal.style.display='flex';document.getElementById('routine-inp-name').focus();}
+}
+function closeAddRoutineModal(){
+  const modal=document.getElementById('routine-add-modal');
+  if(modal)modal.style.display='none';
+}
+function toggleModalDay(i){
+  const el=document.getElementById('rdday-'+i);
+  if(el)el.classList.toggle('on');
+}
+function submitAddRoutine(){
+  const name=document.getElementById('routine-inp-name')?.value.trim();
+  if(!name)return;
+  const time=document.getElementById('routine-inp-time')?.value||'07:00';
+  const days=DAY_LABELS.map((_,i)=>!!document.getElementById('rdday-'+i)?.classList.contains('on'));
+  if(!D.settings.routines)D.settings.routines=[];
+  D.settings.routines.push({id:uid(),name,period:_addRoutinePeriod,time,days,enabled:true,checkedDates:{}});
   saveD();
+  closeAddRoutineModal();
   if(VIEW==='routine')document.getElementById('view-area').innerHTML=renderRoutine();
 }
+function openRoutineTimeModal(rid){
+  _editRoutineTimeId=rid;
+  const r=(D.settings.routines||[]).find(x=>x.id===rid);
+  const inp=document.getElementById('routine-time-inp');
+  if(inp)inp.value=r?.time||'07:00';
+  const modal=document.getElementById('routine-time-modal');
+  if(modal)modal.style.display='flex';
+}
+function saveRoutineTime(){
+  const r=(D.settings.routines||[]).find(x=>x.id===_editRoutineTimeId);
+  if(r){r.time=document.getElementById('routine-time-inp')?.value||r.time;saveD();}
+  document.getElementById('routine-time-modal').style.display='none';
+  if(VIEW==='routine')document.getElementById('view-area').innerHTML=renderRoutine();
+}
+function renameRoutineInline(rid,val){
+  const r=(D.settings.routines||[]).find(x=>x.id===rid);
+  if(r&&val?.trim()){r.name=val.trim();saveD();}
+}
+function addRoutine(period){openAddRoutineModal(period)}
 function checkRoutine(rid){
   const r=(D.settings.routines||[]).find(x=>x.id===rid);if(!r)return;
   const today=todayStr();
@@ -4278,17 +4466,11 @@ function toggleRoutineEnabled(rid,val){
   const r=(D.settings.routines||[]).find(x=>x.id===rid);if(!r)return;
   r.enabled=val;saveD();
 }
-function editRoutineTime(rid){
-  const r=(D.settings.routines||[]).find(x=>x.id===rid);if(!r)return;
-  const t=prompt('알람 시간 (예: 07:30)',r.time||'07:00');
-  if(t!==null){r.time=t;saveD();}
-  if(VIEW==='routine')document.getElementById('view-area').innerHTML=renderRoutine();
-}
+function editRoutineTime(rid){openRoutineTimeModal(rid)}
 function renameRoutine(rid){
   const r=(D.settings.routines||[]).find(x=>x.id===rid);if(!r)return;
-  const n=prompt('루틴 이름 변경',r.name);
-  if(n?.trim()){r.name=n.trim();saveD();}
-  if(VIEW==='routine')document.getElementById('view-area').innerHTML=renderRoutine();
+  const el=document.querySelector(`#rc-${rid} .routine-name`);
+  if(el){el.focus();const range=document.createRange();range.selectNodeContents(el);window.getSelection().removeAllRanges();window.getSelection().addRange(range);}
 }
 function deleteRoutine(rid){
   D.settings.routines=(D.settings.routines||[]).filter(r=>r.id!==rid);
@@ -4308,7 +4490,9 @@ function startRoutineAlarmChecker(){
     routines.forEach(r=>{
       if(r.enabled===false||r.time!==hhmm)return;
       if(r.days&&!r.days[dayIdx])return;
-      pushNotification(`${r.period==='morning'?'🌅':'🌙'} ${r.name} 시간이에요!`,'tip');
+      const icon=r.period==='morning'?'🌅':r.period==='lunch'?'☀️':'🌙';
+      pushNotification(`${icon} ${r.name} 시간이에요!`,'tip');
+      sendNativeNotif(`${icon} ${r.name} 시간이에요!`,`${r.time} — 루틴을 시작할 시간입니다`);
     });
   },60000);
 }
@@ -4559,13 +4743,18 @@ async function communityDeleteComment(postId,commentId){
 
 // RENDER: POMODORO
 // ═══════════════════════════════════════════════════════════
+let _pomoWaitingDismiss=false; // alarmRequireDismiss 활성화 시 단계 완료 후 대기 상태
 const _pomoState={
   running:false,phase:'work',remaining:25*60,total:25*60,
   sessions:0,interval:null,
+  halfCycles:0,       // 집중+휴식 각 1카운트, 짝수마다 사이클+1
   completedCycles:0,
+  cycleSize:4,        // 사이클당 세션(동그라미) 수 (설정 가능)
   autoCycle:true,
   alarmEnabled:true,
+  alarmRequireDismiss:false, // true면 알람 끄기 전까지 다음 단계 안 넘어감
   burnoutWarning:false,
+  pausedAt:null,      // 일시정지/리셋 시각 (5분 내 재시작 시 이어가기)
   presets:[
     {label:'25/5',work:25,shortBreak:5,longBreak:15},
     {label:'50/10',work:50,shortBreak:10,longBreak:20},
@@ -4585,14 +4774,26 @@ function renderPomodoro(){
   const dashOffset=circumference*(1-progress);
   const phaseLabel={work:'집중',break:'짧은 휴식',longBreak:'긴 휴식'}[s.phase]||'집중';
   const phaseColor={work:'#2c5f2e',break:'#2563eb',longBreak:'#7c3aed'}[s.phase]||'#2c5f2e';
-  const sessInCycle=s.sessions%4;
+  const cycleSize=s.cycleSize||4;
+  const sessInCycle=s.sessions%cycleSize;
   const totalMins=s.sessions*(preset?.work||25);
 
   const burnoutHTML=s.burnoutWarning
     ?`<div class="pomo-burnout"><span style="font-size:20px">🔥</span><div><div>번아웃 주의!</div><div style="font-size:11px;font-weight:500;margin-top:2px;opacity:.8">4사이클 달성! 오늘은 충분히 쉬어도 됩니다.</div></div><span class="pomo-burnout-close" onclick="dismissBurnout()">×</span></div>`
     :'';
 
-  return`<div class="pomo-wrap">
+  const dismissOverlay=_pomoWaitingDismiss
+    ?`<div style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)">
+        <div style="background:var(--surface);border-radius:24px;padding:32px 28px;text-align:center;max-width:300px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,.25)">
+          <div style="font-size:52px;margin-bottom:12px">${s.phase==='work'?'☕':'🎯'}</div>
+          <div style="font-size:19px;font-weight:800;margin-bottom:8px">${{work:'휴식 완료!',break:'집중 시간!',longBreak:'집중 시간!'}[s.phase]||'단계 완료!'}</div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.5">알람을 확인하고<br>다음 단계를 시작할 준비가 되면 눌러주세요</div>
+          <button onclick="dismissPomoAlarm()" style="background:var(--accent);color:#fff;border:none;border-radius:14px;padding:14px 0;font-size:15px;font-weight:700;cursor:pointer;width:100%;font-family:inherit">✓ 확인 · 다음 단계 시작</button>
+        </div>
+      </div>`
+    :'';
+
+  return`<div class="pomo-wrap">${dismissOverlay}
     ${burnoutHTML}
     <div class="pomo-phase-bar">
       <button class="pomo-phase-btn${s.phase==='work'?' active':''}" onclick="pomoSetPhase('work')">집중</button>
@@ -4615,8 +4816,9 @@ function renderPomodoro(){
       </div>
     </div>
     <div class="pomo-sessions-row">
-      ${[0,1,2,3].map(i=>`<div class="pomo-dot${i<sessInCycle?' done':i===sessInCycle&&s.running?' current':''}"></div>`).join('')}
-      <span style="font-size:11px;color:var(--text3);margin-left:4px">${s.completedCycles} 사이클</span>
+      ${Array.from({length:cycleSize},(_,i)=>`<div class="pomo-dot${i<sessInCycle?' done':i===sessInCycle&&s.running?' current':''}"></div>`).join('')}
+      <span style="font-size:11px;color:var(--text3);margin-left:6px">${s.completedCycles} 사이클</span>
+      <button onclick="openPomoCycleModal()" style="margin-left:4px;background:none;border:1px solid var(--border);border-radius:6px;padding:1px 6px;font-size:10px;color:var(--text3);cursor:pointer" title="사이클 크기 설정">⚙️</button>
     </div>
     <div class="pomo-controls">
       <button class="pomo-btn" onclick="pomoReset()" title="초기화">↩</button>
@@ -4624,8 +4826,9 @@ function renderPomodoro(){
       <button class="pomo-btn" onclick="pomoSkip()" title="건너뛰기">⏭</button>
     </div>
     <div class="pomo-tool-row">
-      <button class="pomo-tool-btn${s.autoCycle?' on':''}" onclick="togglePomoAutoCycle()" title="자동 사이클 전환">🔄 자동</button>
-      <button class="pomo-tool-btn${s.alarmEnabled?' on':''}" onclick="togglePomoAlarm()" title="알람 소리">🔔 알람</button>
+      <button class="pomo-tool-btn${s.autoCycle?' on':''}" onclick="togglePomoAutoCycle()" title="자동으로 다음 단계로 넘어가기">🔄 자동</button>
+      <button class="pomo-tool-btn${s.alarmEnabled?' on':''}" onclick="togglePomoAlarm()" title="단계 완료 시 알람음">🔔 알람</button>
+      <button class="pomo-tool-btn${s.alarmRequireDismiss?' on':''}" onclick="togglePomoRequireDismiss()" title="알람 끄기 전까지 다음 단계 대기">⏱ 수동</button>
     </div>
     <div class="pomo-presets">
       ${s.presets.map((p,i)=>`<button class="pomo-preset${s.selectedPreset===i?' active':''}" onclick="pomoSelectPreset(${i})">${p.label}분</button>`).join('')}
@@ -4641,7 +4844,15 @@ function renderPomodoro(){
 function pomoToggle(){
   if(_pomoState.running){
     clearInterval(_pomoState.interval);_pomoState.interval=null;_pomoState.running=false;
+    _pomoState.pausedAt=Date.now();
+    showToast('⏸ 5분 내로 다시 시작하면 세트와 사이클이 이어집니다');
   } else {
+    // 5분 초과 시 세션 리셋
+    if(_pomoState.pausedAt&&Date.now()-_pomoState.pausedAt>=5*60*1000){
+      _pomoState.sessions=0;_pomoState.halfCycles=0;_pomoState.completedCycles=0;
+      _pomoState.burnoutWarning=false;
+    }
+    _pomoState.pausedAt=null;
     _pomoState.running=true;
     _pomoState.interval=setInterval(()=>{
       _pomoState.remaining--;
@@ -4652,23 +4863,35 @@ function pomoToggle(){
         const preset=_pomoState.presets[_pomoState.selectedPreset];
         if(_pomoState.phase==='work'){
           _pomoState.sessions++;
-          const isLong=_pomoState.sessions%4===0;
-          if(isLong){
-            _pomoState.completedCycles++;
-            if(_pomoState.completedCycles>=4)_pomoState.burnoutWarning=true;
-          }
-          _pomoState.phase=isLong?'longBreak':'break';
-          const mins=(isLong?preset.longBreak:preset.shortBreak)||5;
+          _pomoState.halfCycles++;
+          // 긴 휴식 자동 전환 없음 — 짧은 휴식으로만 전환
+          _pomoState.phase='break';
+          const mins=preset.shortBreak||5;
           _pomoState.remaining=mins*60;_pomoState.total=mins*60;
-          pushNotification(`⏸ 포모도로 완료! ${isLong?'긴 휴식':'짧은 휴식'}을 취하세요. (${_pomoState.sessions}회)`, 'info');
-        } else {
+          pushNotification(`⏸ 집중 완료! 짧은 휴식을 취하세요. (${_pomoState.sessions}회)`, 'info');
+          sendNativeNotif('⏸ 집중 완료!',`${_pomoState.sessions}회 — 짧은 휴식을 취하세요.`);
+        } else if(_pomoState.phase==='break'||_pomoState.phase==='longBreak'){
+          _pomoState.halfCycles++;
+          // 짝수일 때 사이클 +1
+          if(_pomoState.halfCycles%2===0){
+            _pomoState.completedCycles++;
+            const sessPerCycle=_pomoState.cycleSize||4;
+            if(_pomoState.completedCycles%sessPerCycle===0){
+              pushNotification('오늘 열심히 하셨어요! 번아웃을 예방하기 위해 긴 휴식으로 이동해서 휴식을 취해주세요!','info');
+              sendNativeNotif('🔥 번아웃 주의!','오늘 충분히 달리셨어요. 긴 휴식을 취해보세요.');
+            }
+          }
           _pomoState.phase='work';
           _pomoState.remaining=(preset?.work||25)*60;_pomoState.total=(preset?.work||25)*60;
           pushNotification('▶ 휴식 끝! 다음 집중 세션을 시작하세요.', 'tip');
+          sendNativeNotif('▶ 휴식 끝!','다음 집중 세션을 시작할 준비가 됐나요?');
+        }
+        if(_pomoState.alarmRequireDismiss){
+          _pomoWaitingDismiss=true;
         }
         if(VIEW==='pomodoro')document.getElementById('view-area').innerHTML=renderPomodoro();
         if(VIEW==='home')render();
-        if(_pomoState.autoCycle)setTimeout(()=>pomoToggle(),1500);
+        if(_pomoState.autoCycle&&!_pomoWaitingDismiss)setTimeout(()=>pomoToggle(),1500);
         return;
       }
       const mins=Math.floor(_pomoState.remaining/60);
@@ -4692,11 +4915,35 @@ function pomoToggle(){
 
 function pomoReset(){
   clearInterval(_pomoState.interval);_pomoState.interval=null;_pomoState.running=false;
+  _pomoState.pausedAt=Date.now();
   const preset=_pomoState.presets[_pomoState.selectedPreset];
   _pomoState.phase='work';
   _pomoState.remaining=(preset?.work||25)*60;_pomoState.total=(preset?.work||25)*60;
+  showToast('⏸ 5분 내로 다시 시작하면 세트와 사이클이 이어집니다');
+  // 5분 후 사이클/세션 리셋
+  setTimeout(()=>{
+    if(!_pomoState.running&&_pomoState.pausedAt&&Date.now()-_pomoState.pausedAt>=5*60*1000){
+      _pomoState.sessions=0;_pomoState.halfCycles=0;_pomoState.completedCycles=0;
+      _pomoState.burnoutWarning=false;_pomoState.pausedAt=null;
+      if(VIEW==='pomodoro')document.getElementById('view-area').innerHTML=renderPomodoro();
+    }
+  },5*60*1000);
   if(VIEW==='pomodoro')document.getElementById('view-area').innerHTML=renderPomodoro();
   if(VIEW==='home')render();
+}
+function togglePomoRequireDismiss(){
+  _pomoState.alarmRequireDismiss=!_pomoState.alarmRequireDismiss;
+  if(VIEW==='pomodoro')document.getElementById('view-area').innerHTML=renderPomodoro();
+}
+function dismissPomoAlarm(){
+  _pomoWaitingDismiss=false;
+  if(VIEW==='pomodoro')document.getElementById('view-area').innerHTML=renderPomodoro();
+  if(VIEW==='home')render();
+  if(_pomoState.autoCycle)setTimeout(()=>pomoToggle(),800);
+}
+function openPomoCycleModal(){
+  const n=parseInt(prompt(`사이클당 세션(동그라미) 수 (현재: ${_pomoState.cycleSize||4})`,'4'));
+  if(n>=1&&n<=8){_pomoState.cycleSize=n;if(VIEW==='pomodoro')document.getElementById('view-area').innerHTML=renderPomodoro();}
 }
 
 function pomoSkip(){
@@ -4734,20 +4981,52 @@ function pomoSelectPreset(idx){
   if(VIEW==='pomodoro')document.getElementById('view-area').innerHTML=renderPomodoro();
 }
 
+// 드럼롤 피커 유틸
+const _drumValues={work:25,break:5,long:15};
+function buildDrum(scrollId,min,max,initial,step=1){
+  const scroll=document.getElementById(scrollId);
+  if(!scroll)return;
+  let html='<div class="picker-pad"></div><div class="picker-pad"></div>';
+  for(let v=min;v<=max;v+=step)html+=`<div class="picker-item" data-val="${v}">${String(v).padStart(2,'0')}</div>`;
+  html+='<div class="picker-pad"></div><div class="picker-pad"></div>';
+  scroll.innerHTML=html;
+  const idx=Math.round((initial-min)/step);
+  scroll.scrollTop=idx*50;
+  highlightDrum(scroll,idx);
+}
+function highlightDrum(scroll,idx){
+  scroll.querySelectorAll('.picker-item').forEach((el,i)=>el.classList.toggle('sel',i===idx));
+}
+function onDrumScroll(key,scroll){
+  const idx=Math.round(scroll.scrollTop/50);
+  highlightDrum(scroll,idx);
+  const item=scroll.querySelectorAll('.picker-item')[idx];
+  if(item)_drumValues[key]=parseInt(item.dataset.val);
+}
 function openPomoTimeModal(){
   const preset=_pomoState.presets[_pomoState.selectedPreset];
-  document.getElementById('pt-work').value=preset?.work||25;
-  document.getElementById('pt-break').value=preset?.shortBreak||5;
-  document.getElementById('pt-long').value=preset?.longBreak||15;
   document.getElementById('pomo-time-modal').classList.add('show');
+  // 빌드 후 스크롤 위치 잡기 (requestAnimationFrame으로 렌더 후 실행)
+  requestAnimationFrame(()=>{
+    buildDrum('ps-work',1,120,preset?.work||25);
+    buildDrum('ps-break',1,60,preset?.shortBreak||5);
+    buildDrum('ps-long',1,120,preset?.longBreak||15);
+    _drumValues.work=preset?.work||25;
+    _drumValues.break=preset?.shortBreak||5;
+    _drumValues.long=preset?.longBreak||15;
+  });
 }
 function closePomoTimeModal(){
   document.getElementById('pomo-time-modal').classList.remove('show');
 }
 function applyPomoTime(){
-  const work=Math.max(1,parseInt(document.getElementById('pt-work').value)||25);
-  const sb=Math.max(1,parseInt(document.getElementById('pt-break').value)||5);
-  const lb=Math.max(1,parseInt(document.getElementById('pt-long').value)||15);
+  const work=Math.max(1,_drumValues.work||25);
+  const sb=Math.max(1,_drumValues.break||5);
+  const lb=Math.max(1,_drumValues.long||15);
+  // 숨김 input 동기화 (하위 호환)
+  document.getElementById('pt-work').value=work;
+  document.getElementById('pt-break').value=sb;
+  document.getElementById('pt-long').value=lb;
   const idx=_pomoState.selectedPreset;
   _pomoState.presets[idx]={..._pomoState.presets[idx],work,shortBreak:sb,longBreak:lb,label:`${work}/${sb}`};
   closePomoTimeModal();
@@ -4828,6 +5107,10 @@ function renderTaskView(){
     const todayT=tasks.filter(t=>!t.dueDate||t.dueDate===today);
     const overdue=tasks.filter(t=>t.dueDate&&t.dueDate<today);
     const upcoming=tasks.filter(t=>t.dueDate&&t.dueDate>today);
+    html+=`<div style="display:flex;gap:6px;margin-bottom:8px">
+      <button class="btn btn-ghost btn-sm" onclick="expandAllTasks()" title="전체 열기">⬇ 전체 열기</button>
+      <button class="btn btn-ghost btn-sm" onclick="collapseAllTasks()" title="전체 닫기">⬆ 전체 닫기</button>
+    </div>`;
     if(todayT.length||!overdue.length){html+=`<div class="task-group"><div class="tg-header">${t('todayGroup')} (${todayT.length})</div>`;todayT.forEach(t=>html+=taskCardHTML(t));html+='</div>';}
     if(overdue.length){html+=`<div class="task-group"><div class="tg-header" style="color:var(--red)">${t('overdue')} (${overdue.length})</div>`;overdue.forEach(t=>html+=taskCardHTML(t));html+='</div>';}
     if(upcoming.length){html+=`<div class="task-group"><div class="tg-header" style="color:var(--blue)">${t('upcoming')} (${upcoming.length})</div>`;upcoming.forEach(t=>html+=taskCardHTML(t));html+='</div>';}
@@ -5301,7 +5584,12 @@ async function addHabit(){
   if(!window.GUEST_MODE && window.ApiClient?.isOnline()){
     try{
       const srv=await ApiClient.createHabit({name, sortOrder: D.habits.length-1});
-      if(srv?.id) newH.id=srv.id; // 서버 UUID로 교체
+      if(srv?.id){
+        // 사용자가 즉시 완료 버튼을 눌렀을 경우 completions 보존 후 병합
+        const saved={...(newH.completions||{})};
+        newH.id=srv.id;
+        newH.completions={...Object.fromEntries((srv.checks||[]).map(d=>[d,true])),...saved};
+      }
     }catch(e){console.warn('[addHabit] 서버 저장 실패:',e.message)}
   }
 }
@@ -5488,6 +5776,18 @@ async function signInWithGoogle(){
     options: { redirectTo: prodUrl + '/' }
   })
   if(error) showAuthError(error.message)
+}
+
+// ── 소셜 계정 연동 (로그인 후 설정 > 연동 탭) ─────────────
+async function linkProvider(provider){
+  if(!_sbClient) return showToast('❌ Supabase 설정이 필요합니다')
+  const prodUrl=(window.location.protocol==='file:'||window.location.hostname==='localhost')
+    ?(window.API_BASE||'https://my-os-backend.vercel.app')
+    :window.location.origin
+  try{
+    const {error}=await _sbClient.auth.linkIdentity({provider,options:{redirectTo:prodUrl+'/'}})
+    if(error)showToast('❌ 연동 실패: '+error.message)
+  }catch(e){showToast('❌ '+e.message)}
 }
 
 // ── 이메일 로그인 / 회원가입 ──────────────────────────────
@@ -5807,6 +6107,11 @@ function startApp(){
     const msg=`기한 초과 ${overdue.length}개: ${overdue.slice(0,3).map(t=>t.title).join(', ')}${overdue.length>3?` 외 ${overdue.length-3}개`:''}`;
     const already=D.notifications.find(n=>n.type==='overdue'&&Date.now()-n.time<86400000);
     if(!already) pushNotification(msg,'overdue');
+  }
+
+  // ── 디바이스 알림 권한 요청 ──────────────────────────────
+  if('Notification' in window && Notification.permission==='default'){
+    Notification.requestPermission();
   }
 
   // ── 신규 유저 seed (서버 데이터 없을 때만) ──────────────
