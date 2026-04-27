@@ -780,6 +780,29 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
 .routine-card:hover{box-shadow:var(--shadow-sm)}
 .routine-card.disabled{opacity:.5}
 .routine-card.skipped{opacity:.6;border-style:dashed;background:repeating-linear-gradient(135deg,var(--surface),var(--surface) 6px,var(--surface2) 6px,var(--surface2) 8px)}
+/* ── Calendar ── */
+.cal-wrap{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
+.cal-board{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+.cal-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,var(--surface),#faf7f2)}
+.cal-month-title{font-size:16px;font-weight:800}
+.cal-nav-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.cal-dow-row,.cal-cells{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-dow{padding:7px 0;text-align:center;font-size:10.5px;font-weight:700;color:var(--text3);border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface2)}
+.cal-dow:last-child{border-right:none}
+.cal-cell{min-height:64px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:4px 3px;cursor:pointer;transition:background .1s;overflow:hidden}
+.cal-cell:nth-child(7n){border-right:none}
+.cal-cell:hover{background:var(--surface2)}
+.cal-cell.other-month .cal-dn{opacity:.35}
+.cal-cell.today .cal-dn{background:var(--accent);color:#fff;border-radius:50%}
+.cal-cell.cal-selected{background:rgba(44,95,46,.1);outline:2px inset var(--accent-light)}
+.cal-dn{width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;margin-bottom:2px}
+.cal-dots{display:flex;flex-wrap:wrap;gap:2px;padding:0 1px}
+.cal-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.cal-detail{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);padding:16px;position:sticky;top:16px;max-height:80vh;overflow-y:auto}
+.cal-detail-title{font-size:14px;font-weight:800;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.cal-event{display:flex;gap:8px;padding:8px 10px;border-radius:10px;margin-bottom:6px;font-size:12px;border:1px solid var(--border)}
+.cal-event-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px}
+@media(max-width:768px){.cal-wrap{grid-template-columns:1fr}.cal-cell{min-height:44px}.cal-detail{position:static}}
 .routine-row1{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .routine-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;transition:all .15s}
 .routine-check.done{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -1123,6 +1146,7 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
   <div class="sb-item" id="nav-time" onclick="setView('time')"><span class="ico">🕒</span>Time Tracker</div>
   <div class="sb-item" id="nav-routine" onclick="setView('routine')"><span class="ico">🌅</span>루틴</div>
   <div class="sb-item" id="nav-community" onclick="setView('community')"><span class="ico">🌐</span>커뮤니티</div>
+  <div class="sb-item" id="nav-calendar" onclick="setView('calendar')"><span class="ico">📅</span>캘린더</div>
   <div class="sb-label" style="margin-top:6px">태그</div>
   <div class="tag-cloud" id="sb-tags"></div>
 </aside>
@@ -3648,7 +3672,7 @@ document.getElementById('confirm-overlay').addEventListener('click',function(e){
 // RENDER: SIDEBAR
 // ═══════════════════════════════════════════════════════════
 function renderSidebar(){
-  ['today','todayonly','all','done','high','dashboard','goals','habits','search','settings','home','time','memo','pomodoro','routine','community'].forEach(v=>{
+  ['today','todayonly','all','done','high','dashboard','goals','habits','search','settings','home','time','memo','pomodoro','routine','community','calendar'].forEach(v=>{
     document.getElementById('nav-'+v)?.classList.toggle('active',VIEW===v);
   });
   // Profile section highlight when in settings
@@ -3736,7 +3760,8 @@ function renderHeader(){
     memo:['📝 메모','아이디어와 생각을 기록해요'],
     pomodoro:['⏱ 포모도로','집중력을 높이는 타이머'],
     routine:['🌅 루틴','아침 · 저녁 반복 루틴을 관리해요'],
-    community:['🌐 커뮤니티','생각과 기록을 공유해요']
+    community:['🌐 커뮤니티','생각과 기록을 공유해요'],
+    calendar:['📅 캘린더','할일·루틴·메모를 한눈에']
   };
   let title,sub;
   if(titles[VIEW]){[title,sub]=titles[VIEW]}
@@ -3806,6 +3831,7 @@ function render(){
   if(VIEW==='pomodoro'){va.innerHTML=renderPomodoro();return}
   if(VIEW==='routine'){va.innerHTML=renderRoutine();return}
   if(VIEW==='community'){va.innerHTML=renderCommunity();loadCommunityPosts();return}
+  if(VIEW==='calendar'){va.innerHTML=renderCalendar();return}
   va.innerHTML=renderTaskView();
   openTaskIds.forEach(id=>{
     const card=document.getElementById('card-'+id);
@@ -6257,6 +6283,170 @@ async function resendVerifyEmail(){
 }
 
 // ═══════════════════════════════════════════════════════════
+// RENDER: CALENDAR
+// ═══════════════════════════════════════════════════════════
+let _calYear=new Date().getFullYear();
+let _calMonth=new Date().getMonth(); // 0-indexed
+let _calSelDate=todayStr();
+
+function calNav(delta){
+  _calMonth+=delta;
+  if(_calMonth<0){_calMonth=11;_calYear--;}
+  if(_calMonth>11){_calMonth=0;_calYear++;}
+  document.getElementById('view-area').innerHTML=renderCalendar();
+}
+function calSelectDate(dt){
+  _calSelDate=dt;
+  document.getElementById('view-area').innerHTML=renderCalendar();
+}
+function calGoToday(){
+  _calYear=new Date().getFullYear();
+  _calMonth=new Date().getMonth();
+  _calSelDate=todayStr();
+  document.getElementById('view-area').innerHTML=renderCalendar();
+}
+function icsExport(){
+  const tasks=D.tasks.filter(t=>!t.done&&t.dueDate);
+  const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//MyOS//MyOS//KO','CALSCALE:GREGORIAN','METHOD:PUBLISH'];
+  tasks.forEach(t=>{
+    const dt=t.dueDate.replace(/-/g,'');
+    const stamp=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z';
+    lines.push('BEGIN:VEVENT',`UID:${t.id}@myos.app`,`DTSTAMP:${stamp}`,
+      `DTSTART;VALUE=DATE:${dt}`,`DTEND;VALUE=DATE:${dt}`,
+      `SUMMARY:${(t.title||'').replace(/\n/g,'\\n')}`,
+      `PRIORITY:${{high:1,med:5,low:9}[t.priority]||5}`,'END:VEVENT');
+  });
+  lines.push('END:VCALENDAR');
+  const blob=new Blob([lines.join('\r\n')],{type:'text/calendar;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='myos-tasks.ics';a.click();URL.revokeObjectURL(a.href);
+  showToast('📅 ICS 파일 내보내기 완료! 캘린더 앱에서 가져오기 하세요.');
+}
+
+function renderCalendar(){
+  const today=todayStr();
+  const year=_calYear,month=_calMonth;
+  const MONTHS=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const DOWS=['일','월','화','수','목','금','토'];
+
+  // Build 42-cell grid
+  const firstDow=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const cells=[];
+  for(let i=0;i<firstDow;i++){const d=new Date(year,month,1-firstDow+i);cells.push({dt:d.toISOString().slice(0,10),own:false});}
+  for(let i=1;i<=daysInMonth;i++){const d=new Date(year,month,i);cells.push({dt:d.toISOString().slice(0,10),own:true});}
+  while(cells.length%7!==0){const n=cells.length-firstDow-daysInMonth+1;const d=new Date(year,month+1,n);cells.push({dt:d.toISOString().slice(0,10),own:false});}
+
+  // Index tasks by date (undone only)
+  const tasksByDate={};
+  D.tasks.filter(t=>!t.done&&t.dueDate).forEach(t=>{
+    if(!tasksByDate[t.dueDate])tasksByDate[t.dueDate]=[];
+    tasksByDate[t.dueDate].push(t);
+  });
+  // Index memos by date
+  const memosByDate={};
+  (D.settings.memos||[]).forEach(m=>{
+    const dt=new Date(m.createdAt).toISOString().slice(0,10);
+    if(!memosByDate[dt])memosByDate[dt]=[];
+    memosByDate[dt].push(m);
+  });
+  // Routines by weekday
+  const routines=D.settings.routines||[];
+
+  // Build calendar grid cells HTML
+  const dowHTML=DOWS.map((d,i)=>`<div class="cal-dow" style="${i===0?'color:#ef4444':i===6?'color:#2563eb':''}">${d}</div>`).join('');
+  const cellsHTML=cells.map(({dt,own})=>{
+    const dayNum=parseInt(dt.slice(8));
+    const dow=new Date(dt+'T00:00:00').getDay();
+    const tasks=tasksByDate[dt]||[];
+    const memos=memosByDate[dt]||[];
+    const dayRoutines=routines.filter(r=>r.enabled!==false&&(r.days?r.days[dow]:true));
+    const isToday=dt===today;
+    const isSel=dt===_calSelDate;
+    const dots=[
+      ...tasks.map(t=>({c:{high:'#dc2626',med:'#2c5f2e',low:'#9ca3af'}[t.priority]||'#2c5f2e'})),
+      ...dayRoutines.map(r=>({c:{morning:'#f59e0b',lunch:'#06b6d4',evening:'#7c3aed'}[r.period]||'#9ca3af'})),
+      ...memos.map(()=>({c:'#ec4899'})),
+    ].slice(0,8);
+    const dotsHTML=dots.map(d=>`<div class="cal-dot" style="background:${d.c}"></div>`).join('');
+    return`<div class="cal-cell${own?'':' other-month'}${isToday?' today':''}${isSel?' cal-selected':''}" onclick="calSelectDate('${dt}')">
+      <div class="cal-dn" style="${dow===0?'color:#ef4444':dow===6?'color:#2563eb':''}">${dayNum}</div>
+      <div class="cal-dots">${dotsHTML}</div>
+    </div>`;
+  }).join('');
+
+  // Selected day detail
+  const selDow=new Date(_calSelDate+'T00:00:00').getDay();
+  const selTasks=tasksByDate[_calSelDate]||[];
+  const selMemos=memosByDate[_calSelDate]||[];
+  const selRoutines=routines.filter(r=>r.enabled!==false&&(r.days?r.days[selDow]:true));
+  const selDateLabel=new Date(_calSelDate+'T00:00:00').toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
+
+  const taskEventsHTML=selTasks.map(t=>{
+    const c={high:'#dc2626',med:'#2c5f2e',low:'#9ca3af'}[t.priority]||'#2c5f2e';
+    return`<div class="cal-event">
+      <div class="cal-event-dot" style="background:${c}"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.title)}</div>
+        ${t.tags?.length?`<div style="color:var(--text3);font-size:10.5px">${t.tags.map(tg=>'#'+esc(tg)).join(' ')}</div>`:''}
+      </div>
+      ${t.priority==='high'?'<span style="font-size:10px">🔴</span>':''}
+    </div>`;
+  }).join('');
+
+  const routineEventsHTML=selRoutines.map(r=>{
+    const icon={morning:'🌅',lunch:'☀️',evening:'🌙'}[r.period]||'⏰';
+    const c={morning:'#f59e0b',lunch:'#06b6d4',evening:'#7c3aed'}[r.period]||'#9ca3af';
+    return`<div class="cal-event">
+      <div class="cal-event-dot" style="background:${c}"></div>
+      <div style="flex:1"><div style="font-weight:600">${icon} ${esc(r.name)}</div><div style="color:var(--text3);font-size:10.5px">${r.time||'--:--'}</div></div>
+    </div>`;
+  }).join('');
+
+  const memoEventsHTML=selMemos.map(m=>`<div class="cal-event">
+    <div class="cal-event-dot" style="background:#ec4899"></div>
+    <div style="flex:1;min-width:0"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📝 ${esc(m.title||'제목 없음')}</div></div>
+  </div>`).join('');
+
+  const noEventsHTML=(!selTasks.length&&!selRoutines.length&&!selMemos.length)
+    ?`<div style="text-align:center;padding:24px 0;color:var(--text3);font-size:12px">이 날에는 일정이 없어요</div>`:'';
+
+  // Legend
+  const legendHTML=`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+    <div style="display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--text2)"><div style="width:8px;height:8px;border-radius:50%;background:#dc2626"></div>중요 할일</div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--text2)"><div style="width:8px;height:8px;border-radius:50%;background:#2c5f2e"></div>할일</div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--text2)"><div style="width:8px;height:8px;border-radius:50%;background:#f59e0b"></div>아침</div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--text2)"><div style="width:8px;height:8px;border-radius:50%;background:#06b6d4"></div>점심</div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--text2)"><div style="width:8px;height:8px;border-radius:50%;background:#7c3aed"></div>저녁</div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--text2)"><div style="width:8px;height:8px;border-radius:50%;background:#ec4899"></div>메모</div>
+  </div>`;
+
+  return`<div class="cal-wrap">
+    <div class="cal-board">
+      <div class="cal-head">
+        <div style="display:flex;align-items:center;gap:8px">
+          <button class="cal-nav-btn" onclick="calNav(-1)">‹</button>
+          <span class="cal-month-title">${year}년 ${MONTHS[month]}</span>
+          <button class="cal-nav-btn" onclick="calNav(1)">›</button>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="calGoToday()">오늘</button>
+          <button class="btn btn-ghost btn-sm" onclick="icsExport()" title="Apple/Google Calendar에서 가져오기 가능한 ICS 파일 다운로드">📥 ICS 내보내기</button>
+        </div>
+      </div>
+      <div class="cal-dow-row">${dowHTML}</div>
+      <div class="cal-cells">${cellsHTML}</div>
+      ${legendHTML}
+    </div>
+    <div class="cal-detail">
+      <div class="cal-detail-title">📅 ${selDateLabel}</div>
+      ${taskEventsHTML}${routineEventsHTML}${memoEventsHTML}${noEventsHTML}
+      ${selTasks.length?`<button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px;font-size:11px" onclick="_calSelDate='${_calSelDate}';setView('todayonly')">☀️ 오늘 뷰로 보기</button>`:''}
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════
 // tip_times: 세션 내 메모리만 사용 (재시작 시 초기화)
@@ -6267,7 +6457,7 @@ function startApp(){
   loadD();
   if(!D.notifications) D.notifications = [];
   // 뷰 기본값
-  const valid=['today','todayonly','all','done','high','dashboard','goals','habits','search','settings','home','time','memo','pomodoro','routine','community'];
+  const valid=['today','todayonly','all','done','high','dashboard','goals','habits','search','settings','home','time','memo','pomodoro','routine','community','calendar'];
   const preferredView=D.settings.currentView||VIEW;
   VIEW=valid.includes(preferredView)?preferredView:'today';
 
