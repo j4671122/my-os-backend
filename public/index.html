@@ -246,14 +246,35 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;b
 .goal-card.drag-over{border-top:3px solid var(--accent)}
 .drag-handle{cursor:grab;color:var(--text3);font-size:12px;padding:0 3px;opacity:0;transition:opacity .15s}
 .task-head:hover .drag-handle{opacity:1}
-/* ── Habit heatmap cells ── */
-.hc2{aspect-ratio:1;border-radius:2px;min-width:0;cursor:pointer;transition:transform .1s,opacity .1s}
-.hc2:hover{transform:scale(1.2)}
-.hc2.empty{background:var(--surface2)}
-.hc2.done{background:var(--accent)}
-.hc2.future{background:transparent;border:1px solid var(--border);cursor:default;pointer-events:none}
-.hc2.today{box-shadow:0 0 0 1.5px var(--accent),0 0 0 3px var(--bg)}
-.hc2.today.done{box-shadow:0 0 0 1.5px #155a17,0 0 0 3px var(--bg)}
+/* ── Habit emoji & day cells ── */
+.habit-emoji{font-size:34px;cursor:pointer;flex-shrink:0;line-height:1;transition:transform .18s;margin-right:4px}
+.habit-emoji:hover{transform:scale(1.18) rotate(-6deg)}
+.habit-days{display:flex;align-items:center;margin:10px 0 4px;gap:0;overflow-x:auto}
+.hd-cell{width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;transition:all .15s;flex-shrink:0;position:relative;user-select:none}
+.hd-cell:hover{transform:scale(1.15)}
+/* Vine */
+.hd-cell.vine{border-radius:50%;border:2px solid #a8d88a;background:var(--surface2)}
+.hd-cell.vine.done{background:#3d8b1e;border-color:#2a6015;font-size:15px;box-shadow:0 2px 8px #3d8b1e55}
+.hd-cell.vine.today:not(.done){border-color:var(--accent);background:var(--accent-light)}
+.vine-line{width:6px;height:3px;background:#c6e8a8;border-radius:2px;flex-shrink:0;margin-bottom:2px}
+.vine-line.done{background:#3d8b1e}
+/* Lego */
+.hd-cell.lego{border-radius:4px;background:#d1d5db;box-shadow:inset 0 -4px 0 #9ca3af;margin:0 2px}
+.hd-cell.lego::after{content:'';position:absolute;top:5px;left:50%;transform:translateX(-50%);width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,.22);border:1px solid rgba(0,0,0,.08)}
+.hd-cell.lego.done{background:#ef4444;box-shadow:inset 0 -4px 0 #b91c1c}
+.hd-cell.lego.done::after{background:rgba(255,255,255,.28)}
+.hd-cell.lego.today:not(.done){background:#3b82f6;box-shadow:inset 0 -4px 0 #1d4ed8}
+.hd-cell.lego.today:not(.done)::after{background:rgba(255,255,255,.28)}
+/* Slime */
+.hd-cell.slime{background:var(--surface2);border:2px solid #86efac;margin:0 1px}
+.hd-cell.slime:nth-child(6n+1){border-radius:40% 60% 55% 45%/50% 45% 55% 50%}
+.hd-cell.slime:nth-child(6n+2){border-radius:55% 45% 40% 60%/45% 55% 50% 50%}
+.hd-cell.slime:nth-child(6n+3){border-radius:60% 40% 50% 50%/55% 50% 45% 50%}
+.hd-cell.slime:nth-child(6n+4){border-radius:45% 55% 45% 55%/50% 50% 50% 50%}
+.hd-cell.slime:nth-child(6n+5){border-radius:50% 50% 60% 40%/40% 60% 50% 50%}
+.hd-cell.slime:nth-child(6n+6){border-radius:50% 50% 40% 60%/55% 45% 55% 45%}
+.hd-cell.slime.done{background:#22c55e;border-color:#15803d;box-shadow:0 3px 10px #22c55e44}
+.hd-cell.slime.today:not(.done){border-color:var(--accent);background:var(--accent-light)}
 
 .view-area{flex:1;overflow-y:auto;padding:20px 24px}
 
@@ -462,17 +483,6 @@ canvas{max-width:100%}
 .habit-today-btn{padding:4px 14px;border-radius:20px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
 .habit-today-btn.done{background:var(--accent);color:#fff;border-color:var(--accent)}
 .habit-today-btn:hover{opacity:.8}
-.habit-stats{display:flex;gap:5px;flex-wrap:wrap;margin:7px 0 6px}
-.habit-stat-pill{font-size:10.5px;color:var(--text2);background:var(--surface2);border-radius:20px;padding:2px 7px;white-space:nowrap}
-.habit-stat-pill strong{color:var(--text);font-weight:700}
-.habit-heatmap{margin-top:4px}
-.habit-hm-months{display:flex;padding-left:18px;gap:2px;margin-bottom:2px}
-.habit-hm-month{flex:1;font-size:9px;color:var(--text3);font-weight:600;min-width:0;white-space:nowrap;overflow:hidden}
-.habit-hm-body{display:flex;gap:3px;align-items:flex-start}
-.habit-dow-labels{display:flex;flex-direction:column;gap:2px;width:16px;flex-shrink:0}
-.habit-dow-lbl{height:10px;font-size:8px;color:var(--text3);display:flex;align-items:center;justify-content:flex-end;line-height:1}
-.habit-hm-cols{display:flex;gap:2px;flex:1;min-width:0}
-.habit-hm-col{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
 
 /* ── Search ── */
 .search-bar{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);display:flex;align-items:center;gap:8px;padding:10px 13px;margin-bottom:14px;transition:border-color .15s}
@@ -4380,7 +4390,8 @@ async function loadCommunityPosts(force=false){
   try{
     const posts=await ApiClient.getCommunityPosts();
     if(Array.isArray(posts)){
-      _communityPosts=posts;
+      const pending=_communityPosts.filter(p=>String(p.id).startsWith('tmp_'));
+      _communityPosts=[...pending,...posts];
       if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
     }
   }catch(e){console.warn('[Community] 로드 실패:',e.message)}
@@ -5137,6 +5148,9 @@ let _habitDragId=null;
 
 function renderHabits(){
   const today=todayStr();
+  const emojis=D.settings.habitEmojis||{};
+  const STYLES=['vine','lego','slime'];
+
   const addBar=`<div class="habit-add-bar">
     <input id="habit-add-inp" placeholder="${t('habitPlaceholder')}" onkeydown="if(event.key==='Enter')addHabit()"/>
     <button class="btn btn-primary btn-sm" onclick="addHabit()">${t('addHabitBtn')}</button>
@@ -5146,81 +5160,44 @@ function renderHabits(){
     return addBar+`<div class="empty"><div class="ei">💪</div><p>${t('habitsEmpty')}</p></div>`;
   }
 
-  const WEEKS=13;
-  const lang=D.settings?.lang||'ko';
-  const DOW_LBLS=lang==='en'?['S','M','T','W','T','F','S']:
-                 lang==='zh'?['日','一','二','三','四','五','六']:
-                             ['일','월','화','수','목','금','토'];
-  const MONTH_LBLS=lang==='en'
-    ?['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-    :lang==='zh'
-    ?['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']
-    :['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-
-  // 13주 그리드: 오늘이 속한 주의 일요일 기준으로 13주 앞
-  const now=new Date();
-  const gridStart=new Date(now);
-  gridStart.setDate(now.getDate()-now.getDay()-12*7);
-
-  const baseDays=[];
-  for(let i=0;i<WEEKS*7;i++){
-    const d=new Date(gridStart);d.setDate(gridStart.getDate()+i);
+  // 최근 7일 (6일전 → 오늘)
+  const days7=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
     const ds=d.toISOString().slice(0,10);
-    baseDays.push({date:ds,dow:d.getDay(),month:d.getMonth(),day:d.getDate(),isToday:ds===today,isFuture:ds>today});
+    days7.push({date:ds,isToday:ds===today});
   }
-  const weeksBase=[];
-  for(let w=0;w<WEEKS;w++) weeksBase.push(baseDays.slice(w*7,(w+1)*7));
-
-  // 월 레이블: 해당 주에 1일이 있으면 그 월 이름, 첫 주는 항상 표시
-  const monthLbls=weeksBase.map((wk,wi)=>{
-    const firstDay=wk.find(d=>d.day===1);
-    if(firstDay) return MONTH_LBLS[firstDay.month];
-    if(wi===0) return MONTH_LBLS[wk[0].month];
-    return '';
-  });
-
-  const dowLabelsHTML=DOW_LBLS.map(l=>`<div class="habit-dow-lbl">${l}</div>`).join('');
-  const monthRowHTML=monthLbls.map(m=>`<div class="habit-hm-month">${m}</div>`).join('');
 
   let html=addBar+`<div class="habit-grid">`;
-  D.habits.forEach(h=>{
+  D.habits.forEach((h,idx)=>{
     const comp=h.completions||{};
-    const days=baseDays.map(d=>({...d,done:!!comp[d.date]}));
-    const wkData=[];
-    for(let w=0;w<WEEKS;w++) wkData.push(days.slice(w*7,(w+1)*7));
-
-    const past=days.filter(d=>!d.isFuture);
     const isDoneToday=!!comp[today];
+    const style=STYLES[idx%3];
+    const emoji=emojis[h.id]||h.emoji||'💪';
 
-    // 현재 스트릭 (오늘부터 역산)
+    // 스트릭 (오늘부터 역산)
     let streak=0;
-    for(let i=past.length-1;i>=0;i--){if(past[i].done)streak++;else break;}
+    const chk=new Date();
+    while(true){
+      const ds=chk.toISOString().slice(0,10);
+      if(comp[ds]){streak++;chk.setDate(chk.getDate()-1);}else break;
+    }
 
-    // 최고 스트릭
-    let best=0,run=0;
-    for(const d of past){if(d.done){run++;if(run>best)best=run;}else run=0;}
-
-    const p30=past.slice(-30),p7=past.slice(-7);
-    const r30=p30.length?Math.round(p30.filter(d=>d.done).length/p30.length*100):0;
-    const r7=p7.length?Math.round(p7.filter(d=>d.done).length/p7.length*100):0;
-    const totalDone=past.filter(d=>d.done).length;
+    // 7-day cell strip
+    let cellsHTML='';
+    days7.forEach((d,ci)=>{
+      const done=!!comp[d.date];
+      const cls=`hd-cell ${style}${done?' done':''}${d.isToday?' today':''}`;
+      cellsHTML+=`<div class="${cls}" onclick="toggleHabitDay('${h.id}','${d.date}')" title="${d.date}">${done?'✓':''}</div>`;
+      if(style==='vine'&&ci<6){
+        const nextDone=!!comp[days7[ci+1].date];
+        cellsHTML+=`<div class="vine-line${done&&nextDone?' done':''}"></div>`;
+      }
+    });
 
     const streakBg=streak>0&&streak%5===0
       ?'linear-gradient(135deg,#ea580c,#d97706)'
       :'linear-gradient(135deg,#22c55e,#16a34a)';
-
-    const colsHTML=wkData.map(wk=>{
-      const cells=wk.map(d=>{
-        let cls='hc2';
-        if(d.isFuture)cls+=' future';
-        else if(d.done)cls+=' done';
-        else cls+=' empty';
-        if(d.isToday)cls+=' today';
-        const click=d.isFuture?'':`onclick="toggleHabitDay('${h.id}','${d.date}')"`;
-        return`<div class="${cls}" title="${d.date}${d.done?' ✓':''}" ${click}></div>`;
-      }).join('');
-      return`<div class="habit-hm-col">${cells}</div>`;
-    }).join('');
 
     html+=`<div class="habit-row" draggable="true"
       ondragstart="onHabitDragStart(event,'${h.id}')"
@@ -5228,26 +5205,14 @@ function renderHabits(){
       ondrop="onHabitDrop(event,'${h.id}')"
       ondragend="onHabitDragEnd(event)">
       <div class="habit-header">
+        <span class="habit-emoji" onclick="changeHabitEmoji('${h.id}')" title="이모티콘 변경">${emoji}</span>
         <span style="cursor:grab;color:var(--text3);font-size:13px;opacity:.4;flex-shrink:0">⠿</span>
         <div class="habit-name">${esc(h.name)}</div>
         ${streak>=1?`<div class="streak-badge" style="background:${streakBg}">🔥 ${streak}${t('dayStreak')}${streak%5===0?' 🎉':''}</div>`:''}
         <button class="habit-today-btn${isDoneToday?' done':''}" onclick="toggleHabitToday('${h.id}')" style="flex-shrink:0;font-size:11px;padding:3px 10px">${isDoneToday?'✓ 완료':'+ 오늘'}</button>
         <button onclick="deleteHabit('${h.id}')" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--text3);padding:2px 4px;border-radius:4px;flex-shrink:0" title="${t('deleteHabit')}">✕</button>
       </div>
-      <div class="habit-stats">
-        <div class="habit-stat-pill">🔥 <strong>${streak}</strong>일 연속</div>
-        <div class="habit-stat-pill">⭐ 최고 <strong>${best}</strong>일</div>
-        <div class="habit-stat-pill">📅 30일 <strong>${r30}%</strong></div>
-        <div class="habit-stat-pill">📊 7일 <strong>${r7}%</strong></div>
-        <div class="habit-stat-pill">✅ 총 <strong>${totalDone}</strong>일</div>
-      </div>
-      <div class="habit-heatmap">
-        <div class="habit-hm-months">${monthRowHTML}</div>
-        <div class="habit-hm-body">
-          <div class="habit-dow-labels">${dowLabelsHTML}</div>
-          <div class="habit-hm-cols">${colsHTML}</div>
-        </div>
-      </div>
+      <div class="habit-days">${cellsHTML}</div>
     </div>`;
   });
   return html+'</div>';
@@ -5266,6 +5231,16 @@ async function addHabit(){
       if(srv?.id) newH.id=srv.id; // 서버 UUID로 교체
     }catch(e){console.warn('[addHabit] 서버 저장 실패:',e.message)}
   }
+}
+
+function changeHabitEmoji(hid){
+  const cur=(D.settings.habitEmojis||{})[hid]||'💪';
+  const em=prompt('이모티콘을 입력하세요',cur);
+  if(!em||!em.trim())return;
+  if(!D.settings.habitEmojis)D.settings.habitEmojis={};
+  D.settings.habitEmojis[hid]=em.trim().slice(0,2);
+  saveD();
+  document.getElementById('view-area').innerHTML=renderHabits();
 }
 
 async function deleteHabit(id){
