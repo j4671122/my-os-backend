@@ -1,0 +1,186 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1777295462194,
+  "projectRoot": "/Users/yajjus_0578/Desktop/내 창작 폴더/my-os-backend",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": ">=18",
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      }
+    ],
+    "frameworks": [],
+    "packageManager": "npm",
+    "runtime": "Node.js 18"
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "vercel dev",
+      "deploy": "vercel --prod"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "public"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "api": {
+      "path": "api",
+      "purpose": "API routes",
+      "fileCount": 8,
+      "lastAccessed": 1777295462072,
+      "keyFiles": [
+        "community.js",
+        "events.js",
+        "folders.js",
+        "goals.js",
+        "habits.js"
+      ]
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 1,
+      "lastAccessed": 1777295462100,
+      "keyFiles": [
+        "index.html"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "public/index.html",
+      "accessCount": 380,
+      "lastAccessed": 1777372146046,
+      "type": "file"
+    },
+    {
+      "path": "vercel.json",
+      "accessCount": 4,
+      "lastAccessed": 1777371495242,
+      "type": "file"
+    },
+    {
+      "path": "api/_lib/cors.js",
+      "accessCount": 3,
+      "lastAccessed": 1777371561271,
+      "type": "file"
+    },
+    {
+      "path": "api/_lib/auth.js",
+      "accessCount": 2,
+      "lastAccessed": 1777371461762,
+      "type": "file"
+    },
+    {
+      "path": "schema_v3.sql",
+      "accessCount": 2,
+      "lastAccessed": 1777371470497,
+      "type": "file"
+    },
+    {
+      "path": "api/habits.js",
+      "accessCount": 1,
+      "lastAccessed": 1777242211543,
+      "type": "file"
+    },
+    {
+      "path": "api/tasks.js",
+      "accessCount": 1,
+      "lastAccessed": 1777242241811,
+      "type": "file"
+    },
+    {
+      "path": "api/community.js",
+      "accessCount": 1,
+      "lastAccessed": 1777242365420,
+      "type": "file"
+    },
+    {
+      "path": "schema_community.sql",
+      "accessCount": 1,
+      "lastAccessed": 1777242375803,
+      "type": "file"
+    },
+    {
+      "path": "README.md",
+      "accessCount": 1,
+      "lastAccessed": 1777295533927,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 1,
+      "lastAccessed": 1777295696928,
+      "type": "file"
+    },
+    {
+      "path": "api/_lib/supabase.js",
+      "accessCount": 1,
+      "lastAccessed": 1777371462131,
+      "type": "file"
+    },
+    {
+      "path": "api/events.js",
+      "accessCount": 1,
+      "lastAccessed": 1777371470146,
+      "type": "file"
+    },
+    {
+      "path": "api/profile.js",
+      "accessCount": 1,
+      "lastAccessed": 1777371512398,
+      "type": "file"
+    },
+    {
+      "path": "api/gcal/auth.js",
+      "accessCount": 1,
+      "lastAccessed": 1777371871281,
+      "type": "file"
+    },
+    {
+      "path": "api/gcal/callback.js",
+      "accessCount": 1,
+      "lastAccessed": 1777371896501,
+      "type": "file"
+    },
+    {
+      "path": "api/gcal/events.js",
+      "accessCount": 1,
+      "lastAccessed": 1777371900267,
+      "type": "file"
+    },
+    {
+      "path": "api/gcal/disconnect.js",
+      "accessCount": 1,
+      "lastAccessed": 1777371901796,
+      "type": "file"
+    },
+    {
+      "path": "schema_gcal.sql",
+      "accessCount": 1,
+      "lastAccessed": 1777371911225,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}
