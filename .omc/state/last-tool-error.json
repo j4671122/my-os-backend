@@ -1,7 +1,0 @@
-{
-  "tool_name": "Read",
-  "tool_input_preview": "{\"file_path\":\"/Users/yajjus_0578/Desktop/내 창작 폴더/my-os-backend/public/index.html\"}",
-  "error": "File content (330.4KB) exceeds maximum allowed size (256KB). Use offset and limit parameters to read specific portions of the file, or search for specific content instead of reading the whole file.",
-  "timestamp": "2026-04-27T13:14:56.521Z",
-  "retry_count": 1
-}
