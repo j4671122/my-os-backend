@@ -141,6 +141,11 @@
     async commentCommunityPost(id, data)  { if (!ONLINE) return null; return api('PATCH', `/api/community?id=${id}&action=comment`, data) },
     async uncommentCommunityPost(id, cid) { if (!ONLINE) return null; return api('PATCH', `/api/community?id=${id}&action=uncomment`, { commentId: cid }) },
     async deleteCommunityPost(id)         { if (!ONLINE) return null; return del(`/api/community?id=${id}`) },
+
+    // ── Google Calendar ────────────────────────────────────
+    async gcalAuthUrl()                { if (!ONLINE) return null; return post('/api/gcal/auth', {}) },
+    async gcalEvents(timeMin, timeMax) { if (!ONLINE) return { events: [], connected: false }; return get(`/api/gcal/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`) },
+    async gcalDisconnect()             { if (!ONLINE) return null; return del('/api/gcal/disconnect') },
   }
 
   // ── 자동 태깅 훅 ───────────────────────────────────────
@@ -179,7 +184,21 @@
   --shadow:0 1px 4px rgba(0,0,0,.07);--shadow-md:0 4px 20px rgba(0,0,0,.10);
   --r:8px;
 }
-body{font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;overflow:hidden;font-size:14px}
+body.dark{
+  --bg:#111210;--surface:#1c1e1b;--surface2:#252722;--surface3:#2e312a;
+  --border:#363830;--border2:#4a4c42;
+  --text:#e4e2dc;--text2:#9a9890;--text3:#5e5e58;
+  --accent:#4ea050;--accent-light:#1a2e1b;--accent2:#e07040;
+  --blue:#4c88f0;--purple:#9965f4;--red:#f05050;--amber:#f0a820;
+  --shadow:0 1px 4px rgba(0,0,0,.3);--shadow-md:0 4px 20px rgba(0,0,0,.4);
+}
+body.dark .home-card{background:linear-gradient(180deg,rgba(38,42,36,.95),rgba(28,32,26,.9));border-color:rgba(255,255,255,.07)}
+body.dark .confirm-box{background:var(--surface);border:1px solid var(--border)}
+body.dark .pomo-time-modal-box{background:var(--surface)}
+body.dark .picker-drum{background:var(--surface2)}
+body.dark .picker-drum::before{background:linear-gradient(to bottom,var(--surface2) 20%,transparent)}
+body.dark .picker-drum::after{background:linear-gradient(to top,var(--surface2) 20%,transparent)}
+body{font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;overflow:hidden;font-size:14px;transition:background .25s,color .25s}
 
 /* ── Sidebar ── */
 .sidebar{width:220px;min-width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;padding:16px 0 20px}
@@ -294,6 +313,8 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;b
 .add-bar select{border:none;outline:none;font-size:12px;font-family:inherit;background:var(--surface2);color:var(--text2);padding:3px 5px;border-radius:4px;cursor:pointer}
 .add-bar .add-btn{background:var(--accent);color:#fff;border:none;border-radius:5px;width:24px;height:24px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s;flex-shrink:0}
 .add-bar .add-btn:hover{background:#234f25}
+.no-date-btn{border:1.5px solid var(--border);border-radius:8px;padding:3px 8px;font-size:11px;color:var(--text3);background:var(--surface2);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s}
+.no-date-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
 
 /* ── Task group ── */
 .task-group{margin-bottom:22px}
@@ -326,7 +347,9 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;b
 /* ── Task detail (accordion) ── */
 .task-detail{max-height:0;overflow:hidden;transition:max-height .3s ease}
 .task-card.open .task-detail{max-height:3000px}
-.detail-inner{border-top:1px solid var(--border);padding:14px 13px;background:#fafaf7;display:flex;flex-direction:column;gap:13px}
+.detail-inner{border-top:1px solid var(--border);padding:14px 13px;background:var(--surface2);display:flex;flex-direction:column;gap:13px}
+.task-title-edit-inp{width:100%;border:none;border-bottom:1.5px solid var(--border);background:transparent;font-size:14px;font-weight:600;font-family:inherit;color:var(--text);padding:4px 2px 6px;outline:none;transition:border-color .15s}
+.task-title-edit-inp:focus{border-color:var(--accent)}
 
 /* Resume bar */
 .resume-bar{background:linear-gradient(135deg,#1a3d1c,#2c5f2e);border-radius:6px;padding:10px 12px;display:flex;align-items:center;gap:10px}
@@ -493,6 +516,11 @@ canvas{max-width:100%}
 .filter-btn:hover,.filter-btn.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent);font-weight:600}
 
 /* ── Home widgets ── */
+.home-greeting{padding:4px 2px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.home-greeting-text{font-size:18px;font-weight:800;letter-spacing:-.4px;color:var(--text)}
+.home-greeting-stats{display:flex;gap:8px;flex-wrap:wrap}
+.hgs-item{font-size:11.5px;color:var(--text3);padding:3px 8px;background:var(--surface);border:1px solid var(--border);border-radius:20px}
+.hgs-item strong{color:var(--text2);font-weight:700}
 .home-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
 .home-card{background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(246,242,236,.82));backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border:1px solid rgba(255,255,255,.7);border-radius:18px;box-shadow:0 10px 32px rgba(67,55,40,.08);padding:16px;position:relative;min-height:160px}
 .home-card.dragging{opacity:.45}
@@ -589,6 +617,8 @@ canvas{max-width:100%}
   .home-grid{grid-template-columns:1fr}
   .home-card.wide{grid-column:span 1}
   .tt-layout{grid-template-columns:1fr}
+  .home-greeting-text{font-size:15px}
+  .home-greeting{flex-direction:column;align-items:flex-start;gap:6px}
   .view-area{padding:14px}
   .dash-grid{grid-template-columns:1fr 1fr!important}
   .chart-row{display:flex;flex-direction:column!important}
@@ -603,7 +633,7 @@ canvas{max-width:100%}
 }
 @media (max-width: 480px){
   .bottom-nav{display:flex}
-  .view-area{padding-bottom:calc(70px + env(safe-area-inset-bottom))}
+  .view-area{padding-bottom:calc(80px + env(safe-area-inset-bottom,20px))!important}
   /* 태그가 많아 세로로 밀릴 때: 제목 위, 태그 아래 */
   .task-head{flex-wrap:wrap}
   .task-title-text{order:1;min-width:0;flex:1 1 50%}
@@ -724,6 +754,8 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
 /* ── Custom Confirm Modal ── */
 .confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:9500;backdrop-filter:blur(2px)}
 .confirm-overlay.show{display:flex}
+.input-modal-field{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;font-size:14px;font-family:inherit;outline:none;background:var(--surface);color:var(--text);transition:border-color .15s}
+.input-modal-field:focus{border-color:var(--accent)}
 .confirm-box{background:var(--surface);border-radius:14px;padding:24px;width:320px;box-shadow:0 8px 40px rgba(0,0,0,.18);animation:authCardIn .2s cubic-bezier(.34,1.56,.64,1)}
 .confirm-box p{font-size:13.5px;color:var(--text);line-height:1.6;margin-bottom:18px;text-align:center}
 .confirm-acts{display:flex;gap:8px;justify-content:center}
@@ -908,6 +940,8 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
 .picker-pad{height:50px;flex-shrink:0}
 .picker-item{height:50px;scroll-snap-align:center;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--text2);cursor:pointer;transition:color .1s,font-size .1s}
 .picker-item.sel{color:var(--accent);font-size:24px}
+.drum-type-inp{width:60px;text-align:center;border:1.5px solid var(--border);border-radius:8px;padding:4px;font-size:14px;font-weight:700;font-family:inherit;outline:none;background:var(--surface);color:var(--text);margin-bottom:6px}
+.drum-type-inp:focus{border-color:var(--accent)}
 .pomo-tool-row{display:flex;gap:8px;justify-content:center;width:100%}
 .pomo-tool-btn{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);font-size:11.5px;font-weight:600;cursor:pointer;transition:all .12s;color:var(--text2);display:flex;align-items:center;gap:4px}
 .pomo-tool-btn.on{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
@@ -1158,6 +1192,7 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
     <button class="mob-menu-btn" onclick="toggleMobileSidebar()" aria-label="메뉴">☰</button>
     <span class="mob-title" id="mob-view-title">오늘</span>
     <div class="mob-actions">
+      <button class="bell-btn" id="theme-toggle-btn-mob" onclick="toggleTheme()" title="다크/라이트 모드" style="font-size:16px">🌙</button>
       <button class="bell-btn" id="mob-bell-btn" onclick="toggleNotifPanel(event)" title="알림">🔔<span class="bell-badge" id="b-mob-notif" style="display:none"></span></button>
     </div>
   </div>
@@ -1165,6 +1200,7 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
     <div><h1 id="view-title">오늘</h1><span class="sub" id="view-sub"></span></div>
     <div class="topbar-right">
       <div class="coach-tip" id="coach-tip" style="display:none" onclick="dismissTip()"></div>
+      <button class="bell-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="다크/라이트 모드" style="font-size:16px">🌙</button>
       <button class="bell-btn" id="bell-btn" onclick="toggleNotifPanel(event)" title="오늘 알람">🔔<span class="bell-badge" id="b-topbar-notif" style="display:none"></span></button>
       <button class="btn btn-ghost btn-sm" onclick="openReportModal()">📄 리포트</button>
       <button class="btn btn-ghost btn-sm" onclick="openContentModal()">✍️ 글 생성</button>
@@ -1214,6 +1250,16 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
     </div>
   </div>
 </div>
+<div class="confirm-overlay" id="input-modal" onclick="if(event.target===this)_inputCancel()">
+  <div class="confirm-box">
+    <p id="input-modal-msg" style="margin-bottom:10px"></p>
+    <input id="input-modal-inp" class="input-modal-field" type="text" onkeydown="if(event.key==='Enter')_inputOk();if(event.key==='Escape')_inputCancel()"/>
+    <div class="confirm-acts" style="margin-top:12px">
+      <button class="btn btn-ghost" onclick="_inputCancel()">취소</button>
+      <button class="btn btn-primary" onclick="_inputOk()">확인</button>
+    </div>
+  </div>
+</div>
 
 <!-- Pomodoro Custom Time Modal (드럼롤 피커) -->
 <div class="pomo-time-modal" id="pomo-time-modal" onclick="if(event.target===this)closePomoTimeModal()">
@@ -1226,6 +1272,7 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
     <div class="picker-wrap">
       <div class="picker-col">
         <label>🎯 집중</label>
+        <input type="number" class="drum-type-inp" min="1" max="120" value="25" oninput="syncDrumFromInput('work',this.value)"/>
         <div class="picker-drum" id="drum-work">
           <div class="picker-selector"></div>
           <div class="picker-scroll" id="ps-work" onscroll="onDrumScroll('work',this)"></div>
@@ -1234,6 +1281,7 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
       </div>
       <div class="picker-col">
         <label>☕ 짧은 휴식</label>
+        <input type="number" class="drum-type-inp" min="1" max="60" value="5" oninput="syncDrumFromInput('break',this.value)"/>
         <div class="picker-drum" id="drum-break">
           <div class="picker-selector"></div>
           <div class="picker-scroll" id="ps-break" onscroll="onDrumScroll('break',this)"></div>
@@ -1242,6 +1290,7 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
       </div>
       <div class="picker-col">
         <label>🌿 긴 휴식</label>
+        <input type="number" class="drum-type-inp" min="1" max="120" value="15" oninput="syncDrumFromInput('long',this.value)"/>
         <div class="picker-drum" id="drum-long">
           <div class="picker-selector"></div>
           <div class="picker-scroll" id="ps-long" onscroll="onDrumScroll('long',this)"></div>
@@ -1410,7 +1459,7 @@ const AUTO_TAGS={
 };
 const TAG_COLORS=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#0891b2','#6366f1','#2c5f2e'];
 
-let D={tasks:[],folders:[],goals:[],habits:[],tagReg:{},events:[],settings:{name:'',goal:'',notionKey:'',notionDb:''}};
+let D={tasks:[],folders:[],goals:[],habits:[],tagReg:{},events:[],gcalConnected:false,gcalEvents:[],settings:{name:'',goal:'',notionKey:'',notionDb:''}};
 let VIEW='today';
 let _communityPosts=[];
 let _communityLoading=false;
@@ -1440,6 +1489,8 @@ const DEFAULT_HOME_WIDGETS=[
 const HOME_WIDGET_LIBRARY=[
   {type:'profile',icon:'👤',title:'프로필 카드',sub:'큰 프로필과 칭호를 보여줘요',variant:'wide'},
   {type:'clock',icon:'🕒',title:'현재 시간',sub:'큰 시계와 날짜를 보여줘요',variant:'normal'},
+  {type:'focus',icon:'🔥',title:'오늘의 포커스',sub:'가장 중요한 할일을 보여줘요',variant:'normal'},
+  {type:'habits',icon:'🌱',title:'오늘 습관',sub:'오늘 습관 체크를 홈에서 바로',variant:'normal'},
   {type:'tracker',icon:'📊',title:'데일리 트래커',sub:'오늘 10분 블록 요약을 보여줘요',variant:'tall'},
   {type:'goals',icon:'🎯',title:'목표 진행',sub:'핵심 목표의 달성률을 요약해요',variant:'normal'},
   {type:'memo',icon:'📝',title:'메모',sub:'최근 메모를 홈에서 바로 봐요',variant:'normal'},
@@ -1455,9 +1506,10 @@ let _homeWidgetDragId=null;
 let _trackerRangeStart=null;
 let _trackerLabelEditId=null;
 let _trackerDate=null; // 세션 변수 — 앱 시작 시마다 오늘로 초기화
+let _newTaskNoDate=false; // 날짜 미선택 토글
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
-function todayStr(){return new Date().toISOString().slice(0,10)}
+function todayStr(){const n=new Date();return`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function trackerDateKey(date=new Date()){
   const d=new Date(date);
@@ -1501,7 +1553,6 @@ function saveD(){
           homeWidgets:  D.settings.homeWidgets,
           timeTrackerLabels: D.settings.timeTrackerLabels,
           timeTrackerData: D.settings.timeTrackerData,
-          timeTrackerDate: D.settings.timeTrackerDate,
           timeTrackerSelectedLabel: D.settings.timeTrackerSelectedLabel,
           overdueColor: D.settings.overdueColor,
           upcomingColor: D.settings.upcomingColor,
@@ -1525,7 +1576,6 @@ function loadD(){
     homeWidgets:DEFAULT_HOME_WIDGETS.map(widget=>({...widget})),
     timeTrackerLabels:DEFAULT_TRACKER_LABELS.map(label=>({...label})),
     timeTrackerData:{},
-    timeTrackerDate:'',
     timeTrackerSelectedLabel:'study',
     overdueColor:'#dc2626',upcomingColor:'#2563eb',
     memos:[],
@@ -1542,7 +1592,6 @@ function loadD(){
     D.settings.timeTrackerLabels=DEFAULT_TRACKER_LABELS.map(label=>({...label}));
   }
   if(!D.settings.timeTrackerData||typeof D.settings.timeTrackerData!=='object') D.settings.timeTrackerData={};
-  if(!D.settings.timeTrackerDate) D.settings.timeTrackerDate=trackerDateKey();
   if(!D.settings.timeTrackerSelectedLabel) D.settings.timeTrackerSelectedLabel=D.settings.timeTrackerLabels[0]?.id||'study';
   if(!D.settings.joinedAt) D.settings.joinedAt = Date.now();
   if(!D.notifications) D.notifications = [];
@@ -1880,7 +1929,7 @@ async function addTask(){
   const autoTags=autoDetectTags(title);
   const task={
     id:uid(),title,done:false,priority,folderId,goalId:null,
-    dueDate:document.getElementById('new-task-date')?.value||'',sessionUrl:'',
+    dueDate:_newTaskNoDate?'':todayStr(),sessionUrl:'',
     notes:'',subtasks:[],links:[],tags:autoTags,
     isRecurring:false,createdAt:Date.now(),completedAt:null,completionHour:null
   };
@@ -1903,6 +1952,11 @@ async function addTask(){
   }
 }
 function handleAddKey(e){if(e.key==='Enter')addTask()}
+function toggleNewTaskNoDate(){
+  _newTaskNoDate=!_newTaskNoDate;
+  const btn=document.querySelector('.no-date-btn');
+  if(btn){btn.classList.toggle('active',_newTaskNoDate);btn.textContent=_newTaskNoDate?'📌 날짜 없음':'📅 오늘';}
+}
 function toggleDone(id,e){
   e&&e.stopPropagation();
   const t=D.tasks.find(t=>t.id===id);if(!t)return;
@@ -1983,6 +2037,7 @@ function updateTaskField(id,field,value){
     updateBadges();
     if(['folderId','goalId','priority','dueDate'].includes(field)) renderDetail(id);
     if(['folderId','priority','dueDate'].includes(field)) renderSidebar();
+    if(field==='title'){const el=document.querySelector(`#card-${id} .task-title-text`);if(el)el.textContent=value;}
     scheduleTaskSync(id);
   }
 }
@@ -3016,6 +3071,10 @@ function renderSettings(){
     <div class="settings-card">
       <h4>화면 설정</h4>
       <div class="toggle-row">
+        <div class="toggle-info"><div class="toggle-label">다크 모드</div><div class="toggle-sub">어두운 배경 테마로 전환</div></div>
+        <label class="tog"><input type="checkbox" ${s.theme==='dark'?'checked':''} onchange="saveSetting('theme',this.checked?'dark':'light');applyTheme(this.checked?'dark':'light')"><span class="tog-slider"></span></label>
+      </div>
+      <div class="toggle-row">
         <div class="toggle-info"><div class="toggle-label">오늘 뷰에 완료 항목 표시</div><div class="toggle-sub">완료된 할일도 함께 보이기</div></div>
         <label class="tog"><input type="checkbox" ${s.showDoneInToday?'checked':''} onchange="saveSetting('showDoneInToday',this.checked)"><span class="tog-slider"></span></label>
       </div>
@@ -3101,6 +3160,30 @@ function renderSettings(){
       ${providerRow('🐱','GitHub',githubLinked,'github',false)}
       ${providerRow('📷','Instagram',false,'instagram',true)}
       ${providerRow('👥','Facebook',false,'facebook',true)}
+    </div>
+    <div class="settings-card" style="margin-top:12px">
+      <h4>캘린더 연동</h4>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:4px">연동하면 캘린더 뷰에서 Google 일정을 함께 볼 수 있어요.</p>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:12px">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" fill="#fff" stroke="#e0dbd4"/><rect x="3" y="4" width="18" height="6" rx="2" fill="#4285F4"/><rect x="3" y="8" width="18" height="2" fill="#4285F4"/><line x1="8" y1="4" x2="8" y2="2" stroke="#4285F4" stroke-width="1.5" stroke-linecap="round"/><line x1="16" y1="4" x2="16" y2="2" stroke="#4285F4" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <div>
+            <div style="font-size:13px;font-weight:600">Google 캘린더</div>
+            <div style="font-size:11px;color:var(--text3)">${D.gcalConnected?'연동됨 · 캘린더 뷰에 일정 표시 중':'미연동'}</div>
+          </div>
+        </div>
+        ${D.gcalConnected
+          ?`<button class="btn btn-ghost btn-sm" onclick="disconnectGcal()" style="color:var(--red)">해제</button>`
+          :`<button class="btn btn-ghost btn-sm" onclick="connectGcal()">연결하기</button>`
+        }
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 0;opacity:.5">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:22px;line-height:1">🍎</span>
+          <div><div style="font-size:13px;font-weight:600">Apple 캘린더</div><div style="font-size:11px;color:var(--text3)">준비 중 (CalDAV)</div></div>
+        </div>
+        <span style="font-size:11px;background:var(--surface2);color:var(--text3);padding:3px 10px;border-radius:20px;font-weight:600">준비 중</span>
+      </div>
     </div>`;
   }
   else if(tab==='notion'){
@@ -3647,6 +3730,25 @@ document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{
 function showToast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3000)}
 
 // ── Custom confirm (replaces browser confirm()) ─────────────
+function showInputModal(msg, defaultVal=''){
+  return new Promise(resolve=>{
+    document.getElementById('input-modal-msg').textContent=msg;
+    const inp=document.getElementById('input-modal-inp');
+    inp.value=defaultVal;
+    document.getElementById('input-modal').classList.add('show');
+    setTimeout(()=>inp.focus(),80);
+    window._inputResolve=resolve;
+  });
+}
+function _inputOk(){
+  const val=document.getElementById('input-modal-inp').value;
+  document.getElementById('input-modal').classList.remove('show');
+  window._inputResolve?.(val);window._inputResolve=null;
+}
+function _inputCancel(){
+  document.getElementById('input-modal').classList.remove('show');
+  window._inputResolve?.(null);window._inputResolve=null;
+}
 function showConfirm(msg, dangerLabel=''){
   return new Promise(resolve=>{
     document.getElementById('confirm-msg').textContent=msg;
@@ -3832,7 +3934,7 @@ function render(){
   if(VIEW==='pomodoro'){va.innerHTML=renderPomodoro();return}
   if(VIEW==='routine'){va.innerHTML=renderRoutine();return}
   if(VIEW==='community'){va.innerHTML=renderCommunity();loadCommunityPosts();return}
-  if(VIEW==='calendar'){va.innerHTML=renderCalendar();return}
+  if(VIEW==='calendar'){setTimeout(()=>loadGcalEvents(),0);va.innerHTML=renderCalendar();return}
   va.innerHTML=renderTaskView();
   openTaskIds.forEach(id=>{
     const card=document.getElementById('card-'+id);
@@ -3846,10 +3948,33 @@ function render(){
 // ═══════════════════════════════════════════════════════════
 let _homeClockInterval=null;
 
+function homeGreeting(){
+  const h=new Date().getHours();
+  const name=D.settings.name?D.settings.name.split(' ')[0]:'';
+  const greet=h<6?'🌙 심야에도 열심이네요'
+    :h<11?'☀️ 좋은 아침이에요'
+    :h<14?'🌤 좋은 오전이에요'
+    :h<18?'🌅 좋은 오후예요'
+    :h<22?'🌆 좋은 저녁이에요'
+    :'🌙 오늘도 수고했어요';
+  const today=todayStr();
+  const todayTasks=D.tasks.filter(t=>!t.done&&t.dueDate===today);
+  const doneTasks=D.tasks.filter(t=>t.done&&t.dueDate===today);
+  const overdue=D.tasks.filter(t=>!t.done&&t.dueDate&&t.dueDate<today);
+  return`<div class="home-greeting">
+    <div class="home-greeting-text">${greet}${name?', '+name:''}!</div>
+    <div class="home-greeting-stats">
+      <span class="hgs-item">📋 오늘 <strong>${todayTasks.length}</strong>개</span>
+      <span class="hgs-item">✅ 완료 <strong>${doneTasks.length}</strong>개</span>
+      ${overdue.length?`<span class="hgs-item" style="color:var(--red)">⚠️ 초과 <strong>${overdue.length}</strong>개</span>`:''}
+      ${_pomoState.sessions?`<span class="hgs-item" style="color:var(--accent)">⏱ 세션 <strong>${_pomoState.sessions}</strong>회</span>`:''}
+    </div>
+  </div>`;
+}
 function renderHome(){
   const widgets=D.settings.homeWidgets||DEFAULT_HOME_WIDGETS.map(w=>({...w}));
   document.getElementById('home-fab').classList.add('show');
-  return`<div class="home-grid" id="home-widget-grid">${widgets.map(w=>renderHomeWidget(w)).join('')}</div>`;
+  return homeGreeting()+`<div class="home-grid" id="home-widget-grid">${widgets.map(w=>renderHomeWidget(w)).join('')}</div>`;
 }
 
 function renderHomeWidget(w){
@@ -3871,7 +3996,7 @@ function renderHomeWidget(w){
 }
 
 function homeWidgetTitle(type){
-  return{profile:'👤 프로필',clock:'🕒 현재 시간',tracker:'📊 데일리 트래커',goals:'🎯 목표 진행',memo:'📝 메모',pomodoro:'⏱ 포모도로'}[type]||type;
+  return{profile:'👤 프로필',clock:'🕒 현재 시간',tracker:'📊 데일리 트래커',goals:'🎯 목표 진행',memo:'📝 메모',pomodoro:'⏱ 포모도로',focus:'🔥 오늘의 포커스',habits:'🌱 오늘 습관'}[type]||type;
 }
 
 function homeWidgetContent(w){
@@ -3882,6 +4007,8 @@ function homeWidgetContent(w){
     case 'goals':   return renderHomeGoals();
     case 'memo':    return renderHomeMemo();
     case 'pomodoro':return renderHomePomodoro();
+    case 'focus':   return renderHomeFocus();
+    case 'habits':  return renderHomeHabits();
     default: return `<div class="home-empty">위젯 타입: ${esc(w.type)}</div>`;
   }
 }
@@ -3908,10 +4035,17 @@ function renderHomeClock(){
   const hh=String(now.getHours()).padStart(2,'0');
   const mm=String(now.getMinutes()).padStart(2,'0');
   const ss=String(now.getSeconds()).padStart(2,'0');
+  const h=now.getHours();
+  const greeting=h<6?'심야':h<12?'오전':h<18?'오후':'저녁';
   const dateStr=now.toLocaleDateString(({ko:'ko-KR',en:'en-US',zh:'zh-CN'})[D.settings?.lang||'ko']||'ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  const today=todayStr();
+  const todayDone=D.tasks.filter(t=>t.done&&t.dueDate===today).length;
+  const todayTotal=D.tasks.filter(t=>!t.done&&t.dueDate===today).length+todayDone;
   return`<div id="hw-clock-inner">
+    <div style="font-size:10.5px;font-weight:600;color:var(--text3);margin-bottom:4px;letter-spacing:.3px">${greeting} 시간이에요</div>
     <div class="clock-big" id="hw-clock-time">${hh}:${mm}<span style="font-size:22px;font-weight:400;color:var(--text3)">:${ss}</span></div>
     <div class="clock-date" id="hw-clock-date">${dateStr}</div>
+    ${todayTotal?`<div style="margin-top:8px;height:5px;background:var(--surface2);border-radius:999px;overflow:hidden"><div style="height:100%;width:${Math.round(todayDone/todayTotal*100)}%;background:var(--accent);border-radius:999px;transition:width .3s"></div></div><div style="font-size:10.5px;color:var(--text3);margin-top:4px">${todayDone}/${todayTotal} 완료</div>`:''}
   </div>`;
 }
 
@@ -3988,6 +4122,48 @@ function renderHomePomodoro(){
       <button onclick="setView('pomodoro');event.stopPropagation()" style="background:none;border:1.5px solid var(--border);border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center">⏭</button>
     </div>
     <div style="font-size:11px;color:var(--text3)">${s.sessions}회 완료 · ${Math.floor(s.sessions/4)} 사이클</div>
+  </div>`;
+}
+
+function renderHomeFocus(){
+  const today=todayStr();
+  const pri={high:0,med:1,low:2};
+  const tasks=D.tasks.filter(t=>!t.done&&(t.dueDate===today||(!t.dueDate)))
+    .sort((a,b)=>(pri[a.priority]||1)-(pri[b.priority]||1));
+  if(!tasks.length)return`<div class="home-empty" onclick="setView('today')" style="cursor:pointer"><div style="font-size:28px;margin-bottom:8px">🎉</div><div style="font-size:12px">오늘 할일 없음!</div></div>`;
+  const focus=tasks[0];
+  const rest=tasks.slice(1,4);
+  const pColor={high:'var(--red)',med:'var(--accent)',low:'var(--text3)'}[focus.priority]||'var(--accent)';
+  return`<div style="display:flex;flex-direction:column;gap:10px">
+    <div onclick="setView('today');event.stopPropagation()" style="padding:12px;background:rgba(44,95,46,.08);border:1.5px solid ${pColor};border-radius:12px;cursor:pointer">
+      <div style="font-size:11px;font-weight:700;color:${pColor};margin-bottom:4px">${{high:'🔴 최우선',med:'• 오늘',low:'• 언제든'}[focus.priority]||'오늘'}</div>
+      <div style="font-size:13.5px;font-weight:700;line-height:1.3">${esc(focus.title)}</div>
+      ${focus.dueDate?'':` <div style="font-size:10.5px;color:var(--text3);margin-top:3px">📌 날짜 없음</div>`}
+    </div>
+    ${rest.length?`<div style="display:flex;flex-direction:column;gap:5px">${rest.map(t=>`<div style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text2);padding:4px 0;border-bottom:1px solid var(--border)"><span style="color:${{high:'var(--red)',med:'var(--text3)',low:'var(--text3)'}[t.priority]||'var(--text3)'};font-size:10px">●</span>${esc(t.title)}</div>`).join('')}</div>`:''}
+    <div style="font-size:11px;color:var(--text3);text-align:right">${tasks.length}개 남음 · <span style="cursor:pointer;color:var(--accent)" onclick="setView('today')">전체 보기 →</span></div>
+  </div>`;
+}
+
+function renderHomeHabits(){
+  const habits=D.habits||[];
+  if(!habits.length)return`<div class="home-empty" onclick="setView('habits')" style="cursor:pointer"><div style="font-size:28px;margin-bottom:8px">🌱</div><div style="font-size:12px">습관을 추가해보세요</div></div>`;
+  const today=todayStr();
+  const emojis=D.settings.habitEmojis||{};
+  const doneCount=habits.filter(h=>(h.completions||{})[today]).length;
+  return`<div style="display:flex;flex-direction:column;gap:6px">
+    <div style="font-size:11px;color:var(--text3);margin-bottom:2px">${doneCount}/${habits.length} 완료</div>
+    ${habits.slice(0,5).map(h=>{
+      const done=(h.completions||{})[today];
+      const cnt=Object.keys(h.completions||{}).length;
+      return`<div style="display:flex;align-items:center;gap:9px;padding:5px 0;border-bottom:1px solid var(--border)">
+        <button onclick="toggleHabitToday('${h.id}');setTimeout(()=>{if(VIEW==='home')render()},150);event.stopPropagation()" style="width:26px;height:26px;border-radius:50%;border:2px solid ${done?'var(--accent)':'var(--border)'};background:${done?'var(--accent)':'transparent'};cursor:pointer;font-size:12px;flex-shrink:0;color:#fff;display:flex;align-items:center;justify-content:center;transition:all .15s">${done?'✓':''}</button>
+        <span style="font-size:15px">${emojis[h.id]||'💪'}</span>
+        <span style="flex:1;font-size:12.5px;font-weight:${done?'400':'600'};color:${done?'var(--text3)':'var(--text)'};text-decoration:${done?'line-through':'none'}">${esc(h.name)}</span>
+        <span style="font-size:10px;color:var(--text3)">${cnt}회</span>
+      </div>`;
+    }).join('')}
+    ${habits.length>5?`<div style="font-size:11px;color:var(--text3);text-align:center;cursor:pointer;margin-top:2px" onclick="setView('habits')">+${habits.length-5}개 더</div>`:''}
   </div>`;
 }
 
@@ -4508,6 +4684,7 @@ function submitAddRoutine(){
   const days=DAY_LABELS.map((_,i)=>!!document.getElementById('rdday-'+i)?.classList.contains('on'));
   if(!D.settings.routines)D.settings.routines=[];
   D.settings.routines.push({id:uid(),name,period:_addRoutinePeriod,time,days,enabled:true,checkedDates:{}});
+  D.settings.routines.sort((a,b)=>(a.time||'00:00').localeCompare(b.time||'00:00'));
   saveD();
   closeAddRoutineModal();
   if(VIEW==='routine')document.getElementById('view-area').innerHTML=renderRoutine();
@@ -4924,6 +5101,10 @@ function renderPomodoro(){
       <button class="pomo-tool-btn${s.alarmEnabled?' on':''}" onclick="togglePomoAlarm()" title="단계 완료 시 알람음">🔔 알람</button>
       <button class="pomo-tool-btn${s.alarmRequireDismiss?' on':''}" onclick="togglePomoRequireDismiss()" title="알람 끄기 전까지 다음 단계 대기">⏱ 수동</button>
     </div>
+    <div class="pomo-tool-row" style="margin-top:4px">
+      <button class="pomo-tool-btn" onclick="pomoRestartSet()" title="현재 세트(세션) 재시작">🔁 세트 재시작</button>
+      <button class="pomo-tool-btn" onclick="pomoRestartCycle()" title="전체 사이클 재시작">♻️ 사이클 재시작</button>
+    </div>
     <div class="pomo-presets">
       ${s.presets.map((p,i)=>`<button class="pomo-preset${s.selectedPreset===i?' active':''}" onclick="pomoSelectPreset(${i})">${p.label}분</button>`).join('')}
     </div>
@@ -5013,7 +5194,7 @@ function pomoReset(){
   const preset=_pomoState.presets[_pomoState.selectedPreset];
   _pomoState.phase='work';
   _pomoState.remaining=(preset?.work||25)*60;_pomoState.total=(preset?.work||25)*60;
-  showToast('⏸ 5분 내로 다시 시작하면 세트와 사이클이 이어집니다');
+  if(_pomoState.sessions>0||_pomoState.halfCycles>0)showToast('⏸ 5분 내로 다시 시작하면 세트와 사이클이 이어집니다');
   // 5분 후 사이클/세션 리셋
   setTimeout(()=>{
     if(!_pomoState.running&&_pomoState.pausedAt&&Date.now()-_pomoState.pausedAt>=5*60*1000){
@@ -5025,6 +5206,25 @@ function pomoReset(){
   if(VIEW==='pomodoro')document.getElementById('view-area').innerHTML=renderPomodoro();
   if(VIEW==='home')render();
 }
+function pomoRestartSet(){
+  clearInterval(_pomoState.interval);_pomoState.interval=null;_pomoState.running=false;
+  _pomoState.sessions=0;_pomoState.halfCycles=0;_pomoState.pausedAt=null;
+  const preset=_pomoState.presets[_pomoState.selectedPreset];
+  _pomoState.phase='work';
+  _pomoState.remaining=(preset?.work||25)*60;_pomoState.total=(preset?.work||25)*60;
+  if(VIEW==='pomodoro')document.getElementById('view-area').innerHTML=renderPomodoro();
+  showToast('세트 재시작');
+}
+function pomoRestartCycle(){
+  clearInterval(_pomoState.interval);_pomoState.interval=null;_pomoState.running=false;
+  _pomoState.sessions=0;_pomoState.halfCycles=0;_pomoState.completedCycles=0;
+  _pomoState.burnoutWarning=false;_pomoState.pausedAt=null;
+  const preset=_pomoState.presets[_pomoState.selectedPreset];
+  _pomoState.phase='work';
+  _pomoState.remaining=(preset?.work||25)*60;_pomoState.total=(preset?.work||25)*60;
+  if(VIEW==='pomodoro')document.getElementById('view-area').innerHTML=renderPomodoro();
+  showToast('사이클 재시작');
+}
 function togglePomoRequireDismiss(){
   _pomoState.alarmRequireDismiss=!_pomoState.alarmRequireDismiss;
   if(VIEW==='pomodoro')document.getElementById('view-area').innerHTML=renderPomodoro();
@@ -5035,8 +5235,10 @@ function dismissPomoAlarm(){
   if(VIEW==='home')render();
   if(_pomoState.autoCycle)setTimeout(()=>pomoToggle(),800);
 }
-function openPomoCycleModal(){
-  const n=parseInt(prompt(`사이클당 세션(동그라미) 수 (현재: ${_pomoState.cycleSize||4})`,'4'));
+async function openPomoCycleModal(){
+  const val=await showInputModal(`사이클당 세션(동그라미) 수 (현재: ${_pomoState.cycleSize||4})`,String(_pomoState.cycleSize||4));
+  if(val===null)return;
+  const n=parseInt(val);
   if(n>=1&&n<=8){_pomoState.cycleSize=n;if(VIEW==='pomodoro')document.getElementById('view-area').innerHTML=renderPomodoro();}
 }
 
@@ -5085,29 +5287,43 @@ function buildDrum(scrollId,min,max,initial,step=1){
   html+='<div class="picker-pad"></div><div class="picker-pad"></div>';
   scroll.innerHTML=html;
   const idx=Math.round((initial-min)/step);
-  scroll.scrollTop=idx*50;
+  scroll.scrollTop=(idx+1)*50; // +1 패딩 오프셋 보정
   highlightDrum(scroll,idx);
 }
 function highlightDrum(scroll,idx){
   scroll.querySelectorAll('.picker-item').forEach((el,i)=>el.classList.toggle('sel',i===idx));
 }
 function onDrumScroll(key,scroll){
-  const idx=Math.round(scroll.scrollTop/50);
+  const idx=Math.max(0,Math.round(scroll.scrollTop/50)-1); // 패딩 오프셋 보정
   highlightDrum(scroll,idx);
   const item=scroll.querySelectorAll('.picker-item')[idx];
   if(item)_drumValues[key]=parseInt(item.dataset.val);
 }
+function syncDrumFromInput(key,val){
+  const v=Math.max(1,parseInt(val)||1);
+  _drumValues[key]=v;
+  const scrollId={work:'ps-work',break:'ps-break',long:'ps-long'}[key];
+  const min={work:1,break:1,long:1}[key];
+  const scroll=document.getElementById(scrollId);
+  if(!scroll)return;
+  const idx=Math.max(0,v-min);
+  scroll.scrollTop=(idx+1)*50;
+  highlightDrum(scroll,idx);
+}
 function openPomoTimeModal(){
   const preset=_pomoState.presets[_pomoState.selectedPreset];
   document.getElementById('pomo-time-modal').classList.add('show');
-  // 빌드 후 스크롤 위치 잡기 (requestAnimationFrame으로 렌더 후 실행)
   requestAnimationFrame(()=>{
-    buildDrum('ps-work',1,120,preset?.work||25);
-    buildDrum('ps-break',1,60,preset?.shortBreak||5);
-    buildDrum('ps-long',1,120,preset?.longBreak||15);
-    _drumValues.work=preset?.work||25;
-    _drumValues.break=preset?.shortBreak||5;
-    _drumValues.long=preset?.longBreak||15;
+    const w=preset?.work||25,sb=preset?.shortBreak||5,lb=preset?.longBreak||15;
+    buildDrum('ps-work',1,120,w);
+    buildDrum('ps-break',1,60,sb);
+    buildDrum('ps-long',1,120,lb);
+    _drumValues.work=w;_drumValues.break=sb;_drumValues.long=lb;
+    // 숫자 입력창 동기화
+    const inps=document.querySelectorAll('.drum-type-inp');
+    if(inps[0])inps[0].value=w;
+    if(inps[1])inps[1].value=sb;
+    if(inps[2])inps[2].value=lb;
   });
 }
 function closePomoTimeModal(){
@@ -5185,7 +5401,7 @@ function renderTaskView(){
   const tasks=filteredTasks();
   const addBar=`<div class="add-bar">
     <input id="new-task-input" placeholder="${t('addTask')}" onkeydown="handleAddKey(event)"/>
-    <input type="date" id="new-task-date" title="마감일 (비워두면 언제든 할 일)" style="border:1px solid var(--border);border-radius:8px;padding:4px 6px;font-size:11px;color:var(--text2);background:var(--surface);cursor:pointer;max-width:120px"/>
+    <button class="no-date-btn${_newTaskNoDate?' active':''}" onclick="toggleNewTaskNoDate()" title="활성화 시 날짜 없이 추가 (언제든 할 일)">${_newTaskNoDate?'📌 날짜 없음':'📅 오늘'}</button>
     <select id="new-task-priority"><option value="med">${t('normal')}</option><option value="high">${t('important')}</option><option value="low">${t('lowP')}</option></select>
     <select id="new-task-folder"><option value="">${t('folderDefault')}</option>${D.folders.map(f=>`<option value="${f.id}">${esc(f.name)}</option>`).join('')}</select>
     <button class="add-btn" onclick="addTask()">+</button></div>`;
@@ -5281,6 +5497,8 @@ function renderDetail(tid){
   const goalOptions=D.goals.map(g=>`<option value="${g.id}"${task.goalId===g.id?' selected':''}>${esc(g.name)}</option>`).join('');
   const suggestedTags=autoDetectTags(task.title,task.notes).filter(tg=>!task.tags.includes(tg));
   el.innerHTML=`
+    <input class="task-title-edit-inp" value="${esc(task.title)}" onclick="event.stopPropagation()"
+      onchange="updateTaskField('${task.id}','title',this.value)" placeholder="할일 이름"/>
     <div class="resume-bar">
       <div class="rt"><strong>${t('resumeTitle')}</strong>${pct!==null?`${t('progressLabel')} ${pct}% · ${t('remainingLabel')} ${subTotal-subDone}`:t('noSubtask')}</div>
       <button class="resume-btn" onclick="resumeSession('${task.id}',event)">${t('openSession')}</button>
@@ -5292,7 +5510,7 @@ function renderDetail(tid){
       ${task.sessionUrl?`<button class="session-open-btn" onclick="window.open('${esc(task.sessionUrl)}','_blank');event.stopPropagation()">${t('openBtn')}</button>`:''}
     </div>
     <div class="opts-row">
-      <div class="opt-item"><label>📅</label><input type="date" value="${task.dueDate||''}" onchange="updateTaskField('${task.id}','dueDate',this.value)"/></div>
+      <div class="opt-item"><label>📅</label><input type="date" value="${task.dueDate||''}" onchange="updateTaskField('${task.id}','dueDate',this.value)"/><button onclick="updateTaskField('${task.id}','dueDate','');this.closest('.opt-item').querySelector('input').value='';event.stopPropagation()" title="날짜 없음" style="border:none;background:none;cursor:pointer;color:var(--text3);font-size:11px;padding:2px 4px">✕날짜</button></div>
       <div class="opt-item"><label>🚦</label><select onchange="updateTaskField('${task.id}','priority',this.value)"><option value="high"${task.priority==='high'?' selected':''}>${t('prHigh')}</option><option value="med"${task.priority==='med'?' selected':''}>${t('prMed')}</option><option value="low"${task.priority==='low'?' selected':''}>${t('prLow')}</option></select></div>
       <div class="opt-item"><label>📁</label><select onchange="updateTaskField('${task.id}','folderId',this.value||null)"><option value=""${!task.folderId?' selected':''}>${t('noneOpt')}</option>${folderOptions}</select></div>
       <div class="opt-item"><label>🎯</label><select onchange="updateTaskField('${task.id}','goalId',this.value||null)"><option value=""${!task.goalId?' selected':''}>${t('noneOpt')}</option>${goalOptions}</select></div>
@@ -5790,9 +6008,9 @@ async function addHabit(){
   }
 }
 
-function changeHabitEmoji(hid){
+async function changeHabitEmoji(hid){
   const cur=(D.settings.habitEmojis||{})[hid]||'💪';
-  const em=prompt('이모티콘을 입력하세요',cur);
+  const em=await showInputModal('이모티콘을 입력하세요',cur);
   if(!em||!em.trim())return;
   if(!D.settings.habitEmojis)D.settings.habitEmojis={};
   D.settings.habitEmojis[hid]=em.trim().slice(0,2);
@@ -6293,6 +6511,7 @@ function calNav(delta){
   _calMonth+=delta;
   if(_calMonth<0){_calMonth=11;_calYear--;}
   if(_calMonth>11){_calMonth=0;_calYear++;}
+  loadGcalEvents();
   document.getElementById('view-area').innerHTML=renderCalendar();
 }
 function calSelectDate(dt){
@@ -6303,6 +6522,7 @@ function calGoToday(){
   _calYear=new Date().getFullYear();
   _calMonth=new Date().getMonth();
   _calSelDate=todayStr();
+  loadGcalEvents();
   document.getElementById('view-area').innerHTML=renderCalendar();
 }
 function icsExport(){
@@ -6323,6 +6543,42 @@ function icsExport(){
   showToast('📅 ICS 파일 내보내기 완료! 캘린더 앱에서 가져오기 하세요.');
 }
 
+// ── Google Calendar 연동 ──────────────────────────────────────
+async function connectGcal(){
+  if(!ApiClient.getToken())return showToast('❌ 로그인 후 사용 가능합니다');
+  showToast('Google 캘린더 연결 중...');
+  try{
+    const {url,error}=await ApiClient.gcalAuthUrl();
+    if(error)return showToast('❌ '+error);
+    window.location.href=url;
+  }catch(e){showToast('❌ 연결 실패: '+e.message)}
+}
+async function disconnectGcal(){
+  if(!confirm('Google 캘린더 연동을 해제할까요?'))return;
+  try{
+    await ApiClient.gcalDisconnect();
+    D.gcalConnected=false;D.gcalEvents=[];
+    showToast('✅ Google 캘린더 연동 해제됨');
+    setView('settings');
+  }catch(e){showToast('❌ 해제 실패: '+e.message)}
+}
+async function loadGcalEvents(){
+  if(!ApiClient.getToken()||window.GUEST_MODE)return;
+  try{
+    const y=_calYear,m=_calMonth;
+    const timeMin=new Date(y,m,1).toISOString();
+    const timeMax=new Date(y,m+1,0,23,59,59).toISOString();
+    const {events,connected,reauth}=await ApiClient.gcalEvents(timeMin,timeMax);
+    if(reauth){D.gcalConnected=false;D.gcalEvents=[];return}
+    D.gcalConnected=!!connected;
+    D.gcalEvents=events||[];
+    if(connected&&VIEW==='calendar'){
+      const va=document.getElementById('view-area');
+      if(va)va.innerHTML=renderCalendar();
+    }
+  }catch(e){console.warn('[GCal]',e.message)}
+}
+
 function renderCalendar(){
   const today=todayStr();
   const year=_calYear,month=_calMonth;
@@ -6332,10 +6588,11 @@ function renderCalendar(){
   // Build 42-cell grid
   const firstDow=new Date(year,month,1).getDay();
   const daysInMonth=new Date(year,month+1,0).getDate();
+  const fmtD=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   const cells=[];
-  for(let i=0;i<firstDow;i++){const d=new Date(year,month,1-firstDow+i);cells.push({dt:d.toISOString().slice(0,10),own:false});}
-  for(let i=1;i<=daysInMonth;i++){const d=new Date(year,month,i);cells.push({dt:d.toISOString().slice(0,10),own:true});}
-  while(cells.length%7!==0){const n=cells.length-firstDow-daysInMonth+1;const d=new Date(year,month+1,n);cells.push({dt:d.toISOString().slice(0,10),own:false});}
+  for(let i=0;i<firstDow;i++){const d=new Date(year,month,1-firstDow+i);cells.push({dt:fmtD(d),own:false});}
+  for(let i=1;i<=daysInMonth;i++){cells.push({dt:`${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`,own:true});}
+  while(cells.length%7!==0){const n=cells.length-firstDow-daysInMonth+1;const d=new Date(year,month+1,n);cells.push({dt:fmtD(d),own:false});}
 
   // Index tasks by date (undone only)
   const tasksByDate={};
@@ -6346,9 +6603,17 @@ function renderCalendar(){
   // Index memos by date
   const memosByDate={};
   (D.settings.memos||[]).forEach(m=>{
-    const dt=new Date(m.createdAt).toISOString().slice(0,10);
+    const _md=new Date(m.createdAt);const dt=fmtD(_md);
     if(!memosByDate[dt])memosByDate[dt]=[];
     memosByDate[dt].push(m);
+  });
+  // GCal events by date
+  const gcalByDate={};
+  (D.gcalEvents||[]).forEach(ev=>{
+    const dt=ev.start?.date||(ev.start?.dateTime?fmtD(new Date(ev.start.dateTime)):null);
+    if(!dt)return;
+    if(!gcalByDate[dt])gcalByDate[dt]=[];
+    gcalByDate[dt].push(ev);
   });
   // Routines by weekday
   const routines=D.settings.routines||[];
@@ -6367,6 +6632,7 @@ function renderCalendar(){
       ...tasks.map(t=>({c:{high:'#dc2626',med:'#2c5f2e',low:'#9ca3af'}[t.priority]||'#2c5f2e'})),
       ...dayRoutines.map(r=>({c:{morning:'#f59e0b',lunch:'#06b6d4',evening:'#7c3aed'}[r.period]||'#9ca3af'})),
       ...memos.map(()=>({c:'#ec4899'})),
+      ...(gcalByDate[dt]||[]).map(()=>({c:'#4285F4'})),
     ].slice(0,8);
     const dotsHTML=dots.map(d=>`<div class="cal-dot" style="background:${d.c}"></div>`).join('');
     return`<div class="cal-cell${own?'':' other-month'}${isToday?' today':''}${isSel?' cal-selected':''}" onclick="calSelectDate('${dt}')">
@@ -6380,6 +6646,7 @@ function renderCalendar(){
   const selTasks=tasksByDate[_calSelDate]||[];
   const selMemos=memosByDate[_calSelDate]||[];
   const selRoutines=routines.filter(r=>r.enabled!==false&&(r.days?r.days[selDow]:true));
+  const selGcal=gcalByDate[_calSelDate]||[];
   const selDateLabel=new Date(_calSelDate+'T00:00:00').toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
 
   const taskEventsHTML=selTasks.map(t=>{
@@ -6408,7 +6675,18 @@ function renderCalendar(){
     <div style="flex:1;min-width:0"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📝 ${esc(m.title||'제목 없음')}</div></div>
   </div>`).join('');
 
-  const noEventsHTML=(!selTasks.length&&!selRoutines.length&&!selMemos.length)
+  const gcalEventsHTML=selGcal.map(ev=>{
+    const time=ev.start?.date?'종일':new Date(ev.start.dateTime).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+    return`<div class="cal-event">
+      <div class="cal-event-dot" style="background:#4285F4"></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(ev.summary||'(제목 없음)')}</div>
+        <div style="color:var(--text3);font-size:10.5px">${time}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const noEventsHTML=(!selTasks.length&&!selRoutines.length&&!selMemos.length&&!selGcal.length)
     ?`<div style="text-align:center;padding:24px 0;color:var(--text3);font-size:12px">이 날에는 일정이 없어요</div>`:'';
 
   // Legend
@@ -6419,6 +6697,7 @@ function renderCalendar(){
     <div style="display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--text2)"><div style="width:8px;height:8px;border-radius:50%;background:#06b6d4"></div>점심</div>
     <div style="display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--text2)"><div style="width:8px;height:8px;border-radius:50%;background:#7c3aed"></div>저녁</div>
     <div style="display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--text2)"><div style="width:8px;height:8px;border-radius:50%;background:#ec4899"></div>메모</div>
+    ${D.gcalConnected?`<div style="display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--text2)"><div style="width:8px;height:8px;border-radius:50%;background:#4285F4"></div>Google 캘린더</div>`:''}
   </div>`;
 
   return`<div class="cal-wrap">
@@ -6440,7 +6719,7 @@ function renderCalendar(){
     </div>
     <div class="cal-detail">
       <div class="cal-detail-title">📅 ${selDateLabel}</div>
-      ${taskEventsHTML}${routineEventsHTML}${memoEventsHTML}${noEventsHTML}
+      ${taskEventsHTML}${routineEventsHTML}${memoEventsHTML}${gcalEventsHTML}${noEventsHTML}
       ${selTasks.length?`<button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px;font-size:11px" onclick="_calSelDate='${_calSelDate}';setView('todayonly')">☀️ 오늘 뷰로 보기</button>`:''}
     </div>
   </div>`;
@@ -6453,8 +6732,27 @@ function renderCalendar(){
 loadOpenState();
 
 // 인증 완료 후 startApp()에서 실제 앱 시작
+function applyTheme(theme){
+  document.body.classList.toggle('dark',theme==='dark');
+  const ico=theme==='dark'?'☀️':'🌙';
+  ['theme-toggle-btn','theme-toggle-btn-mob'].forEach(id=>{const b=document.getElementById(id);if(b)b.textContent=ico;});
+}
+function toggleTheme(){
+  const next=(D.settings.theme==='dark')?'light':'dark';
+  D.settings.theme=next;saveD();applyTheme(next);
+}
 function startApp(){
   loadD();
+  applyTheme(D.settings.theme||'light');
+  // ── Google Calendar OAuth 완료 처리 ─────────────────────
+  const _urlP=new URLSearchParams(window.location.search);
+  if(_urlP.get('gcal_connected')==='true'){
+    history.replaceState({},'','/');
+    setTimeout(()=>showToast('✅ Google 캘린더 연결 완료! 캘린더 뷰에서 일정을 확인하세요.'),800);
+  }else if(_urlP.get('gcal_error')){
+    history.replaceState({},'','/');
+    setTimeout(()=>showToast('❌ Google 캘린더 연결 실패: '+_urlP.get('gcal_error')),800);
+  }
   if(!D.notifications) D.notifications = [];
   // 뷰 기본값
   const valid=['today','todayonly','all','done','high','dashboard','goals','habits','search','settings','home','time','memo','pomodoro','routine','community','calendar'];
@@ -6484,6 +6782,8 @@ function startApp(){
   renderSidebar();
   render();
   showCoachTip();
+  // Google Calendar 연동 상태 초기화 (설정 탭에서 정확히 표시되도록)
+  setTimeout(()=>loadGcalEvents(),1500);
 }
 
 // auto-refresh coach tip every 10 min
