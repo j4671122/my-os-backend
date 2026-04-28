@@ -3,9 +3,14 @@
   "version": "1.0.0",
   "description": "내 운영체제 — Backend API",
   "private": true,
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
-    "@supabase/supabase-js": "^2.43.0"
+    "@supabase/supabase-js": "^2.43.0",
+    "dotenv": "^17.4.2",
+    "google-auth-library": "^10.6.2",
+    "googleapis": "^171.4.0"
   },
   "devDependencies": {
     "vercel": "^34.0.0"
