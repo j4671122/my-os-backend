@@ -91,7 +91,7 @@ const useStore = create((set, get) => ({
         folders: Array.isArray(folders) ? folders : [],
         habits:  Array.isArray(habits)  ? habits  : [],
       })
-      if (profile) {
+      if (profile && profile.id && !profile.error) {
         set({ profile })
         const prefs = profile.preferences || {}
         set(s => ({ settings: { ...s.settings, ...prefs,
