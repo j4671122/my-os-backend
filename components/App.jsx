@@ -15,13 +15,17 @@ export default function App() {
   useEffect(() => {
     const sb = getSupabaseBrowser()
 
-    sb.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setUser(session.user, session.access_token)
-        loadFromServer(session.access_token)
-      }
-      setAuthReady(true)
-    })
+    sb.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (session) {
+          setUser(session.user, session.access_token)
+          loadFromServer(session.access_token)
+        }
+      })
+      .catch(e => {
+        console.warn('[Auth] getSession failed:', e.message)
+      })
+      .finally(() => setAuthReady(true))
 
     const { data: { subscription } } = sb.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import useStore from '@/store/useStore'
 import { api } from '@/lib/apiClient'
 import { getSupabaseBrowser } from '@/lib/supabase-browser'
@@ -127,7 +127,7 @@ async function notionUpload(key, dbId, title, content) {
 
 export default function SettingsView() {
   const {
-    tasks, habits, settings,
+    tasks, habits, settings, token, loadFromServer,
     setSetting, setSettings, clearAuth,
     setTasks, setGoals, setFolders, setHabits,
     notifications, clearNotifications,
@@ -143,7 +143,6 @@ export default function SettingsView() {
   const [notionDb,     setNotionDb]     = useState(settings.notionDb ||'')
   const [notionSaved,  setNotionSaved]  = useState(false)
   const [loadingBadges,setLoadingBadges]= useState(false)
-  const fileRef = useRef(null)
 
   async function saveProfile() {
     setSaving(true)
@@ -169,7 +168,7 @@ export default function SettingsView() {
 
   function setAvatar(emoji) {
     setSetting('avatar', emoji)
-    api.patch('/api/profile', { preferences:{ avatar:emoji } }).catch(()=>{})
+    api.patch('/api/profile', { avatar:emoji }).catch(()=>{})
   }
 
   function setAvatarBg(idx) {
@@ -197,28 +196,10 @@ export default function SettingsView() {
     finally { setLoadingBadges(false) }
   }
 
-  function handleExport() {
-    const blob = new Blob([JSON.stringify({ tasks, habits, settings }, null, 2)], { type:'application/json' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `my-os-${new Date().toISOString().slice(0,10)}.json`
-    a.click(); URL.revokeObjectURL(a.href)
-  }
-
-  function handleImport(e) {
-    const file = e.target.files?.[0]; if (!file) return
-    const reader = new FileReader()
-    reader.onload = ev => {
-      try {
-        const d = JSON.parse(ev.target.result)
-        if (d.tasks)    setTasks(d.tasks)
-        if (d.habits)   setHabits(d.habits)
-        if (d.settings) setSettings(d.settings)
-        alert('✅ 가져오기 완료 (서버 동기화 없음)')
-      } catch { alert('파일 형식이 올바르지 않아요') }
-    }
-    reader.readAsText(file)
-    e.target.value = ''
+  async function reloadServerData() {
+    if (!token) return alert('로그인 후 서버 데이터를 불러올 수 있어요')
+    await loadFromServer(token)
+    alert('✅ 서버 데이터로 새로고침 완료')
   }
 
   async function handleReset() {
@@ -499,13 +480,11 @@ export default function SettingsView() {
             할일 {tasks.length}개 · 완료 {tasks.filter(t=>t.done).length}개 · 습관 {habits.length}개
           </div>
           <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-            <button className="btn btn-ghost btn-sm" onClick={handleExport}>📥 내보내기 (JSON)</button>
-            <button className="btn btn-ghost btn-sm" onClick={()=>fileRef.current?.click()}>📤 가져오기 (JSON)</button>
+            <button className="btn btn-ghost btn-sm" onClick={reloadServerData}>서버에서 다시 불러오기</button>
             <button className="btn btn-sm btn-danger" onClick={handleReset}>⚠️ 전체 초기화</button>
           </div>
-          <input ref={fileRef} type="file" accept=".json" style={{display:'none'}} onChange={handleImport}/>
           <p style={{fontSize:11.5,color:'var(--text3)',marginTop:10,lineHeight:1.6}}>
-            가져오기는 로컬에만 반영됩니다. 초기화는 서버 데이터도 삭제됩니다.
+            데이터는 서버에 저장됩니다. 초기화는 서버 데이터도 삭제됩니다.
           </p>
         </div>
 

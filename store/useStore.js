@@ -1,6 +1,38 @@
 'use client'
 import { create } from 'zustand'
 
+let preferencesSaveTimer = null
+let pendingPreferencesPatch = {}
+
+function schedulePreferencesSave(get, patch) {
+  const { token, user, isGuest } = get()
+  if (!token || !user || isGuest) return
+
+  const latest = get().settings || {}
+  pendingPreferencesPatch = patch ? { ...pendingPreferencesPatch, ...patch } : { ...latest }
+  clearTimeout(preferencesSaveTimer)
+  preferencesSaveTimer = setTimeout(async () => {
+    try {
+      const preferences = { ...pendingPreferencesPatch }
+      pendingPreferencesPatch = {}
+      await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${get().token}`,
+        },
+        body: JSON.stringify({ preferences }),
+      })
+    } catch (e) {
+      console.warn('[preferencesSave]', e.message)
+    }
+  }, 500)
+}
+
+function saveNotificationState(get, notifications) {
+  schedulePreferencesSave(get, { notifications })
+}
+
 const DEFAULT_SETTINGS = {
   name: '', goal: '', userTag: '',
   avatar: '😊', bio: '', avatarImg: '', avatarBg: 0, avatarBgGrad: null,
@@ -94,7 +126,8 @@ const useStore = create((set, get) => ({
       if (profile && profile.id && !profile.error) {
         set({ profile })
         const prefs = profile.preferences || {}
-        set(s => ({ settings: { ...s.settings, ...prefs,
+        const { notifications, ...settingsPrefs } = prefs
+        set(s => ({ settings: { ...s.settings, ...settingsPrefs,
           name:        profile.display_name || '',
           userTag:     profile.user_tag     || '',
           avatar:      profile.avatar       || '😊',
@@ -103,7 +136,10 @@ const useStore = create((set, get) => ({
           permission:  profile.permission   || 'user',
           aiPersonality: profile.ai_personality || 'default',
         }}))
+        if (Array.isArray(notifications)) set({ notifications })
         if (!profile.user_tag) set({ showOnboarding: true })
+      } else if (!profile?.error) {
+        set({ showOnboarding: true })
       }
     } catch (e) {
       console.error('[loadFromServer]', e.message)
@@ -145,21 +181,37 @@ const useStore = create((set, get) => ({
   toggleNotifPanel: ()          => set(s => ({ notifPanelOpen: !s.notifPanelOpen })),
 
   // ── 설정 액션 ────────────────────────────────────────────
-  setSetting:  (key, val)       => set(s => ({ settings: { ...s.settings, [key]: val } })),
-  setSettings: (patch)          => set(s => ({ settings: { ...s.settings, ...patch } })),
+  setSetting:  (key, val)       => {
+    set(s => ({ settings: { ...s.settings, [key]: val } }))
+    schedulePreferencesSave(get, { [key]: val })
+  },
+  setSettings: (patch)          => {
+    set(s => ({ settings: { ...s.settings, ...patch } }))
+    schedulePreferencesSave(get, patch)
+  },
 
   // ── 알림 액션 ────────────────────────────────────────────
-  setNotifications:   (n)           => set({ notifications: n }),
-  pushNotification:   (msg, type='info') => set(s => ({
-    notifications: [...(s.notifications||[]), {
+  setNotifications:   (n)           => {
+    set({ notifications: n })
+    saveNotificationState(get, n)
+  },
+  pushNotification:   (msg, type='info') => {
+    const next = [...(get().notifications || []), {
       id:   Date.now().toString(36) + Math.random().toString(36).slice(2,5),
       msg, type, time: Date.now(), read: false,
     }]
-  })),
-  markNotifRead:      (id)          => set(s => ({
-    notifications: s.notifications.map(n => n.id===id ? {...n, read:true} : n)
-  })),
-  clearNotifications: ()            => set({ notifications: [] }),
+    set({ notifications: next })
+    saveNotificationState(get, next)
+  },
+  markNotifRead:      (id)          => {
+    const next = get().notifications.map(n => n.id===id ? {...n, read:true} : n)
+    set({ notifications: next })
+    saveNotificationState(get, next)
+  },
+  clearNotifications: ()            => {
+    set({ notifications: [] })
+    saveNotificationState(get, [])
+  },
 }))
 
 export default useStore
