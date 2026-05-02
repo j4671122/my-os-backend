@@ -66,8 +66,7 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;b
 .mob-title{flex:1;font-size:16px;font-weight:800;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mob-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
 /* ── Sidebar 드로어 backdrop ── */
-.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:290}
-.sidebar-overlay.show{display:block}
+.sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:290}
 /* ── 바텀 네비게이션 ── */
 .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:calc(56px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--border);z-index:200;justify-content:space-around;align-items:flex-start;padding:4px 2px 0;padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -2px 10px rgba(0,0,0,.07)}
 .bn-item{display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 4px;cursor:pointer;border-radius:8px;flex:1;min-width:0;border:none;background:none;font-family:inherit;transition:background .1s}
@@ -849,8 +848,7 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
 /* ══════════════════════════════════════════════════════════
    AUTH SCREEN (로그인/회원가입)
 ══════════════════════════════════════════════════════════ */
-#auth-screen{position:fixed;inset:0;z-index:9000;background:linear-gradient(135deg,#1a3d1c 0%,#2c5f2e 40%,#1e4a20 100%);display:flex;align-items:center;justify-content:center;transition:opacity .4s;font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif}
-#auth-screen.hidden{opacity:0;pointer-events:none}
+.auth-screen{position:fixed;inset:0;z-index:9000;background:linear-gradient(135deg,#1a3d1c 0%,#2c5f2e 40%,#1e4a20 100%);display:flex;align-items:center;justify-content:center;transition:opacity .4s;font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif}
 .auth-card{background:#fff;border-radius:20px;padding:40px;width:360px;box-shadow:0 24px 80px rgba(0,0,0,.25);animation:authCardIn .4s cubic-bezier(.34,1.56,.64,1)}
 @keyframes authCardIn{from{opacity:0;transform:translateY(30px) scale(.95)}to{opacity:1;transform:none}}
 .auth-logo{text-align:center;margin-bottom:28px}
@@ -872,14 +870,12 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
 .auth-submit{width:100%;background:#2c5f2e;color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;font-family:inherit;transition:background .15s}
 .auth-submit:hover{background:#234f25}
 .auth-submit:disabled{opacity:.6;cursor:not-allowed}
-.auth-error{background:#fde8e4;color:#dc2626;border-radius:8px;padding:9px 12px;font-size:12.5px;margin-bottom:12px;display:none}
-.auth-error.show{display:block}
+.auth-error{background:#fde8e4;color:#dc2626;border-radius:8px;padding:9px 12px;font-size:12.5px;margin-bottom:12px}
 
 /* ══════════════════════════════════════════════════════════
    ONBOARDING MODAL (최초 가입 시 프로필 설정)
 ══════════════════════════════════════════════════════════ */
-#onboarding-overlay{position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;transition:opacity .3s}
-#onboarding-overlay.hidden{opacity:0;pointer-events:none}
+.onboarding-overlay{position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;transition:opacity .3s}
 .onb-card{background:#fff;border-radius:20px;padding:36px;width:400px;max-width:90vw;box-shadow:0 24px 80px rgba(0,0,0,.2);animation:authCardIn .4s cubic-bezier(.34,1.56,.64,1)}
 .onb-title{font-size:20px;font-weight:800;color:#1a3d1c;margin-bottom:4px}
 .onb-sub{font-size:13px;color:#888;margin-bottom:24px}

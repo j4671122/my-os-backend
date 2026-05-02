@@ -7,13 +7,11 @@ const AVATARS = ['😊','😎','🥳','🤓','🦊','🐼','🦁','🐯','🐧',
 
 export default function OnboardingModal() {
   const { setProfile, setSettings, setShowOnboarding } = useStore()
-  const [tag, setTag]           = useState('')
-  const [name, setName]         = useState('')
-  const [avatar, setAvatar]     = useState('😊')
-  const [bio, setBio]           = useState('')
-  const [tagStatus, setTagStatus] = useState(null) // null | 'ok' | 'taken' | 'invalid'
-  const [loading, setLoading]   = useState(false)
-  const [error, setError]       = useState('')
+  const [tag, setTag]             = useState('')
+  const [avatar, setAvatar]       = useState('😊')
+  const [tagStatus, setTagStatus] = useState(null)
+  const [loading, setLoading]     = useState(false)
+  const [error, setError]         = useState('')
 
   async function checkTag(value) {
     const clean = value.replace(/^@/, '').toLowerCase()
@@ -28,11 +26,9 @@ export default function OnboardingModal() {
     if (tagStatus !== 'ok') return
     setLoading(true); setError('')
     try {
-      const profile = await api.post('/api/profile', {
-        user_tag: tag, display_name: name, avatar, bio,
-      })
+      const profile = await api.post('/api/profile', { user_tag: tag, avatar })
       setProfile(profile)
-      setSettings({ name: profile.display_name, userTag: profile.user_tag, avatar: profile.avatar, bio: profile.bio })
+      setSettings({ name: profile.display_name, userTag: profile.user_tag, avatar: profile.avatar })
       setShowOnboarding(false)
     } catch (err) {
       setError(err.message)
@@ -41,39 +37,54 @@ export default function OnboardingModal() {
     }
   }
 
+  const tagHint = tagStatus === 'ok' ? '✓ 사용 가능해요'
+    : tagStatus === 'taken'   ? '이미 사용 중인 태그예요'
+    : tagStatus === 'invalid' ? '형식이 올바르지 않아요'
+    : ''
+
   return (
-    <div className="modal-overlay">
-      <div className="modal onboarding-modal">
-        <h2>👋 환영해요!</h2>
-        <p>프로필을 설정하고 시작해볼까요?</p>
+    <div className="onboarding-overlay">
+      <div className="onb-card">
+        <div className="onb-title">👋 환영해요!</div>
+        <div className="onb-sub">프로필을 설정해주세요. 나중에 언제든 바꿀 수 있어요.</div>
+
+        {error && <div className="auth-error">{error}</div>}
+
         <form onSubmit={handleSubmit}>
-          <div className="avatar-picker">
-            {AVATARS.map(a => (
-              <button key={a} type="button"
-                className={avatar === a ? 'selected' : ''}
-                onClick={() => setAvatar(a)}>{a}</button>
-            ))}
-          </div>
-          <input
-            placeholder="이름 (닉네임)"
-            value={name} onChange={e => setName(e.target.value)} required
-          />
-          <div className="tag-input-wrap">
-            <span>@</span>
+          <div className="onb-field">
+            <label>
+              유저 태그{' '}
+              <span style={{color:'#888',fontWeight:400}}>(영문 소문자·숫자·_ / 3~20자)</span>
+            </label>
             <input
-              placeholder="유저태그 (영문소문자, 숫자, _)"
-              value={tag}
+              type="text" placeholder="예: allen_dev" value={tag} maxLength={20}
               onChange={e => checkTag(e.target.value)}
-              minLength={3} maxLength={20} required
+              style={{width:'100%',border:'1.5px solid #e0dbd4',borderRadius:9,padding:'10px 13px',fontSize:14,fontFamily:'inherit',outline:'none',textTransform:'lowercase',boxSizing:'border-box'}}
             />
-            {tagStatus === 'ok'      && <span className="tag-ok">✓ 사용 가능</span>}
-            {tagStatus === 'taken'   && <span className="tag-err">이미 사용 중</span>}
-            {tagStatus === 'invalid' && <span className="tag-err">형식 오류</span>}
+            {tagHint && (
+              <div className="onb-tag-hint" style={{color: tagStatus==='ok' ? '#2c5f2e' : '#dc2626', fontSize:12, marginTop:4}}>
+                {tagHint}
+              </div>
+            )}
           </div>
-          <textarea placeholder="한 줄 소개 (선택)" value={bio} onChange={e => setBio(e.target.value)} rows={2} />
-          {error && <p className="auth-error">{error}</p>}
-          <button type="submit" disabled={loading || tagStatus !== 'ok'}>
-            {loading ? '저장 중...' : '시작하기'}
+
+          <div className="onb-field">
+            <label>아바타 선택</label>
+            <div className="onb-avatar-row">
+              {AVATARS.map(a => (
+                <div key={a} onClick={() => setAvatar(a)} style={{
+                  fontSize:22, cursor:'pointer', padding:'4px 6px', borderRadius:8,
+                  border: avatar===a ? '2px solid #2c5f2e' : '2px solid transparent',
+                  background: avatar===a ? '#e8f5e9' : 'transparent',
+                }}>
+                  {a}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <button type="submit" className="onb-submit" disabled={loading || tagStatus !== 'ok'}>
+            {loading ? '저장 중...' : '시작하기 🚀'}
           </button>
         </form>
       </div>
