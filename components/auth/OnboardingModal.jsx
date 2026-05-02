@@ -1,24 +1,35 @@
 'use client'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { api } from '@/lib/apiClient'
 import useStore from '@/store/useStore'
 
 const AVATARS = ['😊','😎','🥳','🤓','🦊','🐼','🦁','🐯','🐧','🦄','🌟','🔥']
 
 export default function OnboardingModal() {
-  const { setProfile, setSettings, setShowOnboarding } = useStore()
+  const { profile, setProfile, setSettings, setShowOnboarding } = useStore()
   const [tag, setTag]             = useState('')
   const [avatar, setAvatar]       = useState('😊')
   const [tagStatus, setTagStatus] = useState(null)
   const [loading, setLoading]     = useState(false)
   const [error, setError]         = useState('')
+  const checkSeq = useRef(0)
 
   async function checkTag(value) {
-    const clean = value.replace(/^@/, '').toLowerCase()
+    const clean = value.replace(/^@/, '').toLowerCase().trim()
+    const seq = ++checkSeq.current
     setTag(clean)
+    setError('')
     if (clean.length < 3) { setTagStatus(null); return }
-    const res = await api.get(`/api/profile?check=@${clean}`)
-    setTagStatus(res.available ? 'ok' : (res.error ? 'invalid' : 'taken'))
+    setTagStatus('checking')
+    try {
+      const res = await api.get(`/api/profile?check=${encodeURIComponent('@' + clean)}`)
+      if (seq !== checkSeq.current) return
+      setTagStatus(res.available ? 'ok' : (res.error ? 'invalid' : 'taken'))
+    } catch (err) {
+      if (seq !== checkSeq.current) return
+      setTagStatus('invalid')
+      setError(err.message || '태그 확인에 실패했어요')
+    }
   }
 
   async function handleSubmit(e) {
@@ -26,9 +37,11 @@ export default function OnboardingModal() {
     if (tagStatus !== 'ok') return
     setLoading(true); setError('')
     try {
-      const profile = await api.post('/api/profile', { user_tag: tag, avatar })
-      setProfile(profile)
-      setSettings({ name: profile.display_name, userTag: profile.user_tag, avatar: profile.avatar })
+      const savedProfile = profile?.id
+        ? await api.patch('/api/profile', { user_tag: tag, avatar })
+        : await api.post('/api/profile', { user_tag: tag, avatar })
+      setProfile(savedProfile)
+      setSettings({ name: savedProfile.display_name, userTag: savedProfile.user_tag, avatar: savedProfile.avatar })
       setShowOnboarding(false)
     } catch (err) {
       setError(err.message)
@@ -37,7 +50,8 @@ export default function OnboardingModal() {
     }
   }
 
-  const tagHint = tagStatus === 'ok' ? '✓ 사용 가능해요'
+  const tagHint = tagStatus === 'checking' ? '확인 중...'
+    : tagStatus === 'ok' ? '✓ 사용 가능해요'
     : tagStatus === 'taken'   ? '이미 사용 중인 태그예요'
     : tagStatus === 'invalid' ? '형식이 올바르지 않아요'
     : ''

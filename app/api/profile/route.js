@@ -52,7 +52,11 @@ export async function GET(request) {
     const tag = check.replace(/^@/, '').toLowerCase().trim()
     if (!tag)          return Response.json({ available: false, error: '태그를 입력해주세요' })
     if (!TAG_RE.test(tag)) return Response.json({ available: false, error: '영문 소문자, 숫자, _ 만 사용 (3~20자)' })
-    const { data } = await supabase.from('profiles').select('id').eq('user_tag', tag).maybeSingle()
+    const currentUser = await getAuthUser(request)
+    let query = supabase.from('profiles').select('id').eq('user_tag', tag)
+    if (currentUser?.id) query = query.neq('id', currentUser.id)
+    const { data, error } = await query.maybeSingle()
+    if (error) return Response.json({ available: false, error: error.message }, { status: 500 })
     return Response.json({ available: !data })
   }
 
