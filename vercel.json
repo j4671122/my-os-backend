@@ -1,23 +1,3 @@
 {
-  "version": 2,
-  "rewrites": [
-    { "source": "/api/ai/badges",        "destination": "/api/ai?action=badges" },
-    { "source": "/api/ai/report",        "destination": "/api/ai?action=report" },
-    { "source": "/api/ai/suggest",       "destination": "/api/ai?action=suggest" },
-    { "source": "/api/ai/tag",           "destination": "/api/ai?action=tag" },
-    { "source": "/api/gcal/auth",        "destination": "/api/gcal?action=auth" },
-    { "source": "/api/gcal/callback",    "destination": "/api/gcal?action=callback" },
-    { "source": "/api/gcal/disconnect",  "destination": "/api/gcal?action=disconnect" },
-    { "source": "/api/gcal/events",      "destination": "/api/gcal?action=events" }
-  ],
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin",  "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,PATCH,DELETE,OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization, x-user-id" }
-      ]
-    }
-  ]
+  "framework": "nextjs"
 }
