@@ -609,6 +609,7 @@ canvas{max-width:100%}
 .tt-summary-row{display:flex;align-items:center;gap:8px}
 .tt-summary-bar{height:8px;flex:1;background:var(--surface2);border-radius:999px;overflow:hidden}
 .tt-summary-fill{height:100%;border-radius:999px}
+.tt-side-overlay{display:none}
 .tt-modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media (max-width: 1100px){
   .home-grid{grid-template-columns:1fr}
@@ -729,7 +730,8 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
 .profile-display-name{font-size:18px;font-weight:800;color:var(--text);line-height:1.2;margin-bottom:2px}
 .profile-display-tag{font-size:12px;color:var(--text3);margin-bottom:8px}
 .profile-badges-row{display:flex;flex-wrap:wrap;gap:5px}
-.pbadge{font-size:10.5px;padding:2px 9px;border-radius:20px;font-weight:600;display:inline-flex;align-items:center;gap:3px}
+.pbadge{font-size:10.5px;padding:2px 9px;border-radius:20px;font-weight:600;display:inline-flex;align-items:center;gap:3px;cursor:pointer;transition:box-shadow .15s,filter .15s,transform .1s;user-select:none}
+.pbadge:active{transform:scale(.95)}
 
 /* ── Emoji Avatar Picker ── */
 .emoji-picker-row{display:flex;flex-wrap:wrap;gap:5px;padding:8px 0}
@@ -3746,7 +3748,7 @@ function holdBadge(idx){
 function badgePoolHTML(){
   const pool=D.settings.userBadges||[];
   if(!pool.length)return computeUserBadges().map(b=>`<span class="pbadge" style="background:${b.bg};color:${b.fg}">${b.icon} ${b.label}</span>`).join('');
-  return pool.map((b,i)=>`<span class="pbadge" style="background:${b.bg||'#f0ede8'};color:${b.fg||'var(--text2)'}" title="${esc(b.desc||b.label)}">${b.icon} ${b.label} <button onclick="holdBadge(${i})" style="background:none;border:none;cursor:pointer;font-size:9px;padding:0 1px;vertical-align:middle;opacity:.75" title="${b.held?'홀드 해제 (자동 삭제 허용)':'홀드 — 자동 삭제 보호'}">${b.held?'🔒':'🔓'}</button></span>`).join('');
+  return pool.map((b,i)=>`<span class="pbadge" onclick="holdBadge(${i})" title="${b.held?'잠금 해제 (탭)':'잠금 — 자동 교체 방지 (탭)'}" style="background:${b.bg||'#f0ede8'};color:${b.fg||'var(--text2)'}${b.held?';box-shadow:inset 0 2px 5px rgba(0,0,0,.22);filter:brightness(.92)':''}">${b.icon} ${b.label}</span>`).join('');
 }
 
 async function loadAIBadges(force=false){
@@ -4253,7 +4255,7 @@ function renderHomeProfile(){
   const s=D.settings;
   const pool=s.userBadges||[];
   const src=pool.length?pool:computeUserBadges();
-  const homeBadgesHTML=src.slice(0,3).map(b=>`<span style="font-size:10.5px;padding:2px 9px;border-radius:20px;font-weight:600;background:${b.bg||'#f0ede8'};color:${b.fg||'var(--text2)'}">${b.icon?b.icon+' ':''}${b.label}</span>`).join('');
+  const homeBadgesHTML=pool.map(b=>`<span style="font-size:10.5px;padding:2px 9px;border-radius:20px;font-weight:600;background:${b.bg||'#f0ede8'};color:${b.fg||'var(--text2)'}${b.held?';box-shadow:inset 0 2px 5px rgba(0,0,0,.22);filter:brightness(.92)':''}">${b.icon?b.icon+' ':''}${b.label}</span>`).join('')||src.map(b=>`<span style="font-size:10.5px;padding:2px 9px;border-radius:20px;font-weight:600;background:${b.bg||'#f0ede8'};color:${b.fg||'var(--text2)'}">${b.icon?b.icon+' ':''}${b.label}</span>`).join('');
   let avatar='';
   if(s.avatarImg){avatar=`<img src="${s.avatarImg}" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:24px">`;}
   else{avatar=`<span style="font-size:36px">${s.avatar||'😊'}</span>`;}
