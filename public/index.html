@@ -44,6 +44,17 @@
   const put  = (path, body) => api('PUT',    path, body)
   const del  = (path)       => api('DELETE', path)
 
+  // ── AI 호출 속도 제한 (최소 5초 간격) ─────────────────────
+  // 직전 호출 후 5초가 안 됐으면 남은 시간만큼 대기 후 실행
+  let _nextAiSlot = 0
+  const AI_GAP_MS = 7000  // Gemini 무료 10 RPM → 6s 최소, 7s로 여유 확보
+  async function _waitAiSlot() {
+    const now = Date.now()
+    const wait = Math.max(0, _nextAiSlot - now)
+    _nextAiSlot = Math.max(now, _nextAiSlot) + AI_GAP_MS
+    if (wait > 0) await new Promise(r => setTimeout(r, wait))
+  }
+
   // ============================================================
   window.ApiClient = {
 
@@ -96,27 +107,27 @@
     // 백엔드가 [MODE: X] 태그 + systemInstruction으로 AI 행동 제어
     async aiTag(taskId, title, notes = '') {
       if (!ONLINE) return null
-      // alarm mode: 감정 없이 정확한 분류
+      await _waitAiSlot()
       return post('/api/ai/tag', { taskId, title, notes, mode: 'alarm' })
     },
     async aiReport(days = 7) {
       if (!ONLINE) return null
-      // analysis mode: 전문적 데이터 분석 리포트
+      await _waitAiSlot()
       return post('/api/ai/report', { days, mode: 'analysis' })
     },
     async aiSuggest() {
       if (!ONLINE) return null
-      // coach mode: 동기부여 코칭 메시지
-      return get('/api/ai/suggest')   // GET이라 mode는 백엔드에서 고정
+      await _waitAiSlot()
+      return get('/api/ai/suggest')
     },
     async aiBadges(stats, personality = 'default') {
       if (!ONLINE) return null
-      // coach mode: 위트있는 칭호 생성
+      await _waitAiSlot()
       return post('/api/ai/badges', { stats, personality, mode: 'coach' })
     },
-    // 사용자 직접 입력 → mode 자동 감지 또는 명시
     async aiChat(userInput, mode = null) {
       if (!ONLINE) return null
+      await _waitAiSlot()
       const detectedMode = mode || detectAiMode(userInput)
       return post('/api/ai/suggest', { userInput, mode: detectedMode })
     },
@@ -149,6 +160,7 @@
 
     async aiAgent(message, fileData, context, history=[]) {
       if (!ONLINE) return null
+      await _waitAiSlot()
       const body = { message, context, history }
       if (fileData) { body.fileContent = fileData.content; body.fileType = fileData.type; body.isImage = fileData.isImage }
       return post('/api/ai/agent', body)
@@ -1140,15 +1152,36 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
 .plan-card-remove:hover{opacity:.8}
 .plan-card-detail{color:#555;font-size:11.5px;line-height:1.4;padding-left:19px;margin-top:3px}
 .agent-plan-empty{color:var(--text3);text-align:center;padding:36px 18px;font-size:12.5px;line-height:1.7}
-/* 모바일 인라인 플랜 (채팅창 하단, 타이핑창 위) */
-.agent-inline-plan{display:none;flex-shrink:0;overflow-y:auto;max-height:38vh;background:var(--surface2);border-top:2px solid var(--border)}
-.agent-inline-plan-inner{padding:8px 10px;display:flex;flex-direction:column;gap:6px}
-.agent-inline-confirm{padding:8px 12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+/* ── 말풍선 통합 액션 카드 ── */
+.agent-msg-ai .agent-bubble.ab-integrated{padding:0;flex-direction:column;gap:0;align-items:stretch}
+.ab-reply{display:flex;gap:8px;padding:10px 14px;align-items:flex-start}
+.ab-actions-section{background:rgba(44,95,46,.055);border-top:1px solid var(--border);padding:8px 12px 10px;display:flex;flex-direction:column;gap:5px}
+body.dark .ab-actions-section{background:rgba(44,95,46,.12)}
+.ab-card{display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:8px;font-size:12.5px;border-left-width:3px;border-left-style:solid}
+.ab-card-label{flex:1;color:var(--text);line-height:1.35}
+.ab-card-remove{background:none;border:none;cursor:pointer;opacity:.35;font-size:11px;padding:2px 4px;flex-shrink:0;transition:opacity .1s}
+.ab-card-remove:hover{opacity:.8}
+.ab-btns{display:flex;gap:6px;justify-content:flex-end;padding-top:6px;border-top:1px solid rgba(0,0,0,.06);margin-top:2px}
+body.dark .ab-btns{border-top-color:rgba(255,255,255,.07)}
+.ab-applied{color:var(--accent);font-size:12px;font-weight:600;padding:3px 2px}
+/* ── 오른쪽 힌트 패널 ── */
+.agent-hint-panel{padding:14px 12px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;flex:1}
+.agent-hint-title{font-size:10.5px;font-weight:700;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:2px}
+.agent-hint-chips{display:flex;flex-wrap:wrap;gap:5px}
+.agent-hint-chip{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 11px;font-size:12px;color:var(--text2);cursor:pointer;transition:background .12s;line-height:1.4}
+.agent-hint-chip:hover{background:var(--surface3)}
+/* ── 오른쪽 관련 데이터 패널 ── */
+.agent-ctx-panel{border-bottom:1px solid var(--border);flex-shrink:0;display:none;flex-direction:column}
+.agent-ctx-list{padding:0 12px 10px;display:flex;flex-direction:column;gap:0;overflow-y:auto;max-height:220px}
+.ctx-item{display:flex;align-items:center;gap:7px;padding:5px 2px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);cursor:pointer;transition:color .12s;min-width:0}
+.ctx-item:last-child{border-bottom:none}
+.ctx-item:hover{color:var(--text)}
+.ctx-item-icon{flex-shrink:0;font-size:13px}
+.ctx-item-label{flex:1;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ctx-item-date{font-size:10.5px;color:var(--text3);flex-shrink:0}
 @media(max-width:640px){
-  /* 키보드 올라올 때 모달이 함께 줄어들도록 100dvh 사용 */
-  .agent-modal{border-radius:0;position:fixed;top:0;bottom:0;left:0;right:0;width:100%;height:100%;max-height:100%;height:100dvh;max-height:100dvh}
+  .agent-modal{border-radius:0;position:fixed;top:0;bottom:0;left:0;right:0;width:100%;height:100%;height:100dvh;max-height:100dvh}
   .agent-plan-panel{display:none!important}
-  .agent-inline-plan{display:flex;flex-direction:column}
   .agent-body{flex-direction:column}
   .agent-chat-panel{border-right:none}
 }
@@ -1417,15 +1450,6 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
             <div class="agent-bubble"><span class="agent-ai-icon">🤖</span><span>안녕하세요! 할 일, 루틴, 습관, 목표, 이벤트 등 무엇이든 말씀해주세요.<br><span style="opacity:.55;font-size:11.5px">파일이나 이미지를 첨부해서 내용을 분석하고 정리해드릴 수도 있어요.</span></span></div>
           </div>
         </div>
-        <!-- 모바일: 플랜 카드가 채팅 아래, 타이핑창 위에 표시 -->
-        <div id="agent-inline-plan" class="agent-inline-plan">
-          <div style="padding:6px 14px 2px;font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.3px;text-transform:uppercase;flex-shrink:0">적용할 내용</div>
-          <div class="agent-inline-plan-inner" id="agent-inline-plan-content"></div>
-          <div class="agent-inline-confirm" id="agent-inline-confirm-bar">
-            <button id="agent-apply-btn-mob" class="btn btn-primary" onclick="applyAgentPlan()" style="width:100%;font-size:13px">✅ 확인 — <span class="agent-confirm-count-mob">0</span>개 적용</button>
-            <button class="btn btn-ghost btn-sm" onclick="_agentPlan=[];renderAgentPlan()" style="width:100%">취소</button>
-          </div>
-        </div>
         <div class="agent-input-area">
           <div id="agent-file-chip" style="margin-bottom:6px"></div>
           <div style="display:flex;gap:8px;align-items:flex-end">
@@ -1434,22 +1458,42 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
               <input type="file" id="agent-file-input" accept=".txt,.md,.csv,.json,.pdf,image/*" style="display:none" onchange="agentFileChange(this)">
             </label>
             <button id="agent-voice-btn" class="agent-file-btn" onclick="toggleAgentVoice()" title="음성 입력" style="border:none;background:none;cursor:pointer;font-size:18px;padding:4px;line-height:1;flex-shrink:0">🎤</button>
-            <textarea id="agent-input-box" class="agent-textarea" placeholder="무엇을 도와드릴까요? (예: 내일 아침 운동 루틴 3개 만들어줘 / 파일 읽고 할일 정리해줘)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAgentMsg()}"></textarea>
+            <textarea id="agent-input-box" class="agent-textarea" placeholder="무엇을 도와드릴까요? (예: 내일 아침 운동 루틴 3개 만들어줘 / 파일 읽고 할일 정리해줘)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAgentMsg()}" oninput="_updateAgentCtxPanel()"></textarea>
             <button class="btn btn-primary btn-sm" onclick="sendAgentMsg()" style="height:38px;min-width:50px;flex-shrink:0">전송</button>
           </div>
         </div>
       </div>
-      <!-- 오른쪽: 플랜 미리보기 -->
+      <!-- 오른쪽: 관련 데이터 + 빠른 명령 -->
       <div class="agent-plan-panel">
-        <div class="agent-plan-header">적용할 내용</div>
-        <div class="agent-plan-content" id="agent-plan-content">
-          <div class="agent-plan-empty">💬 대화를 시작하면<br>여기에 적용할 내용이<br>표시됩니다</div>
+        <!-- 상단: 규칙 기반 관련 데이터 (타이핑 시 표시) -->
+        <div id="agent-ctx-panel" class="agent-ctx-panel">
+          <div class="agent-plan-header" style="padding-bottom:8px">관련 데이터</div>
+          <div id="agent-ctx-list" class="agent-ctx-list"></div>
         </div>
-        <div class="agent-confirm-bar" id="agent-confirm-bar" style="display:none">
-          <button id="agent-apply-btn" class="btn btn-primary" onclick="applyAgentPlan()" style="width:100%;font-size:13.5px">
-            ✅ 확인 — <span class="agent-confirm-count">0</span>개 적용
-          </button>
-          <button class="btn btn-ghost btn-sm" onclick="_agentPlan=[];renderAgentPlan()" style="width:100%">취소</button>
+        <!-- 하단: 빠른 명령 힌트 -->
+        <div id="agent-hints-section" style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0">
+          <div class="agent-plan-header">빠른 명령</div>
+          <div class="agent-hint-panel">
+            <div>
+              <div class="agent-hint-title">💡 이렇게 말해보세요</div>
+              <div class="agent-hint-chips" style="margin-top:6px">
+                <span class="agent-hint-chip" onclick="_hintSend('오늘 할 일 추천해줘')">📋 오늘 할 일 추천</span>
+                <span class="agent-hint-chip" onclick="_hintSend('이번 주 중요한 할일 정리해줘')">📅 이번 주 정리</span>
+                <span class="agent-hint-chip" onclick="_hintSend('새 습관 추가해줘')">🔥 습관 추가</span>
+                <span class="agent-hint-chip" onclick="_hintSend('아침 루틴 만들어줘')">🌅 루틴 추가</span>
+                <span class="agent-hint-chip" onclick="_hintSend('새 목표 추가해줘')">🎯 목표 추가</span>
+                <span class="agent-hint-chip" onclick="_hintSend('메모 추가해줘')">📝 메모</span>
+              </div>
+            </div>
+            <div>
+              <div class="agent-hint-title">📎 파일 분석</div>
+              <div style="color:var(--text3);font-size:12px;line-height:1.65;margin-top:4px">파일이나 이미지를 첨부하면 내용을 분석해서 할일로 정리해드려요</div>
+            </div>
+            <div>
+              <div class="agent-hint-title">✏️ 자연어로</div>
+              <div style="color:var(--text3);font-size:12px;line-height:1.65;margin-top:4px">"내일까지 보고서 작성 중요하게 추가해줘"<br>"월수금 저녁 운동 루틴 만들어줘"</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -7223,14 +7267,13 @@ async function sendAgentMsg(){
   if(chatEl)chatEl.scrollTop=chatEl.scrollHeight;
 
   try{
-    const ctx=_buildAgentCtx();
+    const ctx=_buildAgentCtx(msg);
     const result=await ApiClient.aiAgent(msg,_agentFile,ctx,_agentHistory.slice(-8));
     document.getElementById('agent-typing-row')?.remove();
     if(result){
-      _agentHistory.push({role:'ai',content:result.reply||''});
+      _agentHistory.push({role:'ai',content:result.reply||'',actions:result.actions||[],applied:false});
       _agentPlan=result.actions||[];
       _renderAgentMsgs();
-      renderAgentPlan();
     }
   }catch(e){
     document.getElementById('agent-typing-row')?.remove();
@@ -7241,33 +7284,58 @@ async function sendAgentMsg(){
   _agentSending=false;
 }
 
-function _buildAgentCtx(){
+function _buildAgentCtx(msg){
   const tasks=D.tasks||[];
-  return{
-    currentView: VIEW,
-    tasks:{
+  const t=(msg||'').toLowerCase();
+  // 인텐트 감지: 해당 키워드가 있는 섹션 데이터만 전송
+  const wantTask    = !msg || /할일|태스크|task|추가|완료|체크|삭제|지워|마감|우선순위|추천|뭐부터|오늘 뭐/.test(t);
+  const wantHabit   = /습관|habit/.test(t);
+  const wantRoutine = /루틴|routine/.test(t);
+  const wantGoal    = /목표|goal/.test(t);
+  const wantMemo    = /메모|기록|노트|memo/.test(t);
+  const ctx={currentView:VIEW};
+  if(wantTask){
+    ctx.tasks={
       total:tasks.length,
       done:tasks.filter(t=>t.done).length,
-      // 미완료 할일 전체 (제목·날짜·우선순위·태그·id)
-      todo:tasks.filter(t=>!t.done).map(t=>({
-        id:t.id, title:t.title, dueDate:t.dueDate||'', priority:t.priority, tags:t.tags||[]
-      })),
-      // 완료된 것은 최근 10개 제목만 (컨텍스트 절약)
-      recentDone:tasks.filter(t=>t.done).slice(0,10).map(t=>t.title)
-    },
-    habits:(D.habits||[]).map(h=>h.name),
-    routines:(D.settings.routines||[]).slice(0,12).map(r=>({period:r.period,name:r.name,time:r.time,days:r.days})),
-    goals:(D.goals||[]).map(g=>({name:g.name,type:g.type,desc:g.desc?.slice(0,60)})),
-    memoPreview:(D.settings.memos||[]).slice(0,3).map(m=>String(m.content||'').slice(0,80)).join(' | ')
-  };
+      todo:tasks.filter(t=>!t.done).sort((a,b)=>{
+        const pri={high:0,med:1,low:2};
+        const da=a.dueDate||'9999',db=b.dueDate||'9999';
+        if(da!==db)return da<db?-1:1;
+        return (pri[a.priority||'med']||1)-(pri[b.priority||'med']||1);
+      }).slice(0,20).map(t=>({id:t.id,title:t.title,dueDate:t.dueDate||'',priority:t.priority,tags:t.tags||[]})),
+      recentDone:tasks.filter(t=>t.done).slice(0,5).map(t=>t.title)
+    };
+  }
+  if(wantHabit)   ctx.habits  =(D.habits||[]).map(h=>h.name);
+  if(wantRoutine) ctx.routines=(D.settings.routines||[]).slice(0,6).map(r=>({period:r.period,name:r.name,time:r.time}));
+  if(wantGoal)    ctx.goals   =(D.goals||[]).map(g=>({name:g.name,type:g.type}));
+  if(wantMemo)    ctx.memoPreview=(D.settings.memos||[]).slice(0,3).map(m=>String(m.content||'').slice(0,80)).join(' | ');
+  return ctx;
 }
 
 function _renderAgentMsgs(){
   const el=document.getElementById('agent-chat-messages');
   if(!el)return;
-  el.innerHTML=_agentHistory.map(m=>{
+  // esc() 로 모든 사용자 입력 이스케이프, idx/i 는 정수 인덱스
+  el.innerHTML=_agentHistory.map((m,idx)=>{
     if(m.role==='user')return`<div class="agent-msg agent-msg-user"><div class="agent-bubble">${esc(m.content)}</div></div>`;
-    return`<div class="agent-msg agent-msg-ai"><div class="agent-bubble"><span class="agent-ai-icon">🤖</span><span>${esc(m.content)}</span></div></div>`;
+    const hasAct=m.actions?.length>0&&!m.applied;
+    let ah='';
+    if(hasAct){
+      const cards=m.actions.map((a,i)=>{
+        const c=_PLAN_COLORS[a.type]||{bg:'#f9fafb',border:'#e5e7eb',icon:'•'};
+        const pv=_planPreview(a);
+        return`<div class="ab-card" style="background:${c.bg};border-left-color:${c.border}"><span style="font-size:13px;flex-shrink:0">${c.icon}</span><span class="ab-card-label"><strong>${esc(a.label||a.type)}</strong>${pv?' &nbsp;·&nbsp; '+pv:''}</span><button class="ab-card-remove" onclick="removeHistoryAction(${idx},${i})">✕</button></div>`;
+      }).join('');
+      ah=`<div class="ab-actions-section">${cards}<div class="ab-btns"><button class="btn btn-ghost btn-sm" onclick="cancelHistoryPlan(${idx})">취소</button><button class="btn btn-primary btn-sm" onclick="applyHistoryPlan(${idx})">✅ 확인 — ${m.actions.length}개 적용</button></div></div>`;
+    }else if(m.applied){
+      ah=`<div class="ab-actions-section"><div class="ab-applied">✅ ${m.appliedCount||''}개 항목이 적용됐어요</div></div>`;
+    }
+    const intg=hasAct||m.applied;
+    return`<div class="agent-msg agent-msg-ai"><div class="agent-bubble${intg?' ab-integrated':''}">
+      ${intg?`<div class="ab-reply"><span class="agent-ai-icon">🤖</span><span>${esc(m.content)}</span></div>`:`<span class="agent-ai-icon">🤖</span><span>${esc(m.content)}</span>`}
+      ${ah}</div></div>`;
   }).join('');
   el.scrollTop=el.scrollHeight;
 }
@@ -7302,78 +7370,89 @@ function _planPreview(a){
     return d.tasks.map(t=>`• <strong>${esc(t.title||'')}</strong>${t.reason?' — '+esc(t.reason):''}`).join('<br>');
   return parts.join(' · ');
 }
-function renderAgentPlan(){
-  const el=document.getElementById('agent-plan-content');
-  const bar=document.getElementById('agent-confirm-bar');
-  if(!el)return;
-  if(!_agentPlan.length){
-    el.innerHTML='<div class="agent-plan-empty">💬 대화를 시작하면<br>여기에 적용할 내용이<br>표시됩니다</div>';
-    if(bar)bar.style.display='none';
-    return;
-  }
-  el.innerHTML=_agentPlan.map((a,i)=>{
-    const c=_PLAN_COLORS[a.type]||{bg:'#f9fafb',border:'#e5e7eb',icon:'•'};
-    const preview=_planPreview(a);
-    return`<div class="plan-card" style="background:${c.bg};border:1.5px solid ${c.border}">
-      <div class="plan-card-header">
-        <span class="plan-card-icon">${c.icon}</span>
-        <span class="plan-card-label">${esc(a.label||a.type)}</span>
-        <button class="plan-card-remove" onclick="removePlanAction(${i})" title="제거">✕</button>
-      </div>
-      ${preview?`<div class="plan-card-detail">${preview}</div>`:''}
-    </div>`;
-  }).join('');
-  if(bar){
-    bar.style.display='flex';
-    const cnt=bar.querySelector('.agent-confirm-count');
-    if(cnt)cnt.textContent=_agentPlan.length;
-  }
-  // 모바일 인라인 플랜 동기화
-  const inlineWrap=document.getElementById('agent-inline-plan');
-  const inlineContent=document.getElementById('agent-inline-plan-content');
-  const inlineBar=document.getElementById('agent-inline-confirm-bar');
-  if(inlineContent){
-    if(!_agentPlan.length){
-      if(inlineWrap)inlineWrap.style.display='none';
-    }else{
-      if(inlineWrap)inlineWrap.style.display='flex';
-      inlineContent.innerHTML=_agentPlan.map((a,i)=>{
-        const c=_PLAN_COLORS[a.type]||{bg:'#f9fafb',border:'#e5e7eb',icon:'•'};
-        const preview=_planPreview(a);
-        return`<div class="plan-card" style="background:${c.bg};border:1.5px solid ${c.border}">
-          <div class="plan-card-header"><span class="plan-card-icon">${c.icon}</span><span class="plan-card-label">${esc(a.label||a.type)}</span><button class="plan-card-remove" onclick="removePlanAction(${i})">✕</button></div>
-          ${preview?`<div class="plan-card-detail">${preview}</div>`:''}
-        </div>`;
-      }).join('');
-      if(inlineBar){
-        inlineBar.style.display='flex';
-        const cnt=inlineBar.querySelector('.agent-confirm-count-mob');
-        if(cnt)cnt.textContent=_agentPlan.length;
-      }
-    }
-  }
-}
-function removePlanAction(idx){
-  _agentPlan.splice(idx,1);
-  renderAgentPlan();
-}
+function renderAgentPlan(){ _renderAgentMsgs(); } // 액션 카드가 말풍선으로 이동
+function removePlanAction(idx){ _agentPlan.splice(idx,1); renderAgentPlan(); }
 
-async function applyAgentPlan(){
-  if(!_agentPlan.length)return;
-  const btn=document.getElementById('agent-apply-btn');
-  if(btn){btn.disabled=true;btn.textContent='적용 중...';}
+// ── 말풍선 통합 액션 핸들러 ───────────────────────────────
+function removeHistoryAction(msgIdx,actionIdx){
+  const m=_agentHistory[msgIdx];
+  if(!m?.actions)return;
+  m.actions.splice(actionIdx,1);
+  _agentPlan=m.actions;
+  _renderAgentMsgs();
+}
+function cancelHistoryPlan(msgIdx){
+  const m=_agentHistory[msgIdx];
+  if(m){m.actions=[];_agentPlan=[];}
+  _renderAgentMsgs();
+}
+async function applyHistoryPlan(msgIdx){
+  const m=_agentHistory[msgIdx];
+  if(!m?.actions?.length||m.applied)return;
+  _agentPlan=m.actions;
   let applied=0;
   for(const action of _agentPlan){
     try{await _applyOneAction(action);applied++;}
-    catch(e){console.warn('[Agent action failed]',action.type,e.message);}
+    catch(e){console.warn('[Agent]',action.type,e.message);}
   }
-  _agentPlan=[];
-  renderAgentPlan();
-  _agentHistory.push({role:'ai',content:`✅ ${applied}개 항목이 적용됐어요! 앱을 확인해보세요.`});
+  m.applied=true;m.appliedCount=applied;m.actions=[];_agentPlan=[];
   _renderAgentMsgs();
   render();saveD();
   showToast(`✅ ${applied}개 항목 적용 완료`);
-  if(btn){btn.disabled=false;btn.innerHTML='✅ 확인 — <span class="agent-confirm-count">0</span>개 적용';}
+}
+function _hintSend(text){
+  const box=document.getElementById('agent-input-box');
+  if(box){box.value=text;box.focus();_updateAgentCtxPanel();}
+}
+
+function _updateAgentCtxPanel(){
+  const q=(document.getElementById('agent-input-box')?.value||'').trim().toLowerCase();
+  const ctxPanel=document.getElementById('agent-ctx-panel');
+  const ctxList=document.getElementById('agent-ctx-list');
+  if(!ctxPanel||!ctxList) return;
+
+  if(!q||q.length<2){
+    ctxPanel.style.display='none';
+    return;
+  }
+
+  const results=[];
+  // 할일 매칭
+  (D.tasks||[]).filter(t=>!t.done&&t.title.toLowerCase().includes(q)).slice(0,5).forEach(t=>{
+    const due=t.dueDate?t.dueDate.slice(5):'';
+    results.push({icon:'📋',label:t.title,date:due});
+  });
+  // 메모 매칭
+  (D.memos||[]).filter(m=>(m.content||'').toLowerCase().includes(q)).slice(0,3).forEach(m=>{
+    results.push({icon:'📝',label:(m.content||'').slice(0,45),date:''});
+  });
+  // 태그 매칭 (태스크에서 수집)
+  const tagSet=new Set();
+  (D.tasks||[]).forEach(t=>(t.tags||[]).filter(tag=>tag.toLowerCase().includes(q)).forEach(tag=>tagSet.add(tag)));
+  [...tagSet].slice(0,3).forEach(tag=>results.push({icon:'🏷️',label:'#'+tag,date:''}));
+
+  if(!results.length){
+    ctxPanel.style.display='none';
+    return;
+  }
+
+  ctxPanel.style.display='flex';
+  ctxList.innerHTML=results.map(r=>`
+    <div class="ctx-item" onclick="_hintSend(${JSON.stringify(r.label)})">
+      <span class="ctx-item-icon">${r.icon}</span>
+      <span class="ctx-item-label">${esc(r.label)}</span>
+      ${r.date?`<span class="ctx-item-date">${esc(r.date)}</span>`:''}
+    </div>
+  `).join('');
+}
+
+async function applyAgentPlan(){
+  // 최신 미적용 액션 메시지에 위임
+  for(let i=_agentHistory.length-1;i>=0;i--){
+    if(_agentHistory[i].role==='ai'&&_agentHistory[i].actions?.length&&!_agentHistory[i].applied){
+      await applyHistoryPlan(i);return;
+    }
+  }
 }
 
 async function _applyOneAction(action){
@@ -7486,11 +7565,10 @@ function startApp(){
   applyDateColors();
   renderSidebar();
   render();
-  showCoachTip();
-  // Google Calendar 연동 상태 초기화 (설정 탭에서 정확히 표시되도록)
+  // rate limit 슬롯 보호: 유저가 먼저 쓸 수 있도록 배경 AI 호출을 지연
+  setTimeout(()=>showCoachTip(),45000);
   setTimeout(()=>loadGcalEvents(),1500);
-  // 일별 칭호 생성 (새 날 로그인 시 1개, 첫 로그인 시 3개)
-  setTimeout(()=>triggerDailyBadge(),2000);
+  setTimeout(()=>triggerDailyBadge(),90000);
 }
 
 // auto-refresh coach tip every 10 min
