@@ -141,11 +141,14 @@ async function handleAgent(req, res) {
 - add_event: {title:"", date:"YYYY-MM-DD", time:"HH:MM"|""}
 - update_settings: {key:"", value:any, description:""}
 - add_memo: {content:""}
+- show_tasks: {tasks:[{id:"", title:"", reason:"짧은 이유"}]} — 추천/하이라이트용, 데이터 변경 없음
 
 규칙:
 - reply는 친절한 한국어, 어떤 작업을 할지 1~2줄로 설명
 - actions가 없으면 빈 배열 []
 - 파일이 첨부된 경우 내용을 분석해서 할일로 정리
+- "오늘 할거 추천해줘", "뭐부터 해?" 같은 추천 요청 → show_tasks로 구체적 할일 3~5개 선정해서 이유와 함께 표시
+- "어디다 추가하면 좋을까?" 같은 조언 요청 → reply에 구체적 설명 + 적절한 action도 함께 제안
 - 오늘 날짜: ${today}`
 
   const ctx = context
@@ -190,7 +193,16 @@ ${todoStr}
       try { result = JSON.parse(text.replace(/^```json\s*/i,'').replace(/```\s*$/,'').trim()) }
       catch { const m=text.match(/\{[\s\S]*\}/); result=m?JSON.parse(m[0]):null }
     } else {
-      result = await callGeminiJSON(systemPrompt + '\n\n' + userPrompt, { temperature: 0.3, maxTokens: 1024, useSystem: false })
+      const raw = await callGemini(systemPrompt + '\n\n' + userPrompt + '\n\n반드시 JSON만 출력. 마크다운 없이.', { temperature: 0.3, maxTokens: 1024, useSystem: false })
+      try {
+        const clean = raw.replace(/^```json\s*/i,'').replace(/^```\s*/i,'').replace(/```\s*$/,'').trim()
+        result = JSON.parse(clean)
+      } catch {
+        const m = raw.match(/\{[\s\S]*\}/)
+        if (m) { try { result = JSON.parse(m[0]) } catch {} }
+        // Gemini answered conversationally — wrap raw text as reply
+        if (!result && raw) result = { reply: raw, actions: [] }
+      }
     }
 
     if (!result) return res.json({ reply: '죄송해요, 처리 중 문제가 생겼어요. 다시 시도해주세요.', actions: [] })

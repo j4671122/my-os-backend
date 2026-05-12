@@ -7230,6 +7230,7 @@ const _PLAN_COLORS={
   add_event:   {bg:'#dbeafe',border:'#93c5fd',icon:'📆'},
   update_settings:{bg:'#f3f4f6',border:'#d1d5db',icon:'⚙️'},
   add_memo:    {bg:'#fef3cd',border:'#fcd34d',icon:'📝'},
+  show_tasks:  {bg:'#f0f9ff',border:'#7dd3fc',icon:'💡'},
 };
 function _planPreview(a){
   const d=a.data||{};const parts=[];
@@ -7245,6 +7246,8 @@ function _planPreview(a){
   if(d.desc)parts.push(esc(String(d.desc).slice(0,50)));
   if(d.key!==undefined)parts.push(`${esc(String(d.key))}: ${esc(String(d.value??''))}`);
   if(d.subtasks?.length)parts.push(`체크리스트 ${d.subtasks.length}개`);
+  if(a.type==='show_tasks'&&d.tasks?.length)
+    return d.tasks.map(t=>`• <strong>${esc(t.title||'')}</strong>${t.reason?' — '+esc(t.reason):''}`).join('<br>');
   return parts.join(' · ');
 }
 function renderAgentPlan(){
@@ -7387,6 +7390,7 @@ async function _applyOneAction(action){
       D.settings.memos.unshift({id:uid(),content:d.content||'',createdAt:Date.now()});
       break;
     }
+    case 'show_tasks': break; // 추천 표시용, 데이터 변경 없음
   }
 }
 
