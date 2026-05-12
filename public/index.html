@@ -48,6 +48,7 @@
   // 직전 호출 후 5초가 안 됐으면 남은 시간만큼 대기 후 실행
   let _nextAiSlot = 0
   const AI_GAP_MS = 7000  // Gemini 무료 10 RPM → 6s 최소, 7s로 여유 확보
+  const _aiBgReadyAt = Date.now() + 30000  // 배경 AI 호출 30초 유예 (사용자 슬롯 보호)
   async function _waitAiSlot() {
     const now = Date.now()
     const wait = Math.max(0, _nextAiSlot - now)
@@ -2620,6 +2621,7 @@ function showCoachTip(){
   }
   else{el.style.display='none'}
   if(!shouldUseAiCoach()) return;
+  if(Date.now() < _aiBgReadyAt) return;  // 부팅 30s 내 배경 AI 호출 차단
   const slot=getCurrentAiCoachSlot(new Date());
   if(!slot) return;
   const cached=D.settings._aiCoachCache;
