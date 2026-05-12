@@ -146,6 +146,13 @@
     async gcalAuthUrl()                { if (!ONLINE) return null; return post('/api/gcal/auth', {}) },
     async gcalEvents(timeMin, timeMax) { if (!ONLINE) return { events: [], connected: false }; return get(`/api/gcal/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`) },
     async gcalDisconnect()             { if (!ONLINE) return null; return del('/api/gcal/disconnect') },
+
+    async aiAgent(message, fileData, context, history=[]) {
+      if (!ONLINE) return null
+      const body = { message, context, history }
+      if (fileData) { body.fileContent = fileData.content; body.fileType = fileData.type; body.isImage = fileData.isImage }
+      return post('/api/ai/agent', body)
+    },
   }
 
   // ── 자동 태깅 훅 ───────────────────────────────────────
@@ -641,7 +648,7 @@ canvas{max-width:100%}
 }
 @media (max-width: 480px){
   .bottom-nav{display:flex}
-  .view-area{padding-bottom:calc(80px + env(safe-area-inset-bottom,20px))!important;overflow-x:hidden}
+  .view-area{padding-bottom:calc(100px + env(safe-area-inset-bottom,34px))!important;overflow-x:hidden}
   /* 태그가 많아 세로로 밀릴 때: 제목 위, 태그 아래 */
   .task-head{flex-wrap:wrap}
   .task-title-text{order:1;min-width:0;flex:1 1 50%}
@@ -651,13 +658,13 @@ canvas{max-width:100%}
   .drag-handle{order:0}
   .chevron{order:3}
   .dash-grid{grid-template-columns:1fr!important}
-  /* add-bar 오버플로 방지: 폴더 선택 숨기고 컨트롤 축소 */
-  #new-task-folder{display:none}
-  .add-bar{gap:4px;max-width:100%;overflow:hidden}
-  .add-bar select{font-size:10px;padding:2px 2px;max-width:52px}
+  /* add-bar: 폴더·우선순위 선택 숨기고 input+버튼이 100% 폭 채우기 */
+  #new-task-folder,#new-task-priority{display:none}
+  .add-bar{gap:6px;width:100%;box-sizing:border-box;overflow:hidden}
+  .add-bar input{flex:1;min-width:0}
+  .add-bar .add-btn{flex-shrink:0;width:36px;height:36px;font-size:20px}
   .no-date-btn{font-size:9px;padding:2px 5px;white-space:nowrap;flex-shrink:0}
-  .add-bar input{min-width:0}
-  /* 바텀 네비 안전 영역 */
+  /* 바텀 네비 안전 영역 + view-area 여유 확보 */
   .bottom-nav{height:calc(56px + env(safe-area-inset-bottom,16px));padding-bottom:max(env(safe-area-inset-bottom,0px),8px)}
 }
 
@@ -1092,6 +1099,46 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
 .onb-submit:disabled{opacity:.5;cursor:not-allowed}
 .onb-error{background:#fde8e4;color:#dc2626;border-radius:8px;padding:9px 12px;font-size:12.5px;margin-bottom:12px;display:none}
 .onb-error.show{display:block}
+/* ── AI Agent Modal ──────────────────────────────────── */
+.agent-modal{background:var(--surface);border-radius:20px;width:min(940px,97vw);height:min(720px,92vh);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.22)}
+.agent-header{display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0}
+.agent-header-left{display:flex;align-items:center;gap:8px;flex:1}
+.agent-body{display:flex;flex:1;overflow:hidden}
+.agent-chat-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--border);min-width:0}
+.agent-chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
+.agent-msg{display:flex}
+.agent-msg-user{justify-content:flex-end}
+.agent-msg-ai{justify-content:flex-start}
+.agent-bubble{max-width:85%;padding:10px 14px;border-radius:16px;font-size:13.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.agent-msg-user .agent-bubble{background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+.agent-msg-ai .agent-bubble{background:var(--surface2);border-bottom-left-radius:4px;display:flex;gap:8px;align-items:flex-start}
+.agent-ai-icon{flex-shrink:0;margin-top:1px}
+.agent-typing{letter-spacing:3px;font-size:18px}
+@keyframes agent-blink{0%,100%{opacity:.25}50%{opacity:1}}
+.agent-typing{animation:agent-blink 1s infinite}
+.agent-input-area{padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0}
+.agent-textarea{flex:1;border:1px solid var(--border);border-radius:12px;padding:9px 12px;font-size:13.5px;font-family:inherit;resize:none;min-height:40px;max-height:110px;background:var(--surface);color:var(--text);outline:none;line-height:1.45;transition:border-color .15s}
+.agent-textarea:focus{border-color:var(--accent)}
+.agent-file-btn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:50%;cursor:pointer;font-size:15px;flex-shrink:0;background:var(--surface);transition:background .12s;align-self:flex-end}
+.agent-file-btn:hover{background:var(--surface2)}
+.agent-plan-panel{width:310px;flex-shrink:0;display:flex;flex-direction:column;background:var(--surface2)}
+.agent-plan-header{padding:14px 16px 6px;font-size:12.5px;font-weight:700;color:var(--text2);flex-shrink:0;letter-spacing:.3px;text-transform:uppercase}
+.agent-plan-content{flex:1;overflow-y:auto;padding:0 10px 8px;display:flex;flex-direction:column;gap:7px}
+.agent-confirm-bar{padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;gap:5px}
+.plan-card{border-radius:12px;padding:10px 12px;font-size:12.5px;cursor:default}
+.plan-card-header{display:flex;align-items:center;gap:6px}
+.plan-card-icon{font-size:13px;flex-shrink:0}
+.plan-card-label{flex:1;font-weight:600;font-size:12.5px;color:#1e1e1e;line-height:1.3}
+.plan-card-remove{background:none;border:none;cursor:pointer;opacity:.35;font-size:11px;padding:0 2px;line-height:1;flex-shrink:0;transition:opacity .1s}
+.plan-card-remove:hover{opacity:.8}
+.plan-card-detail{color:#555;font-size:11.5px;line-height:1.4;padding-left:19px;margin-top:3px}
+.agent-plan-empty{color:var(--text3);text-align:center;padding:36px 18px;font-size:12.5px;line-height:1.7}
+@media(max-width:640px){
+  .agent-modal{border-radius:16px 16px 0 0;position:fixed;bottom:0;left:0;right:0;width:100%;height:88vh;max-height:88vh}
+  .agent-body{flex-direction:column}
+  .agent-plan-panel{width:100%;height:220px;border-right:none;border-top:1px solid var(--border)}
+  .agent-plan-header{padding:8px 14px 4px}
+}
 </style>
 </head>
 <body>
@@ -1208,6 +1255,7 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
     <button class="mob-menu-btn" onclick="toggleMobileSidebar()" aria-label="메뉴">☰</button>
     <span class="mob-title" id="mob-view-title">오늘</span>
     <div class="mob-actions">
+      <button class="bell-btn" onclick="openAIAgent()" title="AI 에이전트" style="font-size:16px">🤖</button>
       <button class="bell-btn" id="theme-toggle-btn-mob" onclick="toggleTheme()" title="다크/라이트 모드" style="font-size:16px">🌙</button>
       <button class="bell-btn" id="mob-bell-btn" onclick="toggleNotifPanel(event)" title="알림">🔔<span class="bell-badge" id="b-mob-notif" style="display:none"></span></button>
     </div>
@@ -1216,6 +1264,7 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
     <div><h1 id="view-title">오늘</h1><span class="sub" id="view-sub"></span></div>
     <div class="topbar-right">
       <div class="coach-tip" id="coach-tip" style="display:none" onclick="dismissTip()"></div>
+      <button class="bell-btn" onclick="openAIAgent()" title="AI 에이전트" style="font-size:16px">🤖</button>
       <button class="bell-btn" id="theme-toggle-btn" onclick="toggleTheme()" title="다크/라이트 모드" style="font-size:16px">🌙</button>
       <button class="bell-btn" id="bell-btn" onclick="toggleNotifPanel(event)" title="오늘 알람">🔔<span class="bell-badge" id="b-topbar-notif" style="display:none"></span></button>
       <button class="btn btn-ghost btn-sm" onclick="openReportModal()">📄 리포트</button>
@@ -1331,6 +1380,55 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
     <div class="verify-actions">
       <button class="btn btn-ghost" onclick="hideVerifyScreen()">닫기</button>
       <button class="btn btn-primary" onclick="resendVerifyEmail()">📨 재전송</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI 에이전트 모달 -->
+<div class="overlay" id="agent-overlay" onclick="if(event.target===this)closeAIAgent()">
+  <div class="agent-modal">
+    <div class="agent-header">
+      <div class="agent-header-left">
+        <span style="font-size:20px">🤖</span>
+        <span style="font-weight:700;font-size:15px">AI 에이전트</span>
+        <span style="font-size:11px;color:var(--text3);background:var(--surface2);padding:2px 8px;border-radius:20px;border:1px solid var(--border)">Gemini 2.5 Flash</span>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="clearAgentSession()" style="margin-right:6px">새 대화</button>
+      <button onclick="closeAIAgent()" style="background:none;border:none;font-size:20px;cursor:pointer;opacity:.5;line-height:1;padding:0">✕</button>
+    </div>
+    <div class="agent-body">
+      <!-- 왼쪽: 채팅 -->
+      <div class="agent-chat-panel">
+        <div class="agent-chat-messages" id="agent-chat-messages">
+          <div class="agent-msg agent-msg-ai">
+            <div class="agent-bubble"><span class="agent-ai-icon">🤖</span><span>안녕하세요! 할 일, 루틴, 습관, 목표, 이벤트 등 무엇이든 말씀해주세요.<br><span style="opacity:.55;font-size:11.5px">파일이나 이미지를 첨부해서 내용을 분석하고 정리해드릴 수도 있어요.</span></span></div>
+          </div>
+        </div>
+        <div class="agent-input-area">
+          <div id="agent-file-chip" style="margin-bottom:6px"></div>
+          <div style="display:flex;gap:8px;align-items:flex-end">
+            <label class="agent-file-btn" title="파일/이미지 첨부">
+              📎
+              <input type="file" id="agent-file-input" accept=".txt,.md,.csv,.json,.pdf,image/*" style="display:none" onchange="agentFileChange(this)">
+            </label>
+            <textarea id="agent-input-box" class="agent-textarea" placeholder="무엇을 도와드릴까요? (예: 내일 아침 운동 루틴 3개 만들어줘 / 파일 읽고 할일 정리해줘)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAgentMsg()}"></textarea>
+            <button class="btn btn-primary btn-sm" onclick="sendAgentMsg()" style="height:38px;min-width:50px;flex-shrink:0">전송</button>
+          </div>
+        </div>
+      </div>
+      <!-- 오른쪽: 플랜 미리보기 -->
+      <div class="agent-plan-panel">
+        <div class="agent-plan-header">적용할 내용</div>
+        <div class="agent-plan-content" id="agent-plan-content">
+          <div class="agent-plan-empty">💬 대화를 시작하면<br>여기에 적용할 내용이<br>표시됩니다</div>
+        </div>
+        <div class="agent-confirm-bar" id="agent-confirm-bar" style="display:none">
+          <button id="agent-apply-btn" class="btn btn-primary" onclick="applyAgentPlan()" style="width:100%;font-size:13.5px">
+            ✅ 확인 — <span class="agent-confirm-count">0</span>개 적용
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="_agentPlan=[];renderAgentPlan()" style="width:100%">취소</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1580,6 +1678,7 @@ function saveD(){
           startupView: D.settings.startupView,
           pomodoroPresets: (typeof _pomoState!=='undefined') ? _pomoState.presets : undefined,
           pomodoroSelectedPreset: (typeof _pomoState!=='undefined') ? _pomoState.selectedPreset : undefined,
+          goal: D.settings.goal,
           alarmSound: D.settings.alarmSound,
           userBadges: D.settings.userBadges,
           lastBadgeDate: D.settings.lastBadgeDate,
@@ -6977,6 +7076,277 @@ function toggleTheme(){
   const next=(D.settings.theme==='dark')?'light':'dark';
   D.settings.theme=next;saveD();applyTheme(next);
 }
+
+// ═══════════════════════════════════════════════════════════
+// AI AGENT
+// ═══════════════════════════════════════════════════════════
+let _agentHistory=[];
+let _agentPlan=[];
+let _agentFile=null;
+let _agentSending=false;
+
+function openAIAgent(){
+  document.getElementById('agent-overlay').classList.add('show');
+  setTimeout(()=>document.getElementById('agent-input-box')?.focus(),150);
+}
+function closeAIAgent(){
+  document.getElementById('agent-overlay').classList.remove('show');
+}
+function clearAgentSession(){
+  _agentHistory=[];_agentPlan=[];_agentFile=null;
+  document.getElementById('agent-chat-messages').innerHTML=`<div class="agent-msg agent-msg-ai"><div class="agent-bubble"><span class="agent-ai-icon">🤖</span><span>새 대화를 시작할게요! 무엇을 도와드릴까요?</span></div></div>`;
+  renderAgentPlan();
+  document.getElementById('agent-file-chip').innerHTML='';
+  document.getElementById('agent-file-input').value='';
+}
+
+function agentFileChange(el){
+  const file=el.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  if(file.type.startsWith('image/')){
+    reader.onload=ev=>{
+      const base64=ev.target.result.split(',')[1];
+      _agentFile={name:file.name,content:base64,type:file.type,isImage:true};
+      _renderAgentFileChip();
+    };
+    reader.readAsDataURL(file);
+  }else{
+    reader.onload=ev=>{
+      _agentFile={name:file.name,content:ev.target.result.slice(0,8000),type:file.type,isImage:false};
+      _renderAgentFileChip();
+    };
+    reader.readAsText(file);
+  }
+}
+function _renderAgentFileChip(){
+  const chip=document.getElementById('agent-file-chip');
+  if(!chip)return;
+  if(!_agentFile){chip.innerHTML='';return;}
+  chip.innerHTML=`<span style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:12px;display:inline-flex;align-items:center;gap:6px">${_agentFile.isImage?'🖼️':'📄'} ${esc(_agentFile.name)}<button onclick="clearAgentFile()" style="background:none;border:none;cursor:pointer;font-size:11px;opacity:.55;padding:0">✕</button></span>`;
+}
+function clearAgentFile(){
+  _agentFile=null;
+  const fi=document.getElementById('agent-file-input');
+  if(fi)fi.value='';
+  _renderAgentFileChip();
+}
+
+async function sendAgentMsg(){
+  if(_agentSending)return;
+  const input=document.getElementById('agent-input-box');
+  const msg=(input?.value||'').trim();
+  if(!msg&&!_agentFile)return;
+  _agentSending=true;
+  if(input)input.value='';
+
+  _agentHistory.push({role:'user',content:msg||((_agentFile?.name)?`[파일: ${_agentFile.name}]`:'')});
+  _renderAgentMsgs();
+
+  // 타이핑 표시
+  const chatEl=document.getElementById('agent-chat-messages');
+  const td=document.createElement('div');
+  td.className='agent-msg agent-msg-ai';td.id='agent-typing-row';
+  td.innerHTML='<div class="agent-bubble"><span class="agent-ai-icon">🤖</span><span class="agent-typing">•••</span></div>';
+  chatEl?.appendChild(td);
+  if(chatEl)chatEl.scrollTop=chatEl.scrollHeight;
+
+  try{
+    const ctx=_buildAgentCtx();
+    const result=await ApiClient.aiAgent(msg,_agentFile,ctx,_agentHistory.slice(-8));
+    document.getElementById('agent-typing-row')?.remove();
+    if(result){
+      _agentHistory.push({role:'ai',content:result.reply||''});
+      _agentPlan=result.actions||[];
+      _renderAgentMsgs();
+      renderAgentPlan();
+    }
+  }catch(e){
+    document.getElementById('agent-typing-row')?.remove();
+    _agentHistory.push({role:'ai',content:'오류가 발생했어요: '+e.message});
+    _renderAgentMsgs();
+  }
+  clearAgentFile();
+  _agentSending=false;
+}
+
+function _buildAgentCtx(){
+  const tasks=D.tasks||[];
+  return{
+    currentView: VIEW,
+    tasks:{
+      total:tasks.length,
+      done:tasks.filter(t=>t.done).length,
+      // 미완료 할일 전체 (제목·날짜·우선순위·태그·id)
+      todo:tasks.filter(t=>!t.done).map(t=>({
+        id:t.id, title:t.title, dueDate:t.dueDate||'', priority:t.priority, tags:t.tags||[]
+      })),
+      // 완료된 것은 최근 10개 제목만 (컨텍스트 절약)
+      recentDone:tasks.filter(t=>t.done).slice(0,10).map(t=>t.title)
+    },
+    habits:(D.habits||[]).map(h=>h.name),
+    routines:(D.settings.routines||[]).slice(0,12).map(r=>({period:r.period,name:r.name,time:r.time,days:r.days})),
+    goals:(D.goals||[]).map(g=>({name:g.name,type:g.type,desc:g.desc?.slice(0,60)})),
+    memoPreview:(D.settings.memos||[]).slice(0,3).map(m=>String(m.content||'').slice(0,80)).join(' | ')
+  };
+}
+
+function _renderAgentMsgs(){
+  const el=document.getElementById('agent-chat-messages');
+  if(!el)return;
+  el.innerHTML=_agentHistory.map(m=>{
+    if(m.role==='user')return`<div class="agent-msg agent-msg-user"><div class="agent-bubble">${esc(m.content)}</div></div>`;
+    return`<div class="agent-msg agent-msg-ai"><div class="agent-bubble"><span class="agent-ai-icon">🤖</span><span>${esc(m.content)}</span></div></div>`;
+  }).join('');
+  el.scrollTop=el.scrollHeight;
+}
+
+const _PLAN_COLORS={
+  add_task:    {bg:'#dcfce7',border:'#86efac',icon:'✅'},
+  update_task: {bg:'#dbeafe',border:'#93c5fd',icon:'✏️'},
+  delete_task: {bg:'#fee2e2',border:'#fca5a5',icon:'🗑️'},
+  add_habit:   {bg:'#fef9c3',border:'#fde047',icon:'🔥'},
+  add_routine: {bg:'#ede9fe',border:'#c4b5fd',icon:'📅'},
+  add_goal:    {bg:'#dcfce7',border:'#86efac',icon:'🎯'},
+  add_event:   {bg:'#dbeafe',border:'#93c5fd',icon:'📆'},
+  update_settings:{bg:'#f3f4f6',border:'#d1d5db',icon:'⚙️'},
+  add_memo:    {bg:'#fef3cd',border:'#fcd34d',icon:'📝'},
+};
+function _planPreview(a){
+  const d=a.data||{};const parts=[];
+  if(d.title)parts.push(`<strong>${esc(d.title)}</strong>`);
+  if(d.name)parts.push(`<strong>${esc(d.name)}</strong>`);
+  if(d.dueDate)parts.push(`📅 ${d.dueDate}`);
+  if(d.priority)parts.push(`우선순위: ${{high:'높음',med:'보통',low:'낮음'}[d.priority]||d.priority}`);
+  if(d.tags?.length)parts.push(`🏷 ${d.tags.join(', ')}`);
+  if(d.time)parts.push(`⏰ ${d.time}`);
+  if(d.period)parts.push(`${{morning:'아침',afternoon:'점심',evening:'저녁'}[d.period]||d.period} 루틴`);
+  if(d.days?.length)parts.push(`요일: ${d.days.map(n=>['일','월','화','수','목','금','토'][n]).join('')}`);
+  if(d.content)parts.push(esc(String(d.content).slice(0,60)));
+  if(d.desc)parts.push(esc(String(d.desc).slice(0,50)));
+  if(d.key!==undefined)parts.push(`${esc(String(d.key))}: ${esc(String(d.value??''))}`);
+  if(d.subtasks?.length)parts.push(`체크리스트 ${d.subtasks.length}개`);
+  return parts.join(' · ');
+}
+function renderAgentPlan(){
+  const el=document.getElementById('agent-plan-content');
+  const bar=document.getElementById('agent-confirm-bar');
+  if(!el)return;
+  if(!_agentPlan.length){
+    el.innerHTML='<div class="agent-plan-empty">💬 대화를 시작하면<br>여기에 적용할 내용이<br>표시됩니다</div>';
+    if(bar)bar.style.display='none';
+    return;
+  }
+  el.innerHTML=_agentPlan.map((a,i)=>{
+    const c=_PLAN_COLORS[a.type]||{bg:'#f9fafb',border:'#e5e7eb',icon:'•'};
+    const preview=_planPreview(a);
+    return`<div class="plan-card" style="background:${c.bg};border:1.5px solid ${c.border}">
+      <div class="plan-card-header">
+        <span class="plan-card-icon">${c.icon}</span>
+        <span class="plan-card-label">${esc(a.label||a.type)}</span>
+        <button class="plan-card-remove" onclick="removePlanAction(${i})" title="제거">✕</button>
+      </div>
+      ${preview?`<div class="plan-card-detail">${preview}</div>`:''}
+    </div>`;
+  }).join('');
+  if(bar){
+    bar.style.display='flex';
+    const cnt=bar.querySelector('.agent-confirm-count');
+    if(cnt)cnt.textContent=_agentPlan.length;
+  }
+}
+function removePlanAction(idx){
+  _agentPlan.splice(idx,1);
+  renderAgentPlan();
+}
+
+async function applyAgentPlan(){
+  if(!_agentPlan.length)return;
+  const btn=document.getElementById('agent-apply-btn');
+  if(btn){btn.disabled=true;btn.textContent='적용 중...';}
+  let applied=0;
+  for(const action of _agentPlan){
+    try{await _applyOneAction(action);applied++;}
+    catch(e){console.warn('[Agent action failed]',action.type,e.message);}
+  }
+  _agentPlan=[];
+  renderAgentPlan();
+  _agentHistory.push({role:'ai',content:`✅ ${applied}개 항목이 적용됐어요! 앱을 확인해보세요.`});
+  _renderAgentMsgs();
+  render();saveD();
+  showToast(`✅ ${applied}개 항목 적용 완료`);
+  if(btn){btn.disabled=false;btn.innerHTML='✅ 확인 — <span class="agent-confirm-count">0</span>개 적용';}
+}
+
+async function _applyOneAction(action){
+  const d=action.data||{};
+  switch(action.type){
+    case 'add_task':{
+      const t={id:uid(),title:d.title||'새 할일',done:false,priority:d.priority||'med',
+        folderId:null,goalId:null,dueDate:d.dueDate||'',sessionUrl:'',notes:d.notes||'',
+        tags:d.tags||[],isRecurring:false,
+        subtasks:(d.subtasks||[]).map(s=>({id:uid(),text:typeof s==='string'?s:s.text,done:false})),
+        links:[],createdAt:Date.now(),completedAt:null,completionHour:null};
+      D.tasks.unshift(t);
+      if(ApiClient.isOnline())await ApiClient.createTask(t).catch(()=>{});
+      break;
+    }
+    case 'update_task':{
+      const match=D.tasks.find(t=>d.id?t.id===d.id:t.title.toLowerCase().includes((d.titleMatch||'').toLowerCase()));
+      if(match){
+        if(d.newTitle!==undefined)match.title=d.newTitle;
+        if(d.done!==undefined)match.done=d.done;
+        if(d.dueDate!==undefined)match.dueDate=d.dueDate;
+        if(d.priority!==undefined)match.priority=d.priority;
+        if(d.tags!==undefined)match.tags=d.tags;
+        if(d.notes!==undefined)match.notes=d.notes;
+        if(ApiClient.isOnline())await ApiClient.updateTask(match.id,match).catch(()=>{});
+      }
+      break;
+    }
+    case 'delete_task':{
+      const idx=D.tasks.findIndex(t=>d.id?t.id===d.id:t.title.toLowerCase().includes((d.titleMatch||'').toLowerCase()));
+      if(idx>=0){const id=D.tasks[idx].id;D.tasks.splice(idx,1);if(ApiClient.isOnline())await ApiClient.deleteTask(id).catch(()=>{});}
+      break;
+    }
+    case 'add_habit':{
+      const h={id:uid(),name:d.name||'새 습관',sortOrder:(D.habits||[]).length,checks:[],streak:0,completions:{},createdAt:Date.now()};
+      if(!D.habits)D.habits=[];
+      D.habits.push(h);
+      if(ApiClient.isOnline())await ApiClient.createHabit(h).catch(()=>{});
+      break;
+    }
+    case 'add_routine':{
+      if(!Array.isArray(D.settings.routines))D.settings.routines=[];
+      D.settings.routines.push({id:uid(),period:d.period||'morning',name:d.name||'루틴',time:d.time||'',days:d.days||[1,2,3,4,5],done:false});
+      break;
+    }
+    case 'add_goal':{
+      const g={id:uid(),name:d.name||'새 목표',type:d.type||'global',desc:d.desc||'',targetDate:d.targetDate||'',color:d.color||'#16a34a',createdAt:Date.now()};
+      if(!D.goals)D.goals=[];
+      D.goals.push(g);
+      if(ApiClient.isOnline())await ApiClient.createGoal(g).catch(()=>{});
+      break;
+    }
+    case 'add_event':{
+      const ev={id:uid(),title:d.title||'새 이벤트',date:d.date||todayStr(),time:d.time||'',type:'manual',color:'#2563eb',createdAt:Date.now()};
+      if(!D.events)D.events=[];
+      D.events.push(ev);
+      if(ApiClient.isOnline())await ApiClient.createEvent(ev).catch(()=>{});
+      break;
+    }
+    case 'update_settings':{
+      if(d.key)D.settings[d.key]=d.value;
+      break;
+    }
+    case 'add_memo':{
+      if(!Array.isArray(D.settings.memos))D.settings.memos=[];
+      D.settings.memos.unshift({id:uid(),content:d.content||'',createdAt:Date.now()});
+      break;
+    }
+  }
+}
+
 function startApp(){
   loadD();
   applyTheme(D.settings.theme||'light');

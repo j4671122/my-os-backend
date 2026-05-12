@@ -117,6 +117,92 @@ async function handleTag(req, res) {
   return res.json(result)
 }
 
+// ── agent ─────────────────────────────────────────────────
+async function handleAgent(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' })
+  const { message, fileContent, fileType, isImage, context = {}, history = [] } = req.body || {}
+  if (!message && !fileContent) return res.status(400).json({ error: 'message or file required' })
+
+  const today = new Date().toISOString().slice(0, 10)
+
+  const systemPrompt = `당신은 개인 생산성 OS의 AI 에이전트입니다.
+사용자의 자연어 요청을 분석해서 할일/루틴/습관/목표/이벤트/메모/설정을 관리해주세요.
+
+반드시 아래 JSON 형식으로만 응답하세요 (마크다운 없이 순수 JSON):
+{"reply":"...","actions":[{"type":"...","label":"...","data":{...}}]}
+
+사용 가능한 action 타입과 data 형식:
+- add_task: {title, dueDate:"YYYY-MM-DD"|"", priority:"high"|"med"|"low", tags:[], notes:"", subtasks:[{text:""}]}
+- update_task: {id:"task-id-if-known", titleMatch:"제목 일부(id 없을 때)", newTitle:"", done:bool, dueDate:"", priority:"", tags:[], notes:""}
+- delete_task: {id:"task-id-if-known", titleMatch:"제목 일부(id 없을 때)"}
+- add_habit: {name:""}
+- add_routine: {period:"morning"|"afternoon"|"evening", name:"", time:"HH:MM", days:[0-6, 0=일요일]}
+- add_goal: {name:"", type:"global"|"project", desc:"", targetDate:"YYYY-MM-DD"|"", color:"#16a34a"}
+- add_event: {title:"", date:"YYYY-MM-DD", time:"HH:MM"|""}
+- update_settings: {key:"", value:any, description:""}
+- add_memo: {content:""}
+
+규칙:
+- reply는 친절한 한국어, 어떤 작업을 할지 1~2줄로 설명
+- actions가 없으면 빈 배열 []
+- 파일이 첨부된 경우 내용을 분석해서 할일로 정리
+- 오늘 날짜: ${today}`
+
+  const ctx = context
+  const todoList = (ctx.tasks?.todo || [])
+  const todoStr = todoList.length
+    ? todoList.map(t => `  - [${t.id?.slice(0,8)||'?'}] "${t.title}"${t.dueDate?' 마감:'+t.dueDate:''} 우선순위:${t.priority||'med'}${t.tags?.length?' 태그:'+t.tags.join(','):''}`).join('\n')
+    : '  없음'
+  const contextStr = `오늘: ${today}
+현재 화면: ${ctx.currentView||'today'}
+미완료 할일 (${todoList.length}개):
+${todoStr}
+완료된 할일(최근): ${(ctx.tasks?.recentDone||[]).join(', ')||'없음'}
+습관: ${(ctx.habits||[]).join(', ')||'없음'}
+루틴: ${(ctx.routines||[]).map(r=>`${r.name}(${r.period} ${r.time||''})`).join(', ')||'없음'}
+목표: ${(ctx.goals||[]).map(g=>g.name).join(', ')||'없음'}
+메모: ${ctx.memoPreview||'없음'}`
+
+  const historyStr = history.slice(-6).map(h=>`${h.role==='user'?'사용자':'AI'}: ${h.content}`).join('\n')
+
+  let userPrompt = `[현재 앱 데이터]\n${contextStr}\n`
+  if (historyStr) userPrompt += `\n[이전 대화]\n${historyStr}\n`
+  if (fileContent && !isImage) userPrompt += `\n[첨부 파일 내용]\n${String(fileContent).slice(0, 4000)}\n`
+  userPrompt += `\n[사용자 요청]\n${message || '첨부 파일을 분석해서 할일을 정리해줘'}`
+
+  try {
+    let result
+    if (isImage && fileContent) {
+      // 이미지: Gemini multimodal parts
+      const BASE = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'
+      const body = {
+        contents: [{ parts: [
+          { inlineData: { mimeType: fileType, data: fileContent } },
+          { text: systemPrompt + '\n\n' + userPrompt }
+        ]}],
+        generationConfig: { temperature: 0.3, maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } }
+      }
+      const r = await fetch(`${BASE}?key=${process.env.GEMINI_API_KEY}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+      })
+      const raw = await r.json()
+      const text = raw.candidates?.[0]?.content?.parts?.find(p=>p.text)?.text?.trim() || ''
+      try { result = JSON.parse(text.replace(/^```json\s*/i,'').replace(/```\s*$/,'').trim()) }
+      catch { const m=text.match(/\{[\s\S]*\}/); result=m?JSON.parse(m[0]):null }
+    } else {
+      result = await callGeminiJSON(systemPrompt + '\n\n' + userPrompt, { temperature: 0.3, maxTokens: 1024, useSystem: false })
+    }
+
+    if (!result) return res.json({ reply: '죄송해요, 처리 중 문제가 생겼어요. 다시 시도해주세요.', actions: [] })
+    return res.json({
+      reply: String(result.reply || ''),
+      actions: Array.isArray(result.actions) ? result.actions.slice(0, 20) : []
+    })
+  } catch(e) {
+    return res.status(500).json({ error: e.message })
+  }
+}
+
 // ── router ────────────────────────────────────────────────
 export default withCors(async (req, res) => {
   const user = await getAuthUser(req)
@@ -128,5 +214,6 @@ export default withCors(async (req, res) => {
   if (action === 'report')  return handleReport(req, res)
   if (action === 'suggest') return handleSuggest(req, res)
   if (action === 'tag')     return handleTag(req, res)
-  return res.status(400).json({ error: 'action required: badges|report|suggest|tag' })
+  if (action === 'agent')   return handleAgent(req, res)
+  return res.status(400).json({ error: 'action required: badges|report|suggest|tag|agent' })
 })
