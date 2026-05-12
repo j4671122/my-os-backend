@@ -2227,6 +2227,15 @@ function collapseAllTasks(){
   openTaskIds.clear();
   render();
 }
+async function rescheduleOverdueToday(){
+  const today=todayStr();
+  const list=D.tasks.filter(t=>!t.done&&t.dueDate&&t.dueDate<today);
+  if(!list.length){showToast('기한 초과 할일이 없어요');return;}
+  list.forEach(t=>{t.dueDate=today;});
+  render();saveD();
+  if(ApiClient.isOnline())await Promise.all(list.map(t=>ApiClient.updateTask(t.id,t).catch(()=>{})));
+  showToast(`📅 ${list.length}개 할일을 오늘로 변경했어요`);
+}
 
 // Subtasks
 function addSubtask(tid){
@@ -3298,6 +3307,10 @@ function renderSettings(){
         <div class="toggle-info"><div class="toggle-label">예정 날짜 색상</div><div class="toggle-sub">마감이 가까운 날짜 표시 색상</div></div>
         <input type="color" value="${s.upcomingColor||'#2563eb'}" oninput="saveSetting('upcomingColor',this.value);applyDateColors()" style="width:40px;height:32px;border:none;border-radius:6px;cursor:pointer;background:none"/>
       </div>
+      <div class="select-row">
+        <div class="toggle-info"><div class="toggle-label">날짜 표시 형식</div><div class="toggle-sub">기한 초과/예정 대신 D-3, D+2 형식으로 표시</div></div>
+        <label class="tog"><input type="checkbox" ${s.dueDateFormat==='dday'?'checked':''} onchange="saveSetting('dueDateFormat',this.checked?'dday':'label');render()"><span class="tog-slider"></span></label>
+      </div>
     </div>
     <div class="settings-card">
       <h4>데이터</h4>
@@ -3826,6 +3839,11 @@ function getDateLabel(ds){
   const today=new Date();today.setHours(0,0,0,0);
   const d=new Date(ds+'T00:00:00');
   const diff=Math.round((d-today)/86400000);
+  if(D.settings.dueDateFormat==='dday'){
+    if(diff===0)return 'D-Day';
+    if(diff<0)return `D+${Math.abs(diff)}`;
+    return `D-${diff}`;
+  }
   if(diff<0)return t('dateOverdueLabel')+' ('+ds+')';
   if(diff===0)return t('today');
   if(diff===1)return t('dateTomorrow');
@@ -5718,9 +5736,10 @@ function renderTaskView(){
     const overdue=tasks.filter(t=>t.dueDate&&t.dueDate<today);
     const todayT=tasks.filter(t=>t.dueDate===today);
     const upcoming=tasks.filter(t=>t.dueDate&&t.dueDate>today);
-    html+=`<div style="display:flex;gap:6px;margin-bottom:8px">
+    html+=`<div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
       <button class="btn btn-ghost btn-sm" onclick="expandAllTasks()" title="전체 열기">⬇ 전체 열기</button>
       <button class="btn btn-ghost btn-sm" onclick="collapseAllTasks()" title="전체 닫기">⬆ 전체 닫기</button>
+      ${overdue.length?`<button class="btn btn-ghost btn-sm" onclick="rescheduleOverdueToday()" title="기한 초과 할일 전부 오늘로 변경" style="color:var(--red)">📅 초과→오늘 (${overdue.length})</button>`:''}
     </div>`;
     const _groupOrder=D.settings.taskGroupOrder||['anytime','today','overdue','upcoming'];
     const _groupMap={
