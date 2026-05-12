@@ -49,13 +49,15 @@
 
   // ── AI 호출 속도 제한 (최소 5초 간격) ─────────────────────
   // 직전 호출 후 5초가 안 됐으면 남은 시간만큼 대기 후 실행
-  let _nextAiSlot = 0
+  // 새로고침 후에도 직전 호출 시각 유지 → rolling 60s 창 내 누적 호출 방지
   const AI_GAP_MS = 10000  // Gemini 무료 20 RPM → 3s 최소, 10s로 여유 확보
   const _aiBgReadyAt = Date.now() + 30000  // 배경 AI 호출 30초 유예 (사용자 슬롯 보호)
+  let _nextAiSlot = Math.max(Date.now(), parseInt(localStorage.getItem('_aiSlot') || '0'))
   async function _waitAiSlot() {
     const now = Date.now()
     const wait = Math.max(0, _nextAiSlot - now)
     _nextAiSlot = Math.max(now, _nextAiSlot) + AI_GAP_MS
+    localStorage.setItem('_aiSlot', String(_nextAiSlot))
     if (wait > 0) await new Promise(r => setTimeout(r, wait))
   }
 
