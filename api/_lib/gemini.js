@@ -133,24 +133,15 @@ export async function callGemini(prompt, opts = {}) {
     body:    JSON.stringify(body)
   })
 
-  if (res.status === 429) {
-    // Rate limit hit — 12초 대기 후 1회 재시도
-    await new Promise(r => setTimeout(r, 12000))
-    const retry = await fetch(`${BASE}?key=${API_KEY}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
-    })
-    if (!retry.ok) {
-      const err = await retry.json().catch(() => ({}))
-      throw new Error(`Gemini error ${retry.status}: ${err?.error?.message || retry.statusText}`)
-    }
-    const data2 = await retry.json()
-    const parts2 = data2.candidates?.[0]?.content?.parts || []
-    return parts2.find(p => p.text)?.text?.trim() || ''
-  }
-
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(`Gemini error ${res.status}: ${err?.error?.message || res.statusText}`)
+    const msg = err?.error?.message || res.statusText
+    const e = new Error(`Gemini error ${res.status}: ${msg}`)
+    e.status = res.status
+    // Gemini "retry in Xs" 파싱
+    const retryMatch = msg.match(/retry in ([\d.]+)s/i)
+    e.retryAfter = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) + 2 : 25
+    throw e
   }
 
   const data = await res.json()

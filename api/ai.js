@@ -231,6 +231,14 @@ async function handleAgent(req, res) {
       actions: Array.isArray(result.actions) ? result.actions.slice(0, 20) : []
     })
   } catch(e) {
+    if (e.status === 429) {
+      return res.status(429).json({
+        error: 'rate_limit',
+        retryAfter: e.retryAfter || 25,
+        reply: `잠깐, AI가 잠시 바빠요 🙏 ${e.retryAfter || 25}초 후에 다시 시도해주세요.`,
+        actions: []
+      })
+    }
     return res.status(500).json({ error: e.message })
   }
 }
