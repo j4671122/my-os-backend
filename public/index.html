@@ -579,7 +579,7 @@ canvas{max-width:100%}
 
 /* ── Time tracker ── */
 .tt-layout{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:16px;align-items:start}
-.tt-side-toggle{display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:10px}
+.tt-side-toggle{display:none;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .tt-board,.tt-side{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)}
 .tt-board{overflow:hidden}
 .tt-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,var(--surface),#faf7f2)}
@@ -613,7 +613,7 @@ canvas{max-width:100%}
 @media (max-width: 1100px){
   .home-grid{grid-template-columns:1fr}
   .home-card.wide{grid-column:span 1}
-  .tt-layout{grid-template-columns:1fr}
+  .tt-layout{grid-template-columns:minmax(0,1fr) 210px}
   .habit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width: 768px){
@@ -4518,6 +4518,7 @@ function renderTimeTracker(){
           <button onclick="ttNavDate(1,'${dateKey}')" title="다음 날">›</button>
         </div>
         <div style="font-size:11.5px;color:var(--text3)">${Math.round(totalFilled*10/60*10)/10}시간 기록됨</div>
+        <button class="tt-side-toggle" id="tt-side-toggle-btn" onclick="toggleTtSide(this)">📋 라벨</button>
       </div>
       <div class="tt-grid-wrap" id="tt-grid-wrap">
         <div class="tt-grid">
@@ -4528,7 +4529,6 @@ function renderTimeTracker(){
       </div>
       <button class="btn btn-ghost btn-sm" onclick="ttClearAll('${dateKey}')" style="margin-top:8px;width:100%;font-size:11px;color:var(--red)">🗑 오늘 전체 삭제</button>
     </div>
-    <button class="tt-side-toggle" id="tt-side-toggle-btn" onclick="toggleTtSide(this)">📋 라벨 열기</button>
     <div id="tt-side-overlay" class="tt-side-overlay" onclick="closeTtSide()"></div>
     <div class="tt-side" id="tt-side">
       <div class="tt-selected" style="background:${selLabel?.color||'var(--surface)'};border-color:${selLabel?.color||'var(--border)'};color:${selLabel?.text||'var(--text)'}">
