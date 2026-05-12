@@ -1121,6 +1121,7 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
 .agent-ai-icon{flex-shrink:0;margin-top:1px}
 .agent-typing{letter-spacing:3px;font-size:18px}
 @keyframes agent-blink{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.18);opacity:.7}}
 .agent-typing{animation:agent-blink 1s infinite}
 .agent-input-area{padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0}
 .agent-textarea{flex:1;border:1px solid var(--border);border-radius:12px;padding:9px 12px;font-size:13.5px;font-family:inherit;resize:none;min-height:40px;max-height:110px;background:var(--surface);color:var(--text);outline:none;line-height:1.45;transition:border-color .15s}
@@ -1432,6 +1433,7 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
               📎
               <input type="file" id="agent-file-input" accept=".txt,.md,.csv,.json,.pdf,image/*" style="display:none" onchange="agentFileChange(this)">
             </label>
+            <button id="agent-voice-btn" class="agent-file-btn" onclick="toggleAgentVoice()" title="음성 입력" style="border:none;background:none;cursor:pointer;font-size:18px;padding:4px;line-height:1;flex-shrink:0">🎤</button>
             <textarea id="agent-input-box" class="agent-textarea" placeholder="무엇을 도와드릴까요? (예: 내일 아침 운동 루틴 3개 만들어줘 / 파일 읽고 할일 정리해줘)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAgentMsg()}"></textarea>
             <button class="btn btn-primary btn-sm" onclick="sendAgentMsg()" style="height:38px;min-width:50px;flex-shrink:0">전송</button>
           </div>
@@ -7105,6 +7107,35 @@ let _agentHistory=[];
 let _agentPlan=[];
 let _agentFile=null;
 let _agentSending=false;
+let _agentRecog=null;
+let _agentListening=false;
+
+function toggleAgentVoice(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){showToast('이 브라우저는 음성 입력을 지원하지 않아요');return;}
+  if(_agentListening){_agentRecog?.stop();return;}
+  _agentRecog=new SR();
+  _agentRecog.lang=({ko:'ko-KR',en:'en-US',zh:'zh-CN'})[D.settings?.lang||'ko']||'ko-KR';
+  _agentRecog.continuous=false;
+  _agentRecog.interimResults=false;
+  _agentRecog.onresult=e=>{
+    const t=e.results[0][0].transcript;
+    const box=document.getElementById('agent-input-box');
+    if(box)box.value=(box.value+' '+t).trim();
+    _agentListening=false;_updateVoiceBtn();
+  };
+  _agentRecog.onerror=()=>{_agentListening=false;_updateVoiceBtn();};
+  _agentRecog.onend=()=>{_agentListening=false;_updateVoiceBtn();};
+  _agentRecog.start();
+  _agentListening=true;_updateVoiceBtn();
+}
+function _updateVoiceBtn(){
+  const btn=document.getElementById('agent-voice-btn');
+  if(!btn)return;
+  btn.textContent=_agentListening?'🔴':'🎤';
+  btn.style.animation=_agentListening?'pulse 1s infinite':'none';
+  btn.title=_agentListening?'음성 입력 중 (탭하면 종료)':'음성 입력';
+}
 
 function openAIAgent(){
   document.getElementById('agent-overlay').classList.add('show');
