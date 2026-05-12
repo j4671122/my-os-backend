@@ -632,11 +632,15 @@ canvas{max-width:100%}
   .chart-row{display:flex;flex-direction:column!important}
   /* 타임 트래커 모바일: 그리드 자동 맞춤 */
   .tt-side-toggle{display:flex;align-items:center;gap:6px}
-  .tt-grid{grid-template-columns:40px repeat(6,1fr);min-width:0;width:100%}
+  .tt-grid{grid-template-columns:40px repeat(6,1fr)!important;min-width:0!important;width:100%!important}
   .tt-grid-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .tt-cell,.tt-time,.tt-min{min-height:20px;font-size:8.5px}
   .tt-cell-label{font-size:7.5px}
-  .tt-nav button{width:40px;height:40px;font-size:18px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  /* 헤더 혼잡 방지: 기록됨 텍스트 숨기고 nav가 가득 채우도록 */
+  .tt-recorded{display:none}
+  .tt-nav{flex:1;justify-content:center}
+  .tt-nav-title{max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+  .tt-nav button{width:44px;height:44px;font-size:20px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;touch-action:manipulation;flex-shrink:0}
   /* 타임 트래커 라벨 → 글래스모피즘 드로어 */
   .tt-side{position:fixed!important;top:0;right:-320px;width:min(280px,88vw);height:100%;height:100dvh;z-index:350;background:rgba(255,255,255,.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-left:4px solid rgba(0,0,0,.08);box-shadow:-8px 0 40px rgba(0,0,0,.18);overflow-y:auto;overflow-x:hidden;padding:calc(60px + env(safe-area-inset-top,0px)) 14px calc(20px + env(safe-area-inset-bottom,0px));max-height:none!important;opacity:1!important;border-radius:0!important;transition:right .28s cubic-bezier(.4,0,.2,1);resize:none}
   body.dark .tt-side{background:rgba(28,30,27,.92);border-left:4px solid rgba(255,255,255,.1)}
@@ -1133,11 +1137,17 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
 .plan-card-remove:hover{opacity:.8}
 .plan-card-detail{color:#555;font-size:11.5px;line-height:1.4;padding-left:19px;margin-top:3px}
 .agent-plan-empty{color:var(--text3);text-align:center;padding:36px 18px;font-size:12.5px;line-height:1.7}
+/* 모바일 인라인 플랜 (채팅창 하단, 타이핑창 위) */
+.agent-inline-plan{display:none;flex-shrink:0;overflow-y:auto;max-height:38vh;background:var(--surface2);border-top:2px solid var(--border)}
+.agent-inline-plan-inner{padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.agent-inline-confirm{padding:8px 12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px;flex-shrink:0}
 @media(max-width:640px){
-  .agent-modal{border-radius:16px 16px 0 0;position:fixed;bottom:0;left:0;right:0;width:100%;height:88vh;max-height:88vh}
+  /* 키보드 올라올 때 모달이 함께 줄어들도록 100dvh 사용 */
+  .agent-modal{border-radius:0;position:fixed;top:0;bottom:0;left:0;right:0;width:100%;height:100%;max-height:100%;height:100dvh;max-height:100dvh}
+  .agent-plan-panel{display:none!important}
+  .agent-inline-plan{display:flex;flex-direction:column}
   .agent-body{flex-direction:column}
-  .agent-plan-panel{width:100%;height:220px;border-right:none;border-top:1px solid var(--border)}
-  .agent-plan-header{padding:8px 14px 4px}
+  .agent-chat-panel{border-right:none}
 }
 </style>
 </head>
@@ -1402,6 +1412,15 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
         <div class="agent-chat-messages" id="agent-chat-messages">
           <div class="agent-msg agent-msg-ai">
             <div class="agent-bubble"><span class="agent-ai-icon">🤖</span><span>안녕하세요! 할 일, 루틴, 습관, 목표, 이벤트 등 무엇이든 말씀해주세요.<br><span style="opacity:.55;font-size:11.5px">파일이나 이미지를 첨부해서 내용을 분석하고 정리해드릴 수도 있어요.</span></span></div>
+          </div>
+        </div>
+        <!-- 모바일: 플랜 카드가 채팅 아래, 타이핑창 위에 표시 -->
+        <div id="agent-inline-plan" class="agent-inline-plan">
+          <div style="padding:6px 14px 2px;font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.3px;text-transform:uppercase;flex-shrink:0">적용할 내용</div>
+          <div class="agent-inline-plan-inner" id="agent-inline-plan-content"></div>
+          <div class="agent-inline-confirm" id="agent-inline-confirm-bar">
+            <button id="agent-apply-btn-mob" class="btn btn-primary" onclick="applyAgentPlan()" style="width:100%;font-size:13px">✅ 확인 — <span class="agent-confirm-count-mob">0</span>개 적용</button>
+            <button class="btn btn-ghost btn-sm" onclick="_agentPlan=[];renderAgentPlan()" style="width:100%">취소</button>
           </div>
         </div>
         <div class="agent-input-area">
@@ -4517,7 +4536,7 @@ function renderTimeTracker(){
           <div class="tt-nav-title">${trackerDateLabel(dateKey)}</div>
           <button onclick="ttNavDate(1,'${dateKey}')" title="다음 날">›</button>
         </div>
-        <div style="font-size:11.5px;color:var(--text3)">${Math.round(totalFilled*10/60*10)/10}시간 기록됨</div>
+        <div class="tt-recorded" style="font-size:11.5px;color:var(--text3)">${Math.round(totalFilled*10/60*10)/10}시간 기록됨</div>
         <button class="tt-side-toggle" id="tt-side-toggle-btn" onclick="toggleTtSide(this)">📋 라벨</button>
       </div>
       <div class="tt-grid-wrap" id="tt-grid-wrap">
@@ -7253,6 +7272,30 @@ function renderAgentPlan(){
     bar.style.display='flex';
     const cnt=bar.querySelector('.agent-confirm-count');
     if(cnt)cnt.textContent=_agentPlan.length;
+  }
+  // 모바일 인라인 플랜 동기화
+  const inlineWrap=document.getElementById('agent-inline-plan');
+  const inlineContent=document.getElementById('agent-inline-plan-content');
+  const inlineBar=document.getElementById('agent-inline-confirm-bar');
+  if(inlineContent){
+    if(!_agentPlan.length){
+      if(inlineWrap)inlineWrap.style.display='none';
+    }else{
+      if(inlineWrap)inlineWrap.style.display='flex';
+      inlineContent.innerHTML=_agentPlan.map((a,i)=>{
+        const c=_PLAN_COLORS[a.type]||{bg:'#f9fafb',border:'#e5e7eb',icon:'•'};
+        const preview=_planPreview(a);
+        return`<div class="plan-card" style="background:${c.bg};border:1.5px solid ${c.border}">
+          <div class="plan-card-header"><span class="plan-card-icon">${c.icon}</span><span class="plan-card-label">${esc(a.label||a.type)}</span><button class="plan-card-remove" onclick="removePlanAction(${i})">✕</button></div>
+          ${preview?`<div class="plan-card-detail">${preview}</div>`:''}
+        </div>`;
+      }).join('');
+      if(inlineBar){
+        inlineBar.style.display='flex';
+        const cnt=inlineBar.querySelector('.agent-confirm-count-mob');
+        if(cnt)cnt.textContent=_agentPlan.length;
+      }
+    }
   }
 }
 function removePlanAction(idx){
