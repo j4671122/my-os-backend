@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover"/>
 <title>My OS TODO</title>
 <!-- Supabase JS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -175,6 +175,7 @@
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
+html{overflow-x:hidden;overscroll-behavior-x:none;touch-action:pan-x pan-y}
 :root{
   --bg:#f4f3ef;--surface:#fff;--surface2:#f0ede8;--surface3:#e8e4de;
   --border:#e0dbd4;--border2:#ccc7c0;
@@ -198,7 +199,7 @@ body.dark .pomo-time-modal-box{background:var(--surface)}
 body.dark .picker-drum{background:var(--surface2)}
 body.dark .picker-drum::before{background:linear-gradient(to bottom,var(--surface2) 20%,transparent)}
 body.dark .picker-drum::after{background:linear-gradient(to top,var(--surface2) 20%,transparent)}
-body{font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;overflow:hidden;font-size:14px;transition:background .25s,color .25s}
+body{font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);height:100vh;height:100dvh;display:flex;overflow:hidden;font-size:14px;transition:background .25s,color .25s;overscroll-behavior:none}
 
 /* ── Sidebar ── */
 .sidebar{width:220px;min-width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;padding:16px 0 20px}
@@ -612,28 +613,35 @@ canvas{max-width:100%}
   .sidebar{position:fixed;top:0;left:-240px;height:100%;z-index:300;transition:left .25s ease;box-shadow:4px 0 20px rgba(0,0,0,.12);width:230px;min-width:230px;overflow-y:auto}
   .sidebar.open{left:0}
   .topbar{display:none}
-  .mobile-header{display:flex}
+  .mobile-header{display:flex;padding-top:calc(11px + env(safe-area-inset-top,0px));height:auto}
   .habit-grid{grid-template-columns:1fr}
   .home-grid{grid-template-columns:1fr}
   .home-card.wide{grid-column:span 1}
-  .tt-layout{grid-template-columns:1fr}
+  .tt-layout{grid-template-columns:1fr;position:relative}
   .home-greeting-text{font-size:15px}
   .home-greeting{flex-direction:column;align-items:flex-start;gap:6px}
-  .view-area{padding:14px}
+  .view-area{padding:14px;overflow-x:hidden}
   .dash-grid{grid-template-columns:1fr 1fr!important}
   .chart-row{display:flex;flex-direction:column!important}
-  /* 타임 트래커 모바일: 셀 작게, 라벨 패널 토글 */
-  .tt-side-toggle{display:block}
-  .tt-grid{grid-template-columns:44px repeat(6,minmax(42px,1fr));min-width:0}
-  .tt-cell,.tt-time,.tt-min{min-height:22px;font-size:9px}
-  .tt-cell-label{font-size:8px}
-  .tt-side{transition:max-height .3s ease,opacity .25s ease;overflow:hidden;max-height:2000px}
-  .tt-side.collapsed{max-height:0!important;opacity:0;padding:0;border:none}
+  /* 타임 트래커 모바일: 그리드 자동 맞춤 */
+  .tt-side-toggle{display:flex;align-items:center;gap:6px}
+  .tt-grid{grid-template-columns:40px repeat(6,1fr);min-width:0;width:100%}
+  .tt-grid-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tt-cell,.tt-time,.tt-min{min-height:20px;font-size:8.5px}
+  .tt-cell-label{font-size:7.5px}
+  .tt-nav button{width:40px;height:40px;font-size:18px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  /* 타임 트래커 라벨 → 글래스모피즘 드로어 */
+  .tt-side{position:fixed!important;top:0;right:-320px;width:min(280px,88vw);height:100%;height:100dvh;z-index:350;background:rgba(255,255,255,.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-left:4px solid rgba(0,0,0,.08);box-shadow:-8px 0 40px rgba(0,0,0,.18);overflow-y:auto;overflow-x:hidden;padding:calc(60px + env(safe-area-inset-top,0px)) 14px calc(20px + env(safe-area-inset-bottom,0px));max-height:none!important;opacity:1!important;border-radius:0!important;transition:right .28s cubic-bezier(.4,0,.2,1);resize:none}
+  body.dark .tt-side{background:rgba(28,30,27,.92);border-left:4px solid rgba(255,255,255,.1)}
+  .tt-side.open{right:0}
+  .tt-side.collapsed{right:-320px!important;max-height:none!important;opacity:1!important}
+  .tt-side-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:349;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+  .tt-side-overlay.show{display:block}
   .tt-label-acts button{min-width:36px;min-height:36px;font-size:15px}
 }
 @media (max-width: 480px){
   .bottom-nav{display:flex}
-  .view-area{padding-bottom:calc(80px + env(safe-area-inset-bottom,20px))!important}
+  .view-area{padding-bottom:calc(80px + env(safe-area-inset-bottom,20px))!important;overflow-x:hidden}
   /* 태그가 많아 세로로 밀릴 때: 제목 위, 태그 아래 */
   .task-head{flex-wrap:wrap}
   .task-title-text{order:1;min-width:0;flex:1 1 50%}
@@ -643,6 +651,14 @@ canvas{max-width:100%}
   .drag-handle{order:0}
   .chevron{order:3}
   .dash-grid{grid-template-columns:1fr!important}
+  /* add-bar 오버플로 방지: 폴더 선택 숨기고 컨트롤 축소 */
+  #new-task-folder{display:none}
+  .add-bar{gap:4px;max-width:100%;overflow:hidden}
+  .add-bar select{font-size:10px;padding:2px 2px;max-width:52px}
+  .no-date-btn{font-size:9px;padding:2px 5px;white-space:nowrap;flex-shrink:0}
+  .add-bar input{min-width:0}
+  /* 바텀 네비 안전 영역 */
+  .bottom-nav{height:calc(56px + env(safe-area-inset-bottom,16px));padding-bottom:max(env(safe-area-inset-bottom,0px),8px)}
 }
 
 /* ── Report / Content gen ── */
@@ -1543,10 +1559,10 @@ function saveD(){
           notifCoach:   D.settings.notifCoach,
           notifOverdue: D.settings.notifOverdue,
           weekStart:    D.settings.weekStart,
-        defaultPriority: D.settings.defaultPriority,
-        showDoneInToday: D.settings.showDoneInToday,
-        theme:        D.settings.theme,
-        settingsTab:  D.settings.settingsTab,
+          defaultPriority: D.settings.defaultPriority,
+          showDoneInToday: D.settings.showDoneInToday,
+          theme:        D.settings.theme,
+          settingsTab:  D.settings.settingsTab,
           currentView:  D.settings.currentView,
           folderOrder:  D.settings.folderOrder,
           goalOrder:    D.settings.goalOrder,
@@ -1557,6 +1573,18 @@ function saveD(){
           overdueColor: D.settings.overdueColor,
           upcomingColor: D.settings.upcomingColor,
           memos: D.settings.memos,
+          routines: D.settings.routines,
+          habitEmojis: D.settings.habitEmojis,
+          habitStyles: D.settings.habitStyles,
+          taskGroupOrder: D.settings.taskGroupOrder,
+          startupView: D.settings.startupView,
+          pomodoroPresets: (typeof _pomoState!=='undefined') ? _pomoState.presets : undefined,
+          pomodoroSelectedPreset: (typeof _pomoState!=='undefined') ? _pomoState.selectedPreset : undefined,
+          alarmSound: D.settings.alarmSound,
+          userBadges: D.settings.userBadges,
+          lastBadgeDate: D.settings.lastBadgeDate,
+          _badgeCache: D.settings._badgeCache,
+          _badgeRetryAfter: D.settings._badgeRetryAfter,
         }
       });
     }catch(e){console.warn('[saveD] preferences sync 실패:',e.message)}
@@ -1582,6 +1610,10 @@ function loadD(){
     _aiCoachCache:null,_aiCoachLastAttemptAt:0,_aiCoachRetryAfter:0,_badgeRetryAfter:0,
     userBadges:[],
     routines:[],
+    habitEmojis:{},
+    habitStyles:{},
+    taskGroupOrder:['anytime','today','overdue','upcoming'],
+    startupView:'restore',
     communityPosts:[],
     goalParentMap:{}
   }, D.settings);
@@ -1661,13 +1693,32 @@ async function loadFromServer(){
         if(prefs.tagReg)    D.tagReg       = prefs.tagReg;
         if(prefs.notifications) D.notifications = prefs.notifications;
         if(prefs.settings)  Object.assign(D.settings, prefs.settings);
+        // 포모도로 설정 복원
+        if(prefs.settings?.pomodoroPresets && typeof _pomoState !== 'undefined'){
+          _pomoState.presets = prefs.settings.pomodoroPresets;
+          const pi = prefs.settings.pomodoroSelectedPreset;
+          if(pi != null && pi >= 0 && pi < _pomoState.presets.length){
+            _pomoState.selectedPreset = pi;
+            const p = _pomoState.presets[pi];
+            if(!_pomoState.running){
+              _pomoState.remaining = (p?.work||25)*60;
+              _pomoState.total = (p?.work||25)*60;
+            }
+          }
+        }
+        // habitEmojis 기본값 보장
+        if(!D.settings.habitEmojis) D.settings.habitEmojis = {};
+        if(!Array.isArray(D.settings.routines)) D.settings.routines = [];
+        if(!Array.isArray(D.settings.taskGroupOrder)) D.settings.taskGroupOrder = ['anytime','today','overdue','upcoming'];
+        if(!D.settings.startupView) D.settings.startupView = 'restore';
       }
     }
 
     D.folders = sortItemsBySavedOrder(D.folders, D.settings.folderOrder);
     D.goals   = sortItemsBySavedOrder(D.goals, D.settings.goalOrder);
 
-    if(D.settings.currentView) VIEW = D.settings.currentView;
+    // startupView: 'restore'이면 마지막 뷰 유지, 'today'이면 항상 오늘로
+    if(D.settings.startupView !== 'today' && D.settings.currentView) VIEW = D.settings.currentView;
 
     console.log(`[Server] 로드 완료 — tasks:${D.tasks.length} goals:${D.goals.length} folders:${D.folders.length} habits:${D.habits.length}`);
   }catch(e){
@@ -2916,7 +2967,7 @@ const AVATAR_EMOJIS=['😊','😎','🤓','🧑‍💻','👨‍🎨','🦊','�
 function renderSettings(){
   const s=D.settings;
   const tab=s.settingsTab||'profile';
-  const badgesHTML=badgePoolHTML(); // 칭호 풀 (최대 4개, 홀드 포함)
+  const badgesHTML=badgePoolHTML(); // 칭호 풀 (최대 5개, 홀드 포함)
   const tabsHTML=getSettingTabs().map(tb=>`<div class="stab${tab===tb.id?' active':''}" onclick="switchSettingsTab('${tb.id}')">${tb.label}</div>`).join('');
   let content='';
   if(tab==='profile'){
@@ -3077,6 +3128,30 @@ function renderSettings(){
       <div class="toggle-row">
         <div class="toggle-info"><div class="toggle-label">오늘 뷰에 완료 항목 표시</div><div class="toggle-sub">완료된 할일도 함께 보이기</div></div>
         <label class="tog"><input type="checkbox" ${s.showDoneInToday?'checked':''} onchange="saveSetting('showDoneInToday',this.checked)"><span class="tog-slider"></span></label>
+      </div>
+      <div class="select-row">
+        <div class="toggle-info"><div class="toggle-label">새로고침 후 시작 화면</div><div class="toggle-sub">앱 재시작 시 이동할 화면</div></div>
+        <select onchange="saveSetting('startupView',this.value)">
+          <option value="restore"${(s.startupView||'restore')==='restore'?' selected':''}>🔄 마지막 화면 유지</option>
+          <option value="today"${s.startupView==='today'?' selected':''}>📋 항상 할일 목록으로</option>
+        </select>
+      </div>
+      <div class="select-row" style="align-items:flex-start;flex-direction:column;gap:8px">
+        <div class="toggle-info"><div class="toggle-label">할일 그룹 순서</div><div class="toggle-sub">드래그로 순서 변경</div></div>
+        <div id="group-order-list" style="display:flex;flex-direction:column;gap:6px;width:100%">
+          ${(s.taskGroupOrder||['anytime','today','overdue','upcoming']).map((gk,i)=>{
+            const labels={anytime:'📌 언제든 할 일',today:'☀️ 오늘',overdue:'⚠️ 기한 초과',upcoming:'📅 예정'};
+            return`<div class="group-order-item" data-gk="${gk}" draggable="true"
+              ondragstart="onGroupOrderDragStart(event,'${gk}')"
+              ondragover="onGroupOrderDragOver(event,'${gk}')"
+              ondrop="onGroupOrderDrop(event,'${gk}')"
+              style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;cursor:grab;font-size:13px;font-weight:600">
+              <span style="color:var(--text3);font-size:11px">${i+1}</span>
+              <span style="flex:1">${labels[gk]||gk}</span>
+              <span style="color:var(--text3);font-size:12px">⠿</span>
+            </div>`;
+          }).join('')}
+        </div>
       </div>
       <div class="select-row">
         <div class="toggle-info"><div class="toggle-label">기본 우선순위</div></div>
@@ -3275,6 +3350,20 @@ function setLang(lang){
   showToast((_names[lang]||lang)+' ✓');setTimeout(()=>render(),400);
 }
 function saveSetting(key,val){D.settings[key]=val;saveD();}
+let _groupOrderDragKey=null;
+function onGroupOrderDragStart(e,gk){_groupOrderDragKey=gk;e.dataTransfer.effectAllowed='move';}
+function onGroupOrderDragOver(e,gk){e.preventDefault();e.dataTransfer.dropEffect='move';}
+function onGroupOrderDrop(e,gk){
+  e.preventDefault();
+  if(!_groupOrderDragKey||_groupOrderDragKey===gk)return;
+  const order=D.settings.taskGroupOrder||['anytime','today','overdue','upcoming'];
+  const fi=order.indexOf(_groupOrderDragKey),ti=order.indexOf(gk);
+  if(fi<0||ti<0)return;
+  const[moved]=order.splice(fi,1);order.splice(ti,0,moved);
+  D.settings.taskGroupOrder=order;saveD();
+  setView('settings');
+  _groupOrderDragKey=null;
+}
 function focusAvatarPicker(){document.getElementById('avatar-picker')?.scrollIntoView({behavior:'smooth'})}
 function saveSettings(){
   const s=D.settings;
@@ -3507,7 +3596,7 @@ function buildBadgeStats(){
 // ── 칭호 풀 관리 (최대 4개, FIFO + 홀드) ─────────────────
 function allBadgesHeld(){
   const pool=D.settings.userBadges||[];
-  return pool.length>=4&&pool.every(b=>b.held);
+  return pool.length>=5&&pool.every(b=>b.held);
 }
 function addBadgesToPool(newBadges){
   if(!Array.isArray(newBadges)||!newBadges.length)return;
@@ -3515,7 +3604,7 @@ function addBadgesToPool(newBadges){
   const pool=D.settings.userBadges;
   for(const b of newBadges){
     if(pool.find(p=>p.label===b.label))continue;
-    if(pool.length<4){
+    if(pool.length<5){
       pool.push({...b,held:false,addedAt:Date.now()});
     } else {
       const cands=pool.map((p,i)=>({p,i})).filter(x=>!x.p.held);
@@ -3576,6 +3665,35 @@ async function loadAndShowBadges(){
   const row=document.querySelector('.profile-badges-row');
   if(!row)return;
   row.innerHTML=permissionBadgeHTML()+badgePoolHTML();
+}
+
+async function triggerDailyBadge(){
+  if(window.GUEST_MODE||!ApiClient?.isOnline())return;
+  const today=todayStr();
+  if(D.settings.lastBadgeDate===today)return;
+  // 병아리 청소: 가입 7일 이후 유저는 pool에서 제거
+  const joinedAt=D.settings.joinedAt||Date.now();
+  if((Date.now()-joinedAt)/86400000>=7&&Array.isArray(D.settings.userBadges)){
+    const before=D.settings.userBadges.length;
+    D.settings.userBadges=D.settings.userBadges.filter(b=>b.label!=='병아리');
+    if(D.settings.userBadges.length!==before)saveD();
+  }
+  const pool=D.settings.userBadges||[];
+  const isFirst=!D.settings.lastBadgeDate&&pool.length===0;
+  D.settings.lastBadgeDate=today;
+  saveD();
+  if(isFirst){
+    // 첫 로그인: 계산된 칭호로 풀 시드 (최대 3개) 후 AI 칭호 추가
+    const computed=computeUserBadges().slice(0,3);
+    if(computed.length)addBadgesToPool(computed);
+    await loadAIBadges(true);
+  }else{
+    // 새 날 로그인: AI 칭호 1개 추가
+    await loadAIBadges(true);
+  }
+  // 홈 위젯 갱신
+  const hw=document.querySelector('.home-profile');
+  if(hw)hw.outerHTML=renderHomeProfile();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -4015,7 +4133,9 @@ function homeWidgetContent(w){
 
 function renderHomeProfile(){
   const s=D.settings;
-  const badges=computeUserBadges().slice(0,3);
+  const pool=s.userBadges||[];
+  const src=pool.length?pool:computeUserBadges();
+  const homeBadgesHTML=src.slice(0,3).map(b=>`<span style="font-size:10.5px;padding:2px 9px;border-radius:20px;font-weight:600;background:${b.bg||'#f0ede8'};color:${b.fg||'var(--text2)'}">${b.icon?b.icon+' ':''}${b.label}</span>`).join('');
   let avatar='';
   if(s.avatarImg){avatar=`<img src="${s.avatarImg}" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:24px">`;}
   else{avatar=`<span style="font-size:36px">${s.avatar||'😊'}</span>`;}
@@ -4025,7 +4145,7 @@ function renderHomeProfile(){
       <div style="font-size:16px;font-weight:800;letter-spacing:-.3px">${esc(s.name||'My OS')}</div>
       <div style="font-size:11.5px;color:var(--text3)">@${esc(s.userTag||'user')}</div>
       ${s.bio?`<div style="font-size:11.5px;color:var(--text2);line-height:1.4;max-width:200px">${esc(s.bio)}</div>`:''}
-      <div class="home-badge-row">${badges.map(b=>`<span style="font-size:10.5px;padding:2px 9px;border-radius:20px;font-weight:600;background:${b.bg};color:${b.color}">${b.label}</span>`).join('')}</div>
+      <div class="home-badge-row">${homeBadgesHTML}</div>
     </div>
   </div>`;
 }
@@ -4309,8 +4429,9 @@ function renderTimeTracker(){
       </div>
       <button class="btn btn-ghost btn-sm" onclick="ttClearAll('${dateKey}')" style="margin-top:8px;width:100%;font-size:11px;color:var(--red)">🗑 오늘 전체 삭제</button>
     </div>
-    <button class="tt-side-toggle" onclick="document.querySelector('.tt-side').classList.toggle('collapsed');this.textContent=document.querySelector('.tt-side').classList.contains('collapsed')?'📋 라벨 열기':'📋 라벨 닫기'">📋 라벨 닫기</button>
-    <div class="tt-side">
+    <button class="tt-side-toggle" id="tt-side-toggle-btn" onclick="toggleTtSide(this)">📋 라벨 열기</button>
+    <div id="tt-side-overlay" class="tt-side-overlay" onclick="closeTtSide()"></div>
+    <div class="tt-side" id="tt-side">
       <div class="tt-selected" style="background:${selLabel?.color||'var(--surface)'};border-color:${selLabel?.color||'var(--border)'};color:${selLabel?.text||'var(--text)'}">
         ✓ 선택됨: ${esc(selLabel?.name||'없음')}
         ${_trackerRangeStart?` · 시작: ${_trackerRangeStart}`:''}
@@ -4348,6 +4469,47 @@ function renderTimeTracker(){
   </div>`;
 }
 
+function toggleTtSide(btn){
+  const side=document.getElementById('tt-side');
+  const overlay=document.getElementById('tt-side-overlay');
+  const isMobile=window.innerWidth<=768;
+  if(isMobile){
+    const isOpen=side.classList.toggle('open');
+    if(overlay)overlay.classList.toggle('show',isOpen);
+    if(btn)btn.textContent=isOpen?'📋 라벨 닫기':'📋 라벨 열기';
+    if(isOpen)initTtSideResize(side);
+  }else{
+    side.classList.toggle('collapsed');
+    const isCollapsed=side.classList.contains('collapsed');
+    if(btn)btn.textContent=isCollapsed?'📋 라벨 열기':'📋 라벨 닫기';
+  }
+}
+function closeTtSide(){
+  const side=document.getElementById('tt-side');
+  const overlay=document.getElementById('tt-side-overlay');
+  if(side)side.classList.remove('open');
+  if(overlay)overlay.classList.remove('show');
+  const btn=document.getElementById('tt-side-toggle-btn');
+  if(btn)btn.textContent='📋 라벨 열기';
+}
+function initTtSideResize(side){
+  if(side._resizeInited)return;
+  side._resizeInited=true;
+  let startX,startW;
+  side.addEventListener('touchstart',e=>{
+    const rect=side.getBoundingClientRect();
+    if(e.touches[0].clientX-rect.left>16)return;
+    startX=e.touches[0].clientX;startW=side.offsetWidth;
+    e.stopPropagation();
+  },{passive:true});
+  side.addEventListener('touchmove',e=>{
+    if(startX==null)return;
+    const dx=startX-e.touches[0].clientX;
+    const nw=Math.max(180,Math.min(window.innerWidth*.92,startW+dx));
+    side.style.width=nw+'px';
+  },{passive:true});
+  side.addEventListener('touchend',()=>{startX=null;},{passive:true});
+}
 function ttSelectLabel(lid){
   D.settings.timeTrackerSelectedLabel=lid;
   _trackerRangeStart=null;
@@ -5340,6 +5502,7 @@ function applyPomoTime(){
   const idx=_pomoState.selectedPreset;
   _pomoState.presets[idx]={..._pomoState.presets[idx],work,shortBreak:sb,longBreak:lb,label:`${work}/${sb}`};
   closePomoTimeModal();
+  saveD();
   pomoReset();
 }
 
@@ -5437,10 +5600,18 @@ function renderTaskView(){
       <button class="btn btn-ghost btn-sm" onclick="expandAllTasks()" title="전체 열기">⬇ 전체 열기</button>
       <button class="btn btn-ghost btn-sm" onclick="collapseAllTasks()" title="전체 닫기">⬆ 전체 닫기</button>
     </div>`;
-    if(anytime.length){html+=`<div class="task-group"><div class="tg-header">${t('anytime')} (${anytime.length})</div>`;anytime.forEach(t=>html+=taskCardHTML(t));html+='</div>';}
-    if(overdue.length){html+=`<div class="task-group"><div class="tg-header" style="color:var(--red)">${t('overdue')} (${overdue.length})</div>`;overdue.forEach(t=>html+=taskCardHTML(t));html+='</div>';}
-    if(todayT.length){html+=`<div class="task-group"><div class="tg-header">${t('todayGroup')} (${todayT.length})</div>`;todayT.forEach(t=>html+=taskCardHTML(t));html+='</div>';}
-    if(upcoming.length){html+=`<div class="task-group"><div class="tg-header" style="color:var(--blue)">${t('upcoming')} (${upcoming.length})</div>`;upcoming.forEach(t=>html+=taskCardHTML(t));html+='</div>';}
+    const _groupOrder=D.settings.taskGroupOrder||['anytime','today','overdue','upcoming'];
+    const _groupMap={
+      anytime:{tasks:anytime,label:t('anytime'),style:''},
+      today:{tasks:todayT,label:t('todayGroup'),style:''},
+      overdue:{tasks:overdue,label:t('overdue'),style:'style="color:var(--red)"'},
+      upcoming:{tasks:upcoming,label:t('upcoming'),style:`style="color:var(--blue)"`}
+    };
+    _groupOrder.forEach(gk=>{
+      const g=_groupMap[gk];if(!g||!g.tasks.length)return;
+      html+=`<div class="task-group"><div class="tg-header" ${g.style}>${g.label} (${g.tasks.length})</div>`;
+      g.tasks.forEach(tk=>html+=taskCardHTML(tk));html+='</div>';
+    });
     if(!anytime.length&&!overdue.length&&!todayT.length&&!upcoming.length){html+=`<div class="empty"><div class="ei">🎉</div><p>모든 할일 완료!</p></div>`;}
   }else if(VIEW==='todayonly'){
     const today=todayStr();
@@ -5919,7 +6090,9 @@ let _habitDragId=null;
 function renderHabits(){
   const today=todayStr();
   const emojis=D.settings.habitEmojis||{};
+  const styles=D.settings.habitStyles||{};
   const STYLES=['vine','lego','slime'];
+  const STYLE_LABELS={vine:'🌿 덩굴',lego:'🧱 레고',slime:'🫧 슬라임'};
 
   const addBar=`<div class="habit-add-bar">
     <input id="habit-add-inp" placeholder="${t('habitPlaceholder')}" onkeydown="if(event.key==='Enter')addHabit()"/>
@@ -5942,7 +6115,7 @@ function renderHabits(){
   D.habits.forEach((h,idx)=>{
     const comp=h.completions||{};
     const isDoneToday=!!comp[today];
-    const style=STYLES[idx%3];
+    const style=styles[h.id]||STYLES[idx%3];
     const emoji=emojis[h.id]||h.emoji||'💪';
 
     // 스트릭 (오늘부터 역산)
@@ -5969,7 +6142,7 @@ function renderHabits(){
       ?'linear-gradient(135deg,#ea580c,#d97706)'
       :'linear-gradient(135deg,#22c55e,#16a34a)';
 
-    html+=`<div class="habit-row" draggable="true"
+    html+=`<div class="habit-row" id="habit-card-${h.id}" draggable="true"
       ondragstart="onHabitDragStart(event,'${h.id}')"
       ondragover="onHabitDragOver(event,'${h.id}')"
       ondrop="onHabitDrop(event,'${h.id}')"
@@ -5979,6 +6152,8 @@ function renderHabits(){
         <span style="cursor:grab;color:var(--text3);font-size:13px;opacity:.4;flex-shrink:0">⠿</span>
         <div class="habit-name">${esc(h.name)}</div>
         ${streak>=1?`<div class="streak-badge" style="background:${streakBg}">🔥 ${streak}${t('dayStreak')}${streak%5===0?' 🎉':''}</div>`:''}
+        <button onclick="openHabitStylePicker('${h.id}')" title="블록 디자인 변경"
+          style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 7px;font-size:10px;color:var(--text3);cursor:pointer;flex-shrink:0;white-space:nowrap">${STYLE_LABELS[style]||'🎨'}</button>
         <button class="habit-today-btn${isDoneToday?' done':''}" onclick="toggleHabitToday('${h.id}')" style="flex-shrink:0;font-size:11px;padding:3px 10px">${isDoneToday?'✓ 완료':'+ 오늘'}</button>
         <button onclick="deleteHabit('${h.id}')" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--text3);padding:2px 4px;border-radius:4px;flex-shrink:0" title="${t('deleteHabit')}">✕</button>
       </div>
@@ -5994,18 +6169,78 @@ async function addHabit(){
   const newH={id:uid(),name,completions:{},checks:[],streak:0,sortOrder:D.habits.length,createdAt:Date.now()};
   D.habits.push(newH);
   inp.value='';
-  document.getElementById('view-area').innerHTML=renderHabits();
+  const va=document.getElementById('view-area');
+  if(va)va.innerHTML=renderHabits();
   if(!window.GUEST_MODE && window.ApiClient?.isOnline()){
     try{
       const srv=await ApiClient.createHabit({name, sortOrder: D.habits.length-1});
       if(srv?.id){
-        // 사용자가 즉시 완료 버튼을 눌렀을 경우 completions 보존 후 병합
         const saved={...(newH.completions||{})};
         newH.id=srv.id;
         newH.completions={...Object.fromEntries((srv.checks||[]).map(d=>[d,true])),...saved};
       }
     }catch(e){console.warn('[addHabit] 서버 저장 실패:',e.message)}
+    try{
+      const res=await ApiClient.aiChat(
+        '습관 이름: "'+name+'"\n'+
+        '아래 두 가지를 JSON으로만 답해줘. 다른 텍스트 없이 순수 JSON만.\n'+
+        '{"emoji":"이모티콘1개","style":"vine|lego|slime 중 하나"}\n'+
+        '선택 기준: vine=부드럽고 자연적인 습관(명상,독서,물마시기), lego=목표지향적이고 쌓이는 습관(운동,공부,저축), slime=창의적이고 유연한 습관(그림,음악,요리)',
+        'alarm'
+      );
+      const raw=(res?.reply||res?.message||res?.text||'').trim();
+      let parsed=null;
+      try{const m=raw.match(/\{[\s\S]*\}/);if(m)parsed=JSON.parse(m[0]);}catch(_){}
+      if(parsed&&newH.id){
+        const emoji=[...(parsed.emoji||'')][0]||'';
+        const style=['vine','lego','slime'].includes(parsed.style)?parsed.style:'';
+        if(!D.settings.habitEmojis)D.settings.habitEmojis={};
+        if(!D.settings.habitStyles)D.settings.habitStyles={};
+        if(emoji)D.settings.habitEmojis[newH.id]=emoji;
+        if(style)D.settings.habitStyles[newH.id]=style;
+        saveD();
+        const va2=document.getElementById('view-area');
+        if(va2)va2.innerHTML=renderHabits();
+      }
+    }catch(e){console.warn('[addHabit] AI 추천 실패:',e.message)}
   }
+}
+
+function openHabitStylePicker(hid){
+  const h=D.habits.find(x=>x.id===hid);if(!h)return;
+  const styles=D.settings.habitStyles||{};
+  const cur=styles[hid]||'vine';
+  const STYLES=['vine','lego','slime'];
+  const LABELS={vine:'🌿 덩굴 — 부드러운 원형 체인',lego:'🧱 레고 — 쌓이는 블록감',slime:'🫧 슬라임 — 유기적인 물방울'};
+  // 기존 픽커 제거
+  document.getElementById('habit-style-picker')?.remove();
+  const card=document.getElementById('habit-card-'+hid);
+  const picker=document.createElement('div');
+  picker.id='habit-style-picker';
+  picker.style.cssText='position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.4);backdrop-filter:blur(6px)';
+  picker.innerHTML=`<div style="background:var(--surface);border-radius:20px;padding:24px;width:min(340px,94vw);box-shadow:0 24px 60px rgba(0,0,0,.25)">
+    <div style="font-size:15px;font-weight:800;margin-bottom:6px">🎨 블록 디자인 선택</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:18px">습관: <b>${esc(h.name)}</b></div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+      ${STYLES.map(s=>`<button onclick="setHabitStyle('${hid}','${s}')"
+        style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;border:2px solid ${cur===s?'var(--accent)':'var(--border)'};background:${cur===s?'var(--accent-light)':'var(--surface2)'};cursor:pointer;text-align:left;font-family:inherit">
+        <div style="display:flex;gap:3px">${[0,1,2,3,4].map(i=>`<div class="hd-cell ${s}${i<3?' done':''}" style="pointer-events:none;width:22px;height:22px;font-size:9px">${i<3?'✓':''}</div>`).join('')}</div>
+        <div><div style="font-size:13px;font-weight:700;color:var(--text)">${LABELS[s].split('—')[0]}</div>
+        <div style="font-size:11px;color:var(--text3)">${LABELS[s].split('—')[1]||''}</div></div>
+      </button>`).join('')}
+    </div>
+    <button onclick="document.getElementById('habit-style-picker').remove()"
+      style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;color:var(--text2)">취소</button>
+  </div>`;
+  document.body.appendChild(picker);
+}
+function setHabitStyle(hid,style){
+  if(!D.settings.habitStyles)D.settings.habitStyles={};
+  D.settings.habitStyles[hid]=style;
+  saveD();
+  document.getElementById('habit-style-picker')?.remove();
+  const va=document.getElementById('view-area');
+  if(va)va.innerHTML=renderHabits();
 }
 
 async function changeHabitEmoji(hid){
@@ -6337,6 +6572,7 @@ function applyProfile(profile){
   if(profile.permission !== undefined) D.settings.permission = profile.permission || 'user'
   if(profile.ai_personality !== undefined) D.settings.aiPersonality = profile.ai_personality || D.settings.aiPersonality
   if(profile.lang !== undefined) D.settings.lang = profile.lang || D.settings.lang
+  if(profile.created_at) D.settings.joinedAt = new Date(profile.created_at).getTime()
   // saveD() 는 여기서 호출하지 않음 — loadFromServer()에서 호출되므로 순환 방지
 }
 
@@ -6784,6 +7020,8 @@ function startApp(){
   showCoachTip();
   // Google Calendar 연동 상태 초기화 (설정 탭에서 정확히 표시되도록)
   setTimeout(()=>loadGcalEvents(),1500);
+  // 일별 칭호 생성 (새 날 로그인 시 1개, 첫 로그인 시 3개)
+  setTimeout(()=>triggerDailyBadge(),2000);
 }
 
 // auto-refresh coach tip every 10 min
