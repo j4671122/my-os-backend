@@ -6969,8 +6969,12 @@ async function changeHabitEmoji(hid){
   const em=await showInputModal('이모티콘을 입력하세요',cur);
   if(!em||!em.trim())return;
   if(!D.settings.habitEmojis)D.settings.habitEmojis={};
-  D.settings.habitEmojis[hid]=em.trim().slice(0,2);
+  D.settings.habitEmojis[hid]=[...(em.trim())][0]||em.trim().slice(0,2);
   saveD();
+  // 디바운스 미적용 즉시 저장 (새로고침 시 유실 방지)
+  if(!window.GUEST_MODE && window.ApiClient?.getToken()){
+    ApiClient.savePreferences({tagReg:D.tagReg,notifications:D.notifications,settings:{...D.settings}}).catch(()=>null);
+  }
   document.getElementById('view-area').innerHTML=renderHabits();
 }
 
