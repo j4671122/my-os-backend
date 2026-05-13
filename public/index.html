@@ -368,8 +368,13 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;b
 
 /* ── Task group ── */
 .task-group{margin-bottom:22px}
-.tg-header{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.6px;text-transform:uppercase;margin-bottom:7px;display:flex;align-items:center;gap:8px}
+.tg-header{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.6px;text-transform:uppercase;margin-bottom:7px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.tg-header:hover{color:var(--text2)}
 .tg-header::after{content:'';flex:1;height:1px;background:var(--border)}
+.tg-arrow{font-size:9px;transition:transform .18s;display:inline-block;flex-shrink:0}
+.tg-collapsed .tg-arrow{transform:rotate(-90deg)}
+.tg-collapsed .task-group-body{display:none}
+.task-group-body{display:flex;flex-direction:column;gap:0}
 
 /* ── Task card ── */
 .task-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:5px;transition:border-color .15s,box-shadow .15s;overflow:hidden}
@@ -2300,6 +2305,12 @@ function expandAllTasks(){
 function collapseAllTasks(){
   openTaskIds.clear();
   render();
+}
+const _collapsedGroups=new Set();
+function toggleTaskGroup(gk){
+  _collapsedGroups.has(gk)?_collapsedGroups.delete(gk):_collapsedGroups.add(gk);
+  const el=document.getElementById('tg-'+gk);
+  if(el)el.classList.toggle('tg-collapsed',_collapsedGroups.has(gk));
 }
 async function rescheduleOverdueToday(){
   const today=todayStr();
@@ -5825,8 +5836,14 @@ function renderTaskView(){
     };
     _groupOrder.forEach(gk=>{
       const g=_groupMap[gk];if(!g||!g.tasks.length)return;
-      html+=`<div class="task-group"><div class="tg-header" ${g.style}>${g.label} (${g.tasks.length})</div>`;
-      g.tasks.forEach(tk=>html+=taskCardHTML(tk));html+='</div>';
+      const collapsed=_collapsedGroups.has(gk);
+      html+=`<div class="task-group${collapsed?' tg-collapsed':''}" id="tg-${gk}">
+        <div class="tg-header" ${g.style} onclick="toggleTaskGroup('${gk}')">
+          <span class="tg-arrow">▾</span>${g.label} (${g.tasks.length})
+        </div>
+        <div class="task-group-body">`;
+      g.tasks.forEach(tk=>html+=taskCardHTML(tk));
+      html+=`</div></div>`;
     });
     if(!anytime.length&&!overdue.length&&!todayT.length&&!upcoming.length){html+=`<div class="empty"><div class="ei">🎉</div><p>모든 할일 완료!</p></div>`;}
   }else if(VIEW==='todayonly'){
