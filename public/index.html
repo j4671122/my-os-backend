@@ -604,23 +604,23 @@ canvas{max-width:100%}
 .goal-chip-fill{height:100%;border-radius:999px}
 .home-fab{position:fixed;right:28px;bottom:28px;width:58px;height:58px;border:none;border-radius:50%;background:linear-gradient(135deg,rgba(255,255,255,.82),rgba(255,255,255,.56));box-shadow:0 18px 30px rgba(59,47,37,.15);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);font-size:28px;color:var(--accent);cursor:pointer;z-index:500;display:none}
 .home-fab.show{display:flex;align-items:center;justify-content:center}
-.widget-picker{width:520px;max-width:92vw;background:rgba(250,247,242,.82);backdrop-filter:blur(26px) saturate(150%);-webkit-backdrop-filter:blur(26px) saturate(150%);border:1px solid rgba(255,255,255,.85)}
-.widget-picker-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.widget-option{padding:14px;border-radius:16px;background:rgba(255,255,255,.68);border:1px solid rgba(255,255,255,.85);cursor:pointer;transition:transform .12s,box-shadow .12s}
-.widget-option:hover{transform:translateY(-1px);box-shadow:0 12px 24px rgba(67,55,40,.08)}
-.widget-option-icon{font-size:20px;margin-bottom:8px}
-.widget-option-title{font-size:12.5px;font-weight:800;margin-bottom:4px}
-.widget-option-sub{font-size:11px;color:var(--text3);line-height:1.5}
-/* FAB 위젯 피커 — iPad 스타일 */
-.wfp{position:fixed;right:20px;bottom:100px;width:210px;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:0 20px 48px rgba(0,0,0,.18);z-index:600;overflow:hidden;transform-origin:right bottom;transform:scale(.6) translateY(20px);opacity:0;pointer-events:none;transition:transform .22s cubic-bezier(.34,1.4,.64,1),opacity .15s}
+/* FAB 위젯 갤러리 피커 — 글래스모피즘 */
+.wfp{position:fixed;right:20px;bottom:96px;width:340px;max-width:calc(100vw - 32px);background:rgba(250,247,242,.88);backdrop-filter:blur(28px) saturate(160%);-webkit-backdrop-filter:blur(28px) saturate(160%);border:1.5px solid rgba(255,255,255,.92);border-radius:24px;box-shadow:0 24px 60px rgba(59,47,37,.18),0 2px 10px rgba(59,47,37,.08);z-index:600;overflow:hidden;transform-origin:right bottom;transform:scale(.72) translateY(16px);opacity:0;pointer-events:none;transition:transform .28s cubic-bezier(.34,1.42,.64,1),opacity .18s}
 .wfp.show{transform:scale(1) translateY(0);opacity:1;pointer-events:auto}
-.wfp-header{padding:10px 14px 8px;font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.4px;border-bottom:1px solid var(--border)}
-.wfp-item{display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;transition:background .1s}
-.wfp-item:hover{background:var(--surface2)}
-.wfp-item:active{background:var(--accent-light)}
-.wfp-icon{font-size:17px;flex-shrink:0;width:24px;text-align:center}
-.wfp-title{font-size:12px;font-weight:700;color:var(--text)}
-.wfp-sub{font-size:10px;color:var(--text3);margin-top:1px}
+.wfp-header{display:flex;align-items:center;justify-content:space-between;padding:15px 18px 11px;font-size:13.5px;font-weight:800;color:var(--text);letter-spacing:-.2px;border-bottom:1px solid rgba(0,0,0,.06)}
+.wfp-close-x{background:rgba(0,0,0,.07);border:none;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:11px;color:var(--text2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.wfp-close-x:hover{background:rgba(0,0,0,.14)}
+.wfp-scroll{max-height:min(460px,calc(90vh - 120px));overflow-y:auto;overscroll-behavior:contain}
+.wfp-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px}
+.wfp-card{border-radius:16px;background:rgba(255,255,255,.72);border:1.5px solid rgba(255,255,255,.92);box-shadow:0 2px 10px rgba(59,47,37,.06);cursor:pointer;overflow:hidden;transition:transform .14s,box-shadow .14s}
+.wfp-card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(59,47,37,.13)}
+.wfp-card:active{transform:scale(.95)}
+.wfp-preview{height:82px;overflow:hidden;position:relative}
+.wfp-card-label{padding:8px 11px 10px;border-top:1px solid rgba(0,0,0,.05)}
+.wfp-card-name{font-size:11px;font-weight:800;color:var(--text)}
+.wfp-card-desc{font-size:9.5px;color:var(--text3);margin-top:2px;line-height:1.4}
+body.dark .wfp{background:rgba(36,32,28,.88);border-color:rgba(255,255,255,.1)}
+body.dark .wfp-card{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.1)}
 .wfp-close-area{position:fixed;inset:0;z-index:599;display:none}
 .wfp-close-area.show{display:block}
 
@@ -1591,8 +1591,11 @@ body.dark .ab-btns{border-top-color:rgba(255,255,255,.07)}
 <!-- FAB 위젯 피커 (iPad 스타일 — overlay 없음) -->
 <div class="wfp-close-area" id="wfp-close-area" onclick="closeWidgetPicker()"></div>
 <div class="wfp" id="wfp">
-  <div class="wfp-header">위젯 추가</div>
-  <div id="wfp-list"></div>
+  <div class="wfp-header">
+    <span>위젯 추가</span>
+    <button class="wfp-close-x" onclick="closeWidgetPicker()">✕</button>
+  </div>
+  <div class="wfp-scroll"><div id="wfp-list"></div></div>
 </div>
 
 <div class="overlay" id="memo-modal">
@@ -4562,14 +4565,88 @@ function removeHomeWidget(id,e){
   D.settings.homeWidgets=(D.settings.homeWidgets||[]).filter(w=>w.id!==id);
   saveD();render();
 }
+function _wfpPreview(type){
+  const p={
+    profile:`<div style="width:100%;height:100%;background:linear-gradient(135deg,#fdf6ec,#f5e8d0);display:flex;align-items:center;justify-content:center;gap:9px;padding:0 12px">
+      <div style="width:34px;height:34px;border-radius:50%;background:#e0cca8;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">😊</div>
+      <div style="display:flex;flex-direction:column;gap:4px;flex:1">
+        <div style="height:5px;background:#c8b48e;border-radius:4px"></div>
+        <div style="height:4px;background:#ddd0b8;border-radius:4px;width:70%"></div>
+        <div style="display:flex;gap:3px;margin-top:2px">
+          <div style="height:10px;width:28px;border-radius:10px;background:#e8d5b0"></div>
+          <div style="height:10px;width:22px;border-radius:10px;background:#d8c8a0"></div>
+        </div>
+      </div>
+    </div>`,
+    clock:`<div style="width:100%;height:100%;background:linear-gradient(135deg,#1c1a2e,#14122a);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px">
+      <div style="font-size:26px;font-weight:900;color:#fff;letter-spacing:-1.5px;font-variant-numeric:tabular-nums;line-height:1">12:34</div>
+      <div style="font-size:8px;color:rgba(255,255,255,.45);letter-spacing:.8px;text-transform:uppercase">MON · MAY 13</div>
+    </div>`,
+    focus:`<div style="width:100%;height:100%;background:#f8f5ef;display:flex;flex-direction:column;justify-content:center;padding:0 13px;gap:8px">
+      <div style="font-size:7.5px;color:#b0a090;font-weight:700;letter-spacing:.6px">🔥 오늘의 포커스</div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div style="width:11px;height:11px;border-radius:50%;border:2px solid #5a8a5c;flex-shrink:0"></div>
+        <div style="height:5px;background:#d5ccbe;border-radius:4px;flex:1"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div style="width:11px;height:11px;border-radius:50%;border:2px solid #c8bfaf;flex-shrink:0"></div>
+        <div style="height:5px;background:#e2dbd0;border-radius:4px;width:60%"></div>
+      </div>
+    </div>`,
+    habits:`<div style="width:100%;height:100%;background:linear-gradient(135deg,#f0faf3,#e2f5e8);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px">
+      <div style="display:flex;gap:7px">
+        ${[1,1,0,1].map(d=>`<div style="width:20px;height:20px;border-radius:50%;background:${d?'#5a8a5c':'rgba(90,138,92,.18)'};border:2px solid ${d?'#5a8a5c':'rgba(90,138,92,.35)'};display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px">${d?'✓':''}</div>`).join('')}
+      </div>
+      <div style="font-size:8px;color:#4a7a4c;font-weight:700">3 / 4 완료</div>
+    </div>`,
+    tracker:`<div style="width:100%;height:100%;background:#f7f5f0;display:flex;align-items:center;justify-content:center;padding:8px 10px">
+      <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:2.5px;width:100%">
+        ${['#e0d8cc','#f4a261','#f4a261','#8bcf9b','#8bcf9b','#6aa8ff','#e0d8cc','#f4a261','#8bcf9b','#6aa8ff','#6aa8ff','#e0d8cc','#f4a261','#8bcf9b','#6aa8ff','#e0d8cc'].map(c=>`<div style="height:11px;border-radius:2.5px;background:${c}"></div>`).join('')}
+      </div>
+    </div>`,
+    goals:`<div style="width:100%;height:100%;background:linear-gradient(135deg,#f0f4ff,#e6ecff);display:flex;flex-direction:column;justify-content:center;padding:0 13px;gap:9px">
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:7.5px;color:#5878c0;margin-bottom:3px"><span>목표 달성률</span><span>72%</span></div>
+        <div style="height:6px;background:#ccd4f0;border-radius:4px;overflow:hidden"><div style="width:72%;height:100%;background:#6088e0;border-radius:4px"></div></div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:7.5px;color:#5878c0;margin-bottom:3px"><span>월간 루틴</span><span>45%</span></div>
+        <div style="height:6px;background:#ccd4f0;border-radius:4px;overflow:hidden"><div style="width:45%;height:100%;background:#6088e0;border-radius:4px"></div></div>
+      </div>
+    </div>`,
+    memo:`<div style="width:100%;height:100%;background:#fffef5;display:flex;flex-direction:column;justify-content:center;padding:0 13px;gap:5px">
+      <div style="height:5px;background:#ddd9c0;border-radius:4px"></div>
+      <div style="height:4px;background:#e8e4cc;border-radius:4px;width:82%"></div>
+      <div style="height:4px;background:#e8e4cc;border-radius:4px;width:66%"></div>
+      <div style="height:5px;background:transparent"></div>
+      <div style="height:4px;background:#ede9d5;border-radius:4px;width:90%"></div>
+      <div style="height:4px;background:#ede9d5;border-radius:4px;width:55%"></div>
+    </div>`,
+    pomodoro:`<div style="width:100%;height:100%;background:linear-gradient(135deg,#fff5f5,#ffe6e6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px">
+      <div style="position:relative;width:46px;height:46px">
+        <svg viewBox="0 0 46 46" style="position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)">
+          <circle cx="23" cy="23" r="19" fill="none" stroke="rgba(224,100,100,.2)" stroke-width="4"/>
+          <circle cx="23" cy="23" r="19" fill="none" stroke="#e06464" stroke-width="4" stroke-dasharray="119" stroke-dashoffset="35" stroke-linecap="round"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#c04444">25:00</div>
+      </div>
+      <div style="font-size:8px;color:#c04444;font-weight:700">집중 모드</div>
+    </div>`,
+  };
+  return p[type]||`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:26px">${HOME_WIDGET_LIBRARY.find(w=>w.type===type)?.icon||'📦'}</div>`;
+}
 function openWidgetPicker(){
   const list=document.getElementById('wfp-list');
   if(list){
-    list.innerHTML=HOME_WIDGET_LIBRARY.map(item=>`
-      <div class="wfp-item" onclick="addHomeWidget('${item.type}','${item.variant}')">
-        <span class="wfp-icon">${item.icon}</span>
-        <div><div class="wfp-title">${item.title}</div><div class="wfp-sub">${item.sub}</div></div>
-      </div>`).join('');
+    list.innerHTML=`<div class="wfp-grid">${HOME_WIDGET_LIBRARY.map(item=>`
+      <div class="wfp-card" onclick="addHomeWidget('${item.type}','${item.variant}')">
+        <div class="wfp-preview">${_wfpPreview(item.type)}</div>
+        <div class="wfp-card-label">
+          <div class="wfp-card-name">${item.icon} ${item.title}</div>
+          <div class="wfp-card-desc">${item.sub}</div>
+        </div>
+      </div>`).join('')}
+    </div>`;
   }
   document.getElementById('wfp').classList.add('show');
   document.getElementById('wfp-close-area').classList.add('show');
