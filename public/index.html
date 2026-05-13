@@ -1736,9 +1736,6 @@ let generatedContent='';
 let generatedReport='';
 let _taskSyncTimers={};
 const _taskSyncPendingIds=new Set();
-const AI_COACH_HOURS=[9,14,21];
-const AI_COACH_WINDOW_MINUTES=90;
-const AI_COACH_RETRY_MS=60*60*1000;
 const AI_BADGE_RETRY_MS=60*60*1000;
 const DEFAULT_HOME_WIDGETS=[
   {id:'w-profile',type:'profile',variant:'wide'},
@@ -2697,41 +2694,65 @@ function getCoachTip(){
   }
   return null;
 }
-function getCurrentAiCoachSlot(now=new Date()){
-  for(const hour of AI_COACH_HOURS){
-    const slotStart=new Date(now);
-    slotStart.setHours(hour,0,0,0);
-    const slotEnd=new Date(slotStart.getTime()+AI_COACH_WINDOW_MINUTES*60000);
-    if(now>=slotStart&&now<=slotEnd){
-      return {
-        key:`${slotStart.toISOString().slice(0,10)}-${String(hour).padStart(2,'0')}`,
-        hour
-      };
+function generateDashboardNotifs(){
+  if(!D.settings?.notifEnabled) return;
+  if(!D.notifications) D.notifications=[];
+  const today=todayStr();
+  const now=Date.now();
+  function push(msg,type){
+    const dup=D.notifications.find(n=>n.msg===msg&&now-n.time<86400000);
+    if(!dup) pushNotification(msg,type);
+  }
+
+  // 기한 초과
+  if(D.settings.notifOverdue!==false){
+    const overdue=D.tasks.filter(t=>!t.done&&t.dueDate&&t.dueDate<today);
+    if(overdue.length){
+      const names=overdue.slice(0,3).map(t=>t.title).join(', ');
+      push(`⚠️ 기한 초과 ${overdue.length}개: ${names}${overdue.length>3?` 외 ${overdue.length-3}개`:''}`, 'overdue');
     }
   }
-  return null;
-}
-function shouldUseAiCoach(){
-  if(!window.ApiClient?.isOnline()) return false;
-  if(!D.settings?.notifEnabled || !D.settings?.notifCoach) return false;
-  const now=Date.now();
-  if(D.settings._aiCoachRetryAfter && now < D.settings._aiCoachRetryAfter) return false;
-  return !!getCurrentAiCoachSlot(new Date(now));
-}
-function applyAiCoachMessage(result, slotKey, el){
-  if(!result?.message) return false;
-  const rawMsg=result.message+(result.action?` → ${result.action}`:'');
-  const personalMsg=applyPersonality(rawMsg);
-  el.textContent=personalMsg;
-  el.style.display='block';
-  D.settings._aiCoachCache={slotKey,message:rawMsg};
-  D.settings._aiCoachLastAttemptAt=Date.now();
-  D.settings._aiCoachRetryAfter=0;
+
+  // 오늘 할일
+  const todayTasks=D.tasks.filter(t=>!t.done&&t.dueDate===today);
+  if(todayTasks.length){
+    push(`📋 오늘 마감 할일 ${todayTasks.length}개 있어요`, 'info');
+  }
+
+  // 습관 미완료 (오후 6시 이후에만)
+  const hour=new Date().getHours();
+  if(hour>=18&&D.habits?.length){
+    const undone=D.habits.filter(h=>!(h.completions||{})[today]);
+    if(undone.length){
+      push(`💪 오늘 미완료 습관 ${undone.length}개: ${undone.slice(0,2).map(h=>h.name).join(', ')}${undone.length>2?' 외':''}`, 'tip');
+    }
+  }
+
+  // 목표 진행률 알림 (달성률 80% 이상)
+  const globals=(D.goals||[]).filter(g=>g.type==='global');
+  globals.forEach(g=>{
+    const gTasks=D.tasks.filter(t=>t.goalId===g.id);
+    if(!gTasks.length) return;
+    const pct=Math.round(gTasks.filter(t=>t.done).length/gTasks.length*100);
+    if(pct>=80){
+      push(`🎯 "${g.name}" 달성률 ${pct}%! 거의 다 왔어요 💪`, 'tip');
+    }
+  });
+
+  // 오늘 루틴
+  const routines=(D.settings.routines||[]).filter(r=>{
+    const days=r.days||[];
+    const dow=new Date().getDay();
+    return days.includes(dow)&&!(r.completedDates||[]).includes(today);
+  });
+  if(routines.length){
+    push(`📅 오늘 루틴 ${routines.length}개 남았어요`, 'info');
+  }
+
   saveD();
-  const dup=(D.notifications||[]).find(n=>n.msg===rawMsg&&Date.now()-n.time<3600000);
-  if(!dup)pushNotification(rawMsg,'tip');
-  return true;
+  updateNotifBadge();
 }
+
 function showCoachTip(){
   if(tipDismissed)return;
   const tip=getCoachTip();
@@ -2739,36 +2760,10 @@ function showCoachTip(){
   if(tip){
     const personalMsg=applyPersonality(tip.msg);
     el.textContent=personalMsg;el.style.display='block';el._tipId=tip.id;
-    // 알람 센터에도 저장
     if(!D.notifications)D.notifications=[];
     const already=D.notifications.find(n=>n.msg===tip.msg&&Date.now()-n.time<3600000);
-    if(!already){pushNotification(tip.msg,'tip');}
-  }
-  else{el.style.display='none'}
-  if(!shouldUseAiCoach()) return;
-  if(Date.now() < _aiBgReadyAt) return;  // 부팅 30s 내 배경 AI 호출 차단
-  const slot=getCurrentAiCoachSlot(new Date());
-  if(!slot) return;
-  const cached=D.settings._aiCoachCache;
-  if(cached?.slotKey===slot.key && cached.message){
-    const personalMsg=applyPersonality(cached.message);
-    el.textContent=personalMsg;
-    el.style.display='block';
-    return;
-  }
-  if(D.settings._aiCoachLastAttemptAt && Date.now()-D.settings._aiCoachLastAttemptAt<10*60*1000){
-    return;
-  }
-  D.settings._aiCoachLastAttemptAt=Date.now();
-  saveD();
-  ApiClient.aiSuggest().then(r=>{
-    if(tipDismissed) return;
-    applyAiCoachMessage(r, slot.key, el);
-  }).catch(e=>{
-    console.warn('[AI Coach]', e.message);
-    D.settings._aiCoachRetryAfter=Date.now()+AI_COACH_RETRY_MS;
-    saveD();
-  });
+    if(!already)pushNotification(tip.msg,'tip');
+  }else{el.style.display='none';}
 }
 function dismissTip(){
   const el=document.getElementById('coach-tip');
@@ -3386,12 +3381,8 @@ function renderSettings(){
     <div class="settings-card">
       <h4>알람 설정</h4>
       <div class="toggle-row">
-        <div class="toggle-info"><div class="toggle-label">알람 활성화</div><div class="toggle-sub">AI 코치 & 시스템 알림</div></div>
+        <div class="toggle-info"><div class="toggle-label">알람 활성화</div><div class="toggle-sub">대시보드 기반 자동 알림</div></div>
         <label class="tog"><input type="checkbox" id="tog-notif" ${s.notifEnabled?'checked':''} onchange="saveSetting('notifEnabled',this.checked)"><span class="tog-slider"></span></label>
-      </div>
-      <div class="toggle-row">
-        <div class="toggle-info"><div class="toggle-label">AI 코치 메시지</div><div class="toggle-sub">생산성 팁, 패턴 분석 알림</div></div>
-        <label class="tog"><input type="checkbox" id="tog-coach" ${s.notifCoach?'checked':''} onchange="saveSetting('notifCoach',this.checked)"><span class="tog-slider"></span></label>
       </div>
       <div class="toggle-row">
         <div class="toggle-info"><div class="toggle-label">기한 초과 알림</div><div class="toggle-sub">마감일 지난 할일 경고</div></div>
@@ -8146,14 +8137,8 @@ function startApp(){
   const preferredView=D.settings.currentView||VIEW;
   VIEW=valid.includes(preferredView)?preferredView:'today';
 
-  // ── 기한 초과 알림 ──────────────────────────────────────
-  const today=todayStr();
-  const overdue=D.tasks.filter(t=>!t.done&&t.dueDate&&t.dueDate<today);
-  if(overdue.length){
-    const msg=`기한 초과 ${overdue.length}개: ${overdue.slice(0,3).map(t=>t.title).join(', ')}${overdue.length>3?` 외 ${overdue.length-3}개`:''}`;
-    const already=D.notifications.find(n=>n.type==='overdue'&&Date.now()-n.time<86400000);
-    if(!already) pushNotification(msg,'overdue');
-  }
+  // ── 대시보드 기반 알림 생성 ──────────────────────────────
+  generateDashboardNotifs();
 
   // ── 디바이스 알림 권한 요청 ──────────────────────────────
   if('Notification' in window && Notification.permission==='default'){
@@ -8168,14 +8153,13 @@ function startApp(){
   applyDateColors();
   renderSidebar();
   render();
-  // rate limit 슬롯 보호: 유저가 먼저 쓸 수 있도록 배경 AI 호출을 지연
-  setTimeout(()=>showCoachTip(),45000);
+  setTimeout(()=>showCoachTip(),3000);
   setTimeout(()=>loadGcalEvents(),1500);
   setTimeout(()=>triggerDailyBadge(),90000);
 }
 
-// auto-refresh coach tip every 10 min
-setInterval(()=>{tipDismissed=false;showCoachTip()},600000);
+// 30분마다 정적 코치 팁 갱신
+setInterval(()=>{tipDismissed=false;showCoachTip();},1800000);
 // close modals on overlay click
 document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show')}));
 
