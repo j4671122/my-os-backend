@@ -63,12 +63,12 @@
     if (wait > 0) await new Promise(r => setTimeout(r, wait))
   }
 
-  // 배경 호출용 — 사용자가 최근 AI를 쓰고 있으면 스킵 (큐 없이 포기)
+  // 배경 호출용 — 슬롯이 조금이라도 미래이면 스킵 (큐 없이 포기)
   // 반환값: true=실행, false=스킵
   async function _waitBgAiSlot() {
     const now = Date.now()
-    // 슬롯이 AI_GAP_MS 이상 앞에 예약돼 있으면 사용자 메시지 대기 중 → 스킵
-    if (_nextAiSlot > now + AI_GAP_MS) return false
+    // 슬롯이 미래에 예약돼 있으면 (최근 10초 내 어떤 AI 호출이든 있었으면) → 스킵
+    if (_nextAiSlot > now) return false
     await _waitAiSlot()
     return true
   }
@@ -181,7 +181,19 @@
       await _waitAiSlot()
       const body = { message, context, history }
       if (fileData) { body.fileContent = fileData.content; body.fileType = fileData.type; body.isImage = fileData.isImage }
-      return post('/api/ai/agent', body)
+      try {
+        return await post('/api/ai/agent', body)
+      } catch(e) {
+        // 429: Gemini가 지정한 대기시간으로 슬롯 강제 갱신
+        if (e.status === 429 && e.body?.retryAfter) {
+          const retryAt = Date.now() + (e.body.retryAfter + 2) * 1000
+          if (retryAt > _nextAiSlot) {
+            _nextAiSlot = retryAt
+            localStorage.setItem('_aiSlot', String(_nextAiSlot))
+          }
+        }
+        throw e
+      }
     },
   }
 
