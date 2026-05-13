@@ -53,12 +53,24 @@
   const AI_GAP_MS = 10000  // Gemini 무료 20 RPM → 3s 최소, 10s로 여유 확보
   const _aiBgReadyAt = Date.now() + 30000  // 배경 AI 호출 30초 유예 (사용자 슬롯 보호)
   let _nextAiSlot = Math.max(Date.now(), parseInt(localStorage.getItem('_aiSlot') || '0'))
+
+  // 사용자 메시지용 (항상 슬롯 예약)
   async function _waitAiSlot() {
     const now = Date.now()
     const wait = Math.max(0, _nextAiSlot - now)
     _nextAiSlot = Math.max(now, _nextAiSlot) + AI_GAP_MS
     localStorage.setItem('_aiSlot', String(_nextAiSlot))
     if (wait > 0) await new Promise(r => setTimeout(r, wait))
+  }
+
+  // 배경 호출용 — 사용자가 최근 AI를 쓰고 있으면 스킵 (큐 없이 포기)
+  // 반환값: true=실행, false=스킵
+  async function _waitBgAiSlot() {
+    const now = Date.now()
+    // 슬롯이 AI_GAP_MS 이상 앞에 예약돼 있으면 사용자 메시지 대기 중 → 스킵
+    if (_nextAiSlot > now + AI_GAP_MS) return false
+    await _waitAiSlot()
+    return true
   }
 
   // ============================================================
@@ -113,27 +125,27 @@
     // 백엔드가 [MODE: X] 태그 + systemInstruction으로 AI 행동 제어
     async aiTag(taskId, title, notes = '') {
       if (!ONLINE) return null
-      await _waitAiSlot()
+      if (!(await _waitBgAiSlot())) return null  // 사용자 슬롯 바쁘면 스킵
       return post('/api/ai/tag', { taskId, title, notes, mode: 'alarm' })
     },
     async aiReport(days = 7) {
       if (!ONLINE) return null
-      await _waitAiSlot()
+      if (!(await _waitBgAiSlot())) return null
       return post('/api/ai/report', { days, mode: 'analysis' })
     },
     async aiSuggest() {
       if (!ONLINE) return null
-      await _waitAiSlot()
+      if (!(await _waitBgAiSlot())) return null
       return get('/api/ai/suggest')
     },
     async aiBadges(stats, personality = 'default') {
       if (!ONLINE) return null
-      await _waitAiSlot()
+      if (!(await _waitBgAiSlot())) return null
       return post('/api/ai/badges', { stats, personality, mode: 'coach' })
     },
     async aiChat(userInput, mode = null) {
       if (!ONLINE) return null
-      await _waitAiSlot()
+      await _waitAiSlot()  // 사용자 직접 입력 → 우선 슬롯
       const detectedMode = mode || detectAiMode(userInput)
       return post('/api/ai/suggest', { userInput, mode: detectedMode })
     },
