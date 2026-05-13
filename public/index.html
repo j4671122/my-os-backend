@@ -1716,6 +1716,44 @@ const HOME_WIDGET_LIBRARY=[
   {type:'goals',icon:'🎯',title:'목표 진행',sub:'핵심 목표의 달성률을 요약해요',variant:'normal'},
   {type:'memo',icon:'📝',title:'메모',sub:'최근 메모를 홈에서 바로 봐요',variant:'normal'},
   {type:'pomodoro',icon:'⏱',title:'포모도로',sub:'포모도로 타이머를 홈에서 제어해요',variant:'normal'},
+  {type:'todayroutine',icon:'🌅',title:'오늘의 루틴',sub:'루틴 체크리스트를 홈에서 바로',variant:'normal'},
+  {type:'todaytasks',icon:'☀️',title:'오늘 할일 — 목록',sub:'오늘 마감 할일을 한눈에',variant:'normal'},
+  {type:'todaytasks',icon:'☀️',title:'오늘 할일 — 확장',sub:'더 많은 할일 목록',variant:'tall'},
+  {type:'streak',icon:'🔥',title:'스트릭 카드',sub:'연속 달성일과 불꽃을 보여줘요',variant:'normal'},
+  {type:'weekly',icon:'📈',title:'주간 요약',sub:'이번주 완료 수와 습관 달성률',variant:'wide'},
+  {type:'quote',icon:'💬',title:'명언 카드',sub:'날마다 바뀌는 동기부여 문장',variant:'wide'},
+  {type:'community',icon:'🌐',title:'최근 커뮤니티',sub:'커뮤니티 최신 글을 홈에서',variant:'normal'},
+  {type:'searchbar',icon:'🔍',title:'검색바',sub:'홈에서 바로 할일·메모 검색',variant:'wide'},
+  {type:'calendar',icon:'📅',title:'오늘 일정',sub:'구글 캘린더 오늘 일정 미리보기',variant:'normal'},
+];
+const HOME_QUOTES=[
+  '작은 진전이 매일 쌓이면 큰 결과가 된다.',
+  '시작이 반이다. 오늘도 시작했으니 이미 절반은 성공이다.',
+  '꾸준함은 재능을 이긴다.',
+  '지금 하기 싫은 일을 하면, 나중에 하고 싶은 일을 할 수 있다.',
+  '포기하지 않는 한 실패는 없다.',
+  '오늘 할 수 있는 일을 내일로 미루지 마라.',
+  '성공은 매일의 작은 노력이 쌓인 결과다.',
+  '한 걸음씩, 그러나 멈추지 않고.',
+  '변화는 불편함에서 시작된다.',
+  '어제보다 나은 오늘이면 충분하다.',
+  '두려움을 행동으로 이겨라.',
+  '집중은 힘이다. 분산은 약점이다.',
+  '계획 없는 목표는 그냥 소원일 뿐이다.',
+  '완벽한 준비란 없다. 지금 시작하라.',
+  '힘들다는 건 성장하고 있다는 신호다.',
+  '오늘의 나는 어제의 선택이 만든 결과다.',
+  '작은 습관이 큰 삶을 만든다.',
+  '실수는 배움의 기회다.',
+  '집중하면 모든 것이 가능해진다.',
+  '당신의 가장 큰 경쟁자는 어제의 자신이다.',
+  '불가능이란 도전해보지 않은 사람의 말이다.',
+  '행동 없는 꿈은 그냥 꿈이다.',
+  '오늘의 고통이 내일의 강함이 된다.',
+  '멈추지 않는 한 얼마나 느려도 상관없다.',
+  '결과보다 과정이 당신을 만든다.',
+  '할 수 있다고 믿는 것이 시작이다.',
+  '최고의 투자는 자기 자신에게 하는 것이다.',
 ];
 const DEFAULT_TRACKER_LABELS=[
   {id:'rest',name:'쉼',color:'#f6f4ef',text:'#6f675f'},
@@ -4346,7 +4384,7 @@ function renderHomeWidget(w){
 }
 
 function homeWidgetTitle(type){
-  return{profile:'👤 프로필',clock:'🕒 현재 시간',tracker:'📊 데일리 트래커',goals:'🎯 목표 진행',memo:'📝 메모',pomodoro:'⏱ 포모도로',focus:'🔥 오늘의 포커스',habits:'🌱 오늘 습관',photo:'🖼️ 사진'}[type]||type;
+  return{profile:'👤 프로필',clock:'🕒 현재 시간',tracker:'📊 데일리 트래커',goals:'🎯 목표 진행',memo:'📝 메모',pomodoro:'⏱ 포모도로',focus:'🔥 오늘의 포커스',habits:'🌱 오늘 습관',photo:'🖼️ 사진',todayroutine:'🌅 오늘의 루틴',todaytasks:'☀️ 오늘 할일',streak:'🔥 스트릭',weekly:'📈 주간 요약',quote:'💬 오늘의 명언',community:'🌐 커뮤니티',searchbar:'🔍 검색',calendar:'📅 오늘 일정'}[type]||type;
 }
 
 function homeWidgetContent(w){
@@ -4359,7 +4397,15 @@ function homeWidgetContent(w){
     case 'pomodoro':return renderHomePomodoro();
     case 'focus':   return renderHomeFocus();
     case 'habits':  return renderHomeHabits();
-    case 'photo':   return renderHomePhoto(w);
+    case 'photo':        return renderHomePhoto(w);
+    case 'todayroutine': return renderHomeTodayroutine();
+    case 'todaytasks':   return renderHomeTodaytasks(w);
+    case 'streak':       return renderHomeStreak();
+    case 'weekly':       return renderHomeWeekly();
+    case 'quote':        return renderHomeQuote();
+    case 'community':    return renderHomeCommunity();
+    case 'searchbar':    return renderHomeSearchbar();
+    case 'calendar':     return renderHomeCalendar();
     default: return `<div class="home-empty">위젯 타입: ${esc(w.type)}</div>`;
   }
 }
@@ -4536,6 +4582,152 @@ function renderHomePhoto(w){
     <input type="file" id="${iid}" accept="image/*" style="display:none" onchange="onWidgetPhotoChange(this)">
   </div>`;
 }
+function homeCheckRoutine(rid){checkRoutine(rid);if(VIEW==='home')render();}
+function renderHomeTodayroutine(){
+  const today=todayStr();
+  const routines=(D.settings.routines||[]).filter(r=>r.enabled!==false);
+  if(!routines.length)return`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:90px;gap:7px;color:var(--text3)">
+    <span style="font-size:24px">🌅</span><span style="font-size:11.5px">등록된 루틴이 없어요</span>
+    <button class="btn btn-ghost btn-sm" onclick="setView('routine')">루틴 추가</button></div>`;
+  const list=routines.slice(0,5);
+  const doneN=list.filter(r=>r.checkedDates?.[today]).length;
+  return`<div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px">
+      <span style="font-size:10.5px;color:var(--text3)">오늘 완료</span>
+      <span style="font-size:12px;font-weight:800;color:var(--accent)">${doneN}/${list.length}</span>
+    </div>
+    ${list.map(r=>{const done=!!(r.checkedDates?.[today]);const ic={morning:'🌅',lunch:'☀️',evening:'🌙'}[r.period]||'⏰';
+    return`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(0,0,0,.04)">
+      <button onclick="homeCheckRoutine('${r.id}')" style="width:18px;height:18px;border-radius:50%;border:2px solid ${done?'var(--accent)':'var(--border)'};background:${done?'var(--accent)':'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;flex-shrink:0">${done?'✓':''}</button>
+      <span style="font-size:12px;flex:1;color:${done?'var(--text3)':'var(--text)'};text-decoration:${done?'line-through':'none'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${ic} ${esc(r.name)}</span>
+      <span style="font-size:10px;color:var(--text3)">${r.time||''}</span>
+    </div>`;}).join('')}
+    ${routines.length>5?`<div style="font-size:10.5px;color:var(--text3);text-align:center;padding-top:6px;cursor:pointer" onclick="setView('routine')">+${routines.length-5}개 더 →</div>`:''}
+  </div>`;
+}
+function renderHomeTodaytasks(w){
+  const today=todayStr();
+  const tasks=D.tasks.filter(t=>!t.done&&t.dueDate===today);
+  if(!tasks.length)return`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:90px;gap:7px;color:var(--text3)">
+    <span style="font-size:24px">🎉</span><span style="font-size:11.5px">오늘 할일이 없어요!</span></div>`;
+  const limit=w.variant==='tall'?9:4;
+  return`<div style="display:flex;flex-direction:column;gap:4px">
+    ${tasks.slice(0,limit).map(t=>`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(0,0,0,.04)">
+      <button onclick="toggleDone('${t.id}',event);render()" style="width:16px;height:16px;border-radius:50%;border:2px solid ${t.priority==='high'?'#e74c3c':'var(--border)'};background:transparent;cursor:pointer;flex-shrink:0"></button>
+      <span style="font-size:12px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)">${esc(t.title)}</span>
+      ${t.priority==='high'?'<span style="font-size:9px">🔴</span>':''}
+    </div>`).join('')}
+    ${tasks.length>limit?`<div style="font-size:10.5px;color:var(--accent);text-align:center;padding-top:5px;cursor:pointer;font-weight:600" onclick="setView('todayonly')">+${tasks.length-limit}개 더 →</div>`:''}
+  </div>`;
+}
+function renderHomeStreak(){
+  let streak=0;
+  for(let i=0;i<60;i++){
+    const d=new Date();d.setDate(d.getDate()-i);const ds=d.toISOString().slice(0,10);
+    const has=D.events.some(e=>(e.type==='completed'||e.type==='complete')&&new Date(e.timestamp).toISOString().slice(0,10)===ds);
+    if(has)streak++;else if(i>0)break;
+  }
+  const badge=streak>=30?'🏆 30일 달성!':streak>=14?'🥈 14일 달성!':streak>=7?'⚡ 7일 달성!':'';
+  return`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100px;gap:8px;text-align:center;padding:8px 0">
+    <div style="font-size:44px;line-height:1">${streak>=1?'🔥':'💤'}</div>
+    <div style="font-size:34px;font-weight:900;color:var(--text);letter-spacing:-1.5px;line-height:1">${streak}</div>
+    <div style="font-size:11px;color:var(--text3)">일 연속 활동 중</div>
+    ${badge?`<div style="font-size:10px;background:var(--accent-light);color:var(--accent);padding:3px 12px;border-radius:20px;font-weight:700">${badge}</div>`:''}
+  </div>`;
+}
+function renderHomeWeekly(){
+  const week7ago=Date.now()-7*86400000;
+  const done7=D.events.filter(e=>(e.type==='completed'||e.type==='complete')&&e.timestamp>week7ago).length;
+  const days=Array.from({length:7},(_,i)=>{
+    const d=new Date();d.setDate(d.getDate()-(6-i));
+    const ds=d.toISOString().slice(0,10);
+    const count=D.events.filter(e=>(e.type==='completed'||e.type==='complete')&&new Date(e.timestamp).toISOString().slice(0,10)===ds).length;
+    return{count,label:['일','월','화','수','목','금','토'][d.getDay()],isToday:ds===todayStr()};
+  });
+  const mx=Math.max(...days.map(d=>d.count),1);
+  let habitDone=0,habitTotal=0;
+  (D.habits||[]).forEach(h=>{for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);const ds=d.toISOString().slice(0,10);habitTotal++;if(h.checks?.includes(ds))habitDone++;}});
+  const habitRate=habitTotal?Math.round(habitDone/habitTotal*100):0;
+  return`<div style="display:flex;gap:14px;align-items:stretch">
+    <div style="flex:1">
+      <div style="font-size:9.5px;color:var(--text3);margin-bottom:8px;font-weight:700;letter-spacing:.4px">이번 주 완료</div>
+      <div style="display:flex;align-items:flex-end;gap:3px;height:58px">
+        ${days.map(d=>{const h=Math.max(4,Math.round(d.count/mx*50));
+        return`<div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:3px">
+          <div style="width:100%;height:${h}px;background:${d.isToday?'var(--accent)':'var(--border)'};border-radius:3px 3px 0 0"></div>
+          <div style="font-size:7.5px;color:${d.isToday?'var(--accent)':'var(--text3)'};font-weight:${d.isToday?'800':'400'}">${d.label}</div>
+        </div>`;}).join('')}
+      </div>
+    </div>
+    <div style="width:1px;background:var(--border);flex-shrink:0"></div>
+    <div style="width:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px">
+      <div style="font-size:9px;color:var(--text3);font-weight:700;text-align:center">습관 달성률</div>
+      <div style="font-size:26px;font-weight:900;color:var(--accent)">${habitRate}%</div>
+      <div style="font-size:9px;color:var(--text3)">${done7}개 완료</div>
+    </div>
+  </div>`;
+}
+function renderHomeQuote(){
+  const doy=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,1).getTime())/86400000);
+  const q=HOME_QUOTES[doy%HOME_QUOTES.length];
+  const dateStr=new Date().toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
+  return`<div style="display:flex;flex-direction:column;justify-content:center;min-height:80px;gap:10px">
+    <div style="font-size:20px">💬</div>
+    <div style="font-size:13px;font-weight:700;color:var(--text);line-height:1.7">"${q}"</div>
+    <div style="font-size:10px;color:var(--text3)">${dateStr}</div>
+  </div>`;
+}
+function _hwTimeAgo(ts){
+  const s=Math.floor((Date.now()-new Date(ts).getTime())/1000);
+  if(s<60)return'방금';if(s<3600)return Math.floor(s/60)+'분 전';
+  if(s<86400)return Math.floor(s/3600)+'시간 전';return Math.floor(s/86400)+'일 전';
+}
+function renderHomeCommunity(){
+  const posts=_communityPosts.slice(0,2);
+  if(!posts.length)return`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:90px;gap:6px;color:var(--text3)">
+    <span style="font-size:24px">🌐</span><span style="font-size:11.5px">불러오는 중...</span></div>`;
+  return`<div style="display:flex;flex-direction:column;gap:8px">
+    ${posts.map(p=>`<div style="padding:8px 10px;background:var(--surface2);border-radius:10px;cursor:pointer" onclick="setView('community')">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        <span style="font-size:13px">${p.avatar||'😊'}</span>
+        <span style="font-size:10.5px;font-weight:700;color:var(--text)">${esc(p.author||'익명')}</span>
+        <span style="font-size:9px;color:var(--text3);margin-left:auto">${_hwTimeAgo(p.created_at)}</span>
+      </div>
+      <div style="font-size:11.5px;color:var(--text);line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${esc(p.content||'')}</div>
+    </div>`).join('')}
+    <div style="text-align:center;cursor:pointer;font-size:11px;color:var(--accent);font-weight:600" onclick="setView('community')">더 보기 →</div>
+  </div>`;
+}
+function renderHomeSearchbar(){
+  return`<div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1.5px solid var(--border);border-radius:14px;padding:11px 14px;cursor:text" onclick="setView('search');setTimeout(()=>document.getElementById('search-main-input')?.focus(),80)">
+    <span style="font-size:16px;color:var(--text3)">🔍</span>
+    <span style="font-size:13px;color:var(--text3)">할일, 메모, 목표 검색...</span>
+  </div>`;
+}
+function renderHomeCalendar(){
+  const today=todayStr();
+  if(!D.gcalConnected)return`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:90px;gap:7px;color:var(--text3)">
+    <span style="font-size:24px">📅</span><span style="font-size:11.5px">구글 캘린더 미연결</span>
+    <button class="btn btn-ghost btn-sm" onclick="setView('calendar')">연결하기</button></div>`;
+  const evts=(D.gcalEvents||[]).filter(ev=>(ev.start?.date||ev.start?.dateTime?.slice(0,10))===today);
+  if(!evts.length)return`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:90px;gap:7px;color:var(--text3)">
+    <span style="font-size:24px">🎉</span><span style="font-size:11.5px">오늘 일정이 없어요</span></div>`;
+  const gcalColors=['#7986cb','#33b679','#8e24aa','#e67c73','#f6bf26','#f4511e','#039be5','#616161','#3f51b5','#0b8043','#d50000'];
+  return`<div style="display:flex;flex-direction:column;gap:5px">
+    ${evts.slice(0,4).map(ev=>{
+      const allDay=!!ev.start?.date;
+      const timeStr=allDay?'종일':new Date(ev.start.dateTime).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false});
+      const color=ev.colorId?gcalColors[parseInt(ev.colorId)-1]||'var(--accent)':'var(--accent)';
+      return`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+        <div style="width:3px;min-height:28px;border-radius:2px;background:${color};flex-shrink:0"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(ev.summary||'(제목 없음)')}</div>
+          <div style="font-size:10px;color:var(--text3)">${timeStr}</div>
+        </div>
+      </div>`;}).join('')}
+    ${evts.length>4?`<div style="font-size:10.5px;color:var(--text3);text-align:center;padding-top:4px">+${evts.length-4}개 더</div>`:''}
+  </div>`;
+}
 function pickWidgetPhoto(iid,e){
   e&&e.stopPropagation();
   document.getElementById(iid)?.click();
@@ -4566,8 +4758,10 @@ async function onWidgetPhotoChange(inp){
 }
 
 function initHomeView(){
-  // 홈 뷰 FAB 표시
   document.getElementById('home-fab').classList.add('show');
+  const hw=D.settings.homeWidgets||[];
+  if(hw.some(w=>w.type==='calendar')&&D.gcalConnected)loadGcalEvents();
+  if(hw.some(w=>w.type==='community')&&!_communityPosts.length)loadCommunityPosts();
   // 시계 자동 업데이트
   if(_homeClockInterval) clearInterval(_homeClockInterval);
   _homeClockInterval=setInterval(()=>{
@@ -4670,6 +4864,62 @@ function _wfpPreview(type){
       <div style="height:5px;background:transparent"></div>
       <div style="height:4px;background:#ede9d5;border-radius:4px;width:90%"></div>
       <div style="height:4px;background:#ede9d5;border-radius:4px;width:55%"></div>
+    </div>`,
+    todayroutine:`<div style="width:100%;height:100%;background:#f3faf5;display:flex;flex-direction:column;justify-content:center;padding:0 13px;gap:7px">
+      <div style="font-size:7.5px;color:#5a8a5c;font-weight:700;letter-spacing:.5px">🌅 오늘의 루틴</div>
+      ${[1,1,0].map(d=>`<div style="display:flex;align-items:center;gap:7px">
+        <div style="width:12px;height:12px;border-radius:50%;border:2px solid ${d?'#5a8a5c':'rgba(90,138,92,.35)'};background:${d?'#5a8a5c':'transparent'};display:flex;align-items:center;justify-content:center;color:#fff;font-size:7px;flex-shrink:0">${d?'✓':''}</div>
+        <div style="height:4px;background:${d?'#c0dac2':'#dde8de'};border-radius:4px;flex:1"></div>
+      </div>`).join('')}
+    </div>`,
+    todaytasks:`<div style="width:100%;height:100%;background:#f8f6f1;display:flex;flex-direction:column;justify-content:center;padding:0 13px;gap:7px">
+      <div style="font-size:7.5px;color:#b0a090;font-weight:700;letter-spacing:.5px">☀️ 오늘 할일</div>
+      ${[1,0,0].map(d=>`<div style="display:flex;align-items:center;gap:7px">
+        <div style="width:12px;height:12px;border-radius:50%;border:2px solid ${d?'var(--accent,#3a6b3c)':'#c8c0b0'};background:transparent;flex-shrink:0"></div>
+        <div style="height:4px;background:#d8d0c0;border-radius:4px;flex:1;width:${d?'100':'70'}%"></div>
+      </div>`).join('')}
+    </div>`,
+    streak:`<div style="width:100%;height:100%;background:linear-gradient(135deg,#fff8f0,#ffeedc);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px">
+      <div style="font-size:26px;line-height:1">🔥</div>
+      <div style="font-size:22px;font-weight:900;color:#e06820;letter-spacing:-1px;line-height:1">7</div>
+      <div style="font-size:8px;color:#c08040;font-weight:600">일 연속</div>
+    </div>`,
+    weekly:`<div style="width:100%;height:100%;background:#f7f5f0;display:flex;align-items:flex-end;justify-content:center;padding:10px 12px 14px;gap:3px">
+      ${[2,4,3,5,2,6,3].map((h,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="width:100%;height:${h*7}px;background:${i===6?'var(--accent,#3a6b3c)':'#d8d0c0'};border-radius:2px 2px 0 0"></div>
+        <div style="font-size:6.5px;color:#a09080">${['일','월','화','수','목','금','토'][i]}</div>
+      </div>`).join('')}
+    </div>`,
+    quote:`<div style="width:100%;height:100%;background:linear-gradient(135deg,#fdfaf5,#f5efe8);display:flex;flex-direction:column;justify-content:center;padding:0 14px;gap:6px">
+      <div style="font-size:14px">💬</div>
+      <div style="height:4px;background:#d8cfc0;border-radius:4px"></div>
+      <div style="height:4px;background:#e0d8cc;border-radius:4px;width:80%"></div>
+      <div style="height:4px;background:#e0d8cc;border-radius:4px;width:55%"></div>
+    </div>`,
+    community:`<div style="width:100%;height:100%;background:#f7f5f0;display:flex;flex-direction:column;justify-content:center;padding:0 12px;gap:6px">
+      ${[0,1].map(i=>`<div style="background:#fff;border-radius:8px;padding:6px 8px">
+        <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px">
+          <div style="width:12px;height:12px;border-radius:50%;background:#e0d8c8"></div>
+          <div style="height:3.5px;background:#d8d0c0;border-radius:3px;width:${i?45:55}px"></div>
+        </div>
+        <div style="height:3.5px;background:#ece8e0;border-radius:3px;margin-bottom:2px"></div>
+        <div style="height:3.5px;background:#ece8e0;border-radius:3px;width:70%"></div>
+      </div>`).join('')}
+    </div>`,
+    searchbar:`<div style="width:100%;height:100%;background:#f7f5f0;display:flex;align-items:center;justify-content:center;padding:0 14px">
+      <div style="display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #e0d8cc;border-radius:10px;padding:8px 12px;width:100%">
+        <span style="font-size:13px">🔍</span>
+        <div style="height:4px;background:#e0d8cc;border-radius:4px;flex:1"></div>
+      </div>
+    </div>`,
+    calendar:`<div style="width:100%;height:100%;background:#f5f7ff;display:flex;flex-direction:column;justify-content:center;padding:0 12px;gap:6px">
+      ${['#6088e0','#33b679'].map((c,i)=>`<div style="display:flex;align-items:center;gap:7px;padding:4px 0;border-bottom:1px solid #e0e4f0">
+        <div style="width:3px;height:24px;border-radius:2px;background:${c};flex-shrink:0"></div>
+        <div>
+          <div style="height:4px;background:#c8d0e8;border-radius:3px;width:${i?55:70}px;margin-bottom:3px"></div>
+          <div style="height:3px;background:#dce0f0;border-radius:3px;width:${i?35:42}px"></div>
+        </div>
+      </div>`).join('')}
     </div>`,
     photo:`<div style="width:100%;height:100%;position:relative;overflow:hidden">${D.settings.widgetPhoto?`<img src="${D.settings.widgetPhoto}" style="width:100%;height:100%;object-fit:cover">`:
       `<div style="width:100%;height:100%;background:linear-gradient(135deg,#f5f0eb,#ece5db);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
