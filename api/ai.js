@@ -17,6 +17,11 @@ const PERSONALITY_HINTS = {
   drill:   '군대식 훈련 교관처럼, 짧고 강렬하게'
 }
 
+function catch429(e, res) {
+  if (e.status === 429) return res.status(429).json({ error: 'rate_limit', retryAfter: e.retryAfter || 25 })
+  return res.status(500).json({ error: e.message })
+}
+
 async function handleBadges(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' })
   const { stats = {}, personality = 'default' } = req.body || {}
@@ -37,7 +42,7 @@ async function handleBadges(req, res) {
     if (!result?.badges?.length) return res.json({ badges: [{ icon:'🌱', label:'성장 중', desc:'꾸준히 가는 중' }] })
     const clean = result.badges.slice(0,4).map(b=>({ icon:String(b.icon||'🏷').slice(0,4), label:String(b.label||'칭호').slice(0,10), desc:String(b.desc||'').slice(0,30) }))
     return res.json({ badges: clean })
-  } catch(e) { return res.status(500).json({ error: e.message }) }
+  } catch(e) { return catch429(e, res) }
 }
 
 // ── report ────────────────────────────────────────────────
@@ -69,8 +74,10 @@ async function handleReport(req, res) {
   const peakDay = dayNames[dayMap.indexOf(Math.max(...dayMap))]
   const stats = { total, completed:completed.length, rate, overdue:overdue.length, delayed:delayed.length, peakHour, peakDay, tagRates:tagRates.slice(0,5) }
   const prompt = `당신은 생산성 코치입니다. 다음 ${days}일 데이터를 분석해서 한국어로 짧고 명확하게 리포트를 작성하세요.\n\n📊 통계:\n- 전체 할일: ${total}개\n- 완료: ${completed.length}개 (${rate}%)\n- 기한 초과: ${overdue.length}개\n- 미룬 횟수 있는 할일: ${delayed.length}개\n- 집중 시간대: ${peakHour}시\n- 가장 생산적인 요일: ${peakDay}요일\n- 태그별 완료율: ${tagRates.map(t=>`#${t.tag} ${t.rate}%`).join(', ')}\n\n형식:\n1. 한 줄 요약\n2. 잘한 점 1가지\n3. 개선할 점 1가지\n4. 다음 주 핵심 행동 1가지\n\n각 항목은 1~2문장.`
-  const insight = await callGemini(prompt, { mode: 'analysis', temperature: 0.3, maxTokens: 600 })
-  return res.json({ stats, insight, generatedAt: new Date().toISOString() })
+  try {
+    const insight = await callGemini(prompt, { mode: 'analysis', temperature: 0.3, maxTokens: 600 })
+    return res.json({ stats, insight, generatedAt: new Date().toISOString() })
+  } catch(e) { return catch429(e, res) }
 }
 
 // ── suggest ───────────────────────────────────────────────
@@ -92,13 +99,15 @@ async function handleSuggest(req, res) {
   if (!(todayTasks?.length)) return res.json({ message:'오늘 할일을 모두 완료했어요! 🎉', type:'success' })
   const context = { hour, isPeakHour, overdueCount:overdue.length, todayCount:dueToday.length, highPriCount:highPri.length, totalPending:todayTasks?.length||0, overdueTitle:overdue[0]?.title||null, highPriTitle:highPri[0]?.title||null }
   const prompt = `당신은 생산성 코치입니다.\n현재: ${hour}시, 집중시간: ${isPeakHour?'예':'아니오'}, 기한초과: ${context.overdueCount}개${context.overdueTitle?` ("${context.overdueTitle}")`:''},오늘마감: ${context.todayCount}개, 중요: ${context.highPriCount}개${context.highPriTitle?` ("${context.highPriTitle}")`:''}.\n\nmessage(20자이내 행동으로끝),type(urgent|focus|encourage|habit),action(5단어이내)만 JSON으로 출력.`
-  const result = await callGeminiJSON(prompt, { mode:'coach', temperature:0.5 })
-  if (!result) {
-    if (context.overdueCount>0) return res.json({ message:`기한 초과 ${context.overdueCount}개, 지금 하나만 해결하세요`, type:'urgent', action:'기한 초과 확인' })
-    if (isPeakHour) return res.json({ message:'지금이 집중 시간입니다. 중요한 것부터', type:'focus', action:'중요 할일 시작' })
-    return res.json({ message:`남은 할일 ${context.totalPending}개. 작은 것 하나부터`, type:'encourage', action:'할일 목록 확인' })
-  }
-  return res.json(result)
+  try {
+    const result = await callGeminiJSON(prompt, { mode:'coach', temperature:0.5 })
+    if (!result) {
+      if (context.overdueCount>0) return res.json({ message:`기한 초과 ${context.overdueCount}개, 지금 하나만 해결하세요`, type:'urgent', action:'기한 초과 확인' })
+      if (isPeakHour) return res.json({ message:'지금이 집중 시간입니다. 중요한 것부터', type:'focus', action:'중요 할일 시작' })
+      return res.json({ message:`남은 할일 ${context.totalPending}개. 작은 것 하나부터`, type:'encourage', action:'할일 목록 확인' })
+    }
+    return res.json(result)
+  } catch(e) { return catch429(e, res) }
 }
 
 // ── tag ───────────────────────────────────────────────────
@@ -108,13 +117,15 @@ async function handleTag(req, res) {
   const { taskId, title, notes='' } = req.body
   if (!title) return res.status(400).json({ error: 'title required' })
   const prompt = `할일 제목: "${title}"\n메모: "${notes}"\n\n위 할일을 분석해서 JSON으로 답해라.\n규칙:\n- tags: 1~3개, 한국어 소문자 [공부,개발,운동,독서,업무,건강,재무,창작,습관,소통,생활]\n- priority: "high"|"med"|"low"\n- category: 한 단어\n- due_hint: null|"today"|"tomorrow"|"this_week"\n\nJSON만 출력: {"tags":[],"priority":"med","category":"","due_hint":null}`
-  const result = await callGeminiJSON(prompt, { mode:'alarm', temperature:0.1 })
-  if (!result) return res.status(500).json({ error: 'AI parsing failed' })
-  if (taskId) {
-    await supabase.from('tasks').update({ tags:result.tags||[], priority:result.priority||'med', ai_tagged:true }).eq('id',taskId).eq('user_id',uid)
-    await supabase.from('events').insert({ user_id:uid, type:'ai_tagged', task_id:taskId, timestamp:new Date().toISOString(), metadata:{ tags:result.tags, priority:result.priority, confidence:'gemini-flash' } })
-  }
-  return res.json(result)
+  try {
+    const result = await callGeminiJSON(prompt, { mode:'alarm', temperature:0.1 })
+    if (!result) return res.json({ tags:[], priority:'med', category:'', due_hint:null })
+    if (taskId) {
+      await supabase.from('tasks').update({ tags:result.tags||[], priority:result.priority||'med', ai_tagged:true }).eq('id',taskId).eq('user_id',uid)
+      await supabase.from('events').insert({ user_id:uid, type:'ai_tagged', task_id:taskId, timestamp:new Date().toISOString(), metadata:{ tags:result.tags, priority:result.priority, confidence:'gemini-flash' } })
+    }
+    return res.json(result)
+  } catch(e) { return catch429(e, res) }
 }
 
 // ── agent helpers ──────────────────────────────────────────
