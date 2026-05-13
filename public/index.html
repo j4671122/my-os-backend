@@ -1674,6 +1674,12 @@ body.dark .ab-btns{border-top-color:rgba(255,255,255,.07)}
         <input id="ttm-color" type="color" value="#d97706" style="height:40px;padding:4px"/>
       </div>
     </div>
+    <div class="modal-field" style="margin-top:6px">
+      <label>연결 목표 <span style="font-weight:400;color:var(--text3)">(선택)</span></label>
+      <select id="ttm-goal" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-size:13px;font-family:inherit">
+        <option value="">-- 연결 안함 --</option>
+      </select>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('tracker-label-modal')">취소</button>
       <button class="btn btn-primary" onclick="saveTrackerLabel()">저장</button>
@@ -5082,14 +5088,17 @@ function renderTimeTracker(){
           <div class="tt-label-color" style="background:#ef4444;font-size:11px;display:flex;align-items:center;justify-content:center">🧹</div>
           <div class="tt-label-name">지우개</div>
         </div>
-        ${labels.map(l=>`<div class="tt-label${l.id===selId?' active':''}" onclick="ttSelectLabel('${l.id}')" style="${l.id===selId?'border-color:'+l.color+';box-shadow:0 0 0 3px '+l.color+'33':''}">
+        ${labels.map(l=>{const linkedGoal=l.goalId?(D.goals||[]).find(g=>g.id===l.goalId):null;return`<div class="tt-label${l.id===selId?' active':''}" onclick="ttSelectLabel('${l.id}')" style="${l.id===selId?'border-color:'+l.color+';box-shadow:0 0 0 3px '+l.color+'33':''}">
           <div class="tt-label-color" style="background:${l.color}"></div>
-          <div class="tt-label-name">${esc(l.name)}</div>
+          <div style="flex:1;min-width:0">
+            <div class="tt-label-name">${esc(l.name)}</div>
+            ${linkedGoal?`<div style="font-size:10px;color:var(--text3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${linkedGoal.type==='global'?'🎯':'📌'} ${esc(linkedGoal.name)}</div>`:''}
+          </div>
           <div class="tt-label-acts">
             <button onclick="openTrackerLabelModal('${l.id}');event.stopPropagation()" title="편집">✏️</button>
             <button onclick="deleteTrackerLabel('${l.id}');event.stopPropagation()" title="삭제">✕</button>
           </div>
-        </div>`).join('')}
+        </div>`;}).join('')}
       </div>
       <button class="btn btn-ghost btn-sm" onclick="openTrackerLabelModal(null)" style="width:100%;margin-bottom:14px">+ 라벨 추가</button>
       <h4>요약</h4>
@@ -5224,6 +5233,15 @@ function openTrackerLabelModal(id){
   document.getElementById('ttm-title').textContent=lbl?'라벨 편집':'라벨 추가';
   document.getElementById('ttm-name').value=lbl?.name||'';
   document.getElementById('ttm-color').value=lbl?.color||'#d97706';
+  // 목표 select 동적 생성
+  const sel=document.getElementById('ttm-goal');
+  sel.innerHTML='<option value="">-- 연결 안함 --</option>';
+  (D.goals||[]).forEach(g=>{
+    const opt=document.createElement('option');
+    opt.value=g.id;opt.textContent=(g.type==='global'?'🎯 ':'📌 ')+g.name;
+    if(lbl?.goalId===g.id)opt.selected=true;
+    sel.appendChild(opt);
+  });
   document.getElementById('tracker-label-modal').classList.add('show');
   setTimeout(()=>document.getElementById('ttm-name').focus(),50);
 }
@@ -5232,13 +5250,14 @@ function saveTrackerLabel(){
   const name=document.getElementById('ttm-name').value.trim();
   if(!name)return;
   const color=document.getElementById('ttm-color').value;
+  const goalId=document.getElementById('ttm-goal').value||null;
   if(!D.settings.timeTrackerLabels)D.settings.timeTrackerLabels=DEFAULT_TRACKER_LABELS.map(l=>({...l}));
   if(_trackerLabelEditId){
     const lbl=D.settings.timeTrackerLabels.find(l=>l.id===_trackerLabelEditId);
-    if(lbl){lbl.name=name;lbl.color=color;lbl.text=getContrastColor(color);}
+    if(lbl){lbl.name=name;lbl.color=color;lbl.text=getContrastColor(color);lbl.goalId=goalId;}
   } else {
     const newId='lbl-'+uid();
-    D.settings.timeTrackerLabels.push({id:newId,name,color,text:getContrastColor(color)});
+    D.settings.timeTrackerLabels.push({id:newId,name,color,text:getContrastColor(color),goalId});
     D.settings.timeTrackerSelectedLabel=newId;
   }
   closeModal('tracker-label-modal');
@@ -6663,6 +6682,49 @@ function renderDashboard(){
       <div class="chart-title">🕒 타임 트래커 7일 요약</div>
       <div class="bar-chart-area" style="align-items:flex-end">${bars}</div>
       ${labels.length?`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">${labels.map(l=>`<div style="display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--text2)"><div style="width:10px;height:10px;border-radius:50%;background:${l.color}"></div>${esc(l.name)}</div>`).join('')}</div>`:''}
+    </div>`;
+  })()}
+  ${(()=>{
+    // ── 목표별 시간 투자 (주간) ──
+    const labels=D.settings.timeTrackerLabels||[];
+    const linkedLabels=labels.filter(l=>l.goalId);
+    if(!linkedLabels.length) return '';
+    const ttData=D.settings.timeTrackerData||{};
+    // 이번 주 날짜 (월~오늘 or 최근 7일)
+    const last7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return d.toISOString().slice(0,10);});
+    // goalId → 총 분 계산
+    const goalMins={};
+    last7.forEach(dt=>{
+      const dayData=ttData[dt]||{};
+      Object.values(dayData).forEach(lid=>{
+        if(!lid)return;
+        const lbl=linkedLabels.find(l=>l.id===lid);
+        if(!lbl)return;
+        goalMins[lbl.goalId]=(goalMins[lbl.goalId]||0)+10;
+      });
+    });
+    if(!Object.keys(goalMins).length) return '';
+    const maxMins=Math.max(...Object.values(goalMins),1);
+    const rows=Object.entries(goalMins).sort((a,b)=>b[1]-a[1]).map(([gid,mins])=>{
+      const goal=(D.goals||[]).find(g=>g.id===gid);
+      if(!goal)return '';
+      const h=Math.floor(mins/60),m=mins%60;
+      const timeStr=h?`${h}시간${m?` ${m}분`:''}`:`${m}분`;
+      const pct=Math.round(mins/maxMins*100);
+      return`<div style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+          <span style="font-size:12px;font-weight:600">${goal.type==='global'?'🎯':'📌'} ${esc(goal.name)}</span>
+          <span style="font-size:11px;color:var(--text3);white-space:nowrap">${timeStr}</span>
+        </div>
+        <div style="height:7px;background:var(--surface2);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${goal.color||'var(--accent)'};border-radius:4px;transition:width .3s"></div>
+        </div>
+      </div>`;
+    }).join('');
+    return`<div class="chart-card" style="margin-bottom:14px">
+      <div class="chart-title">⏱️ 목표별 시간 투자 (최근 7일)</div>
+      ${rows}
+      <div style="font-size:10px;color:var(--text3);margin-top:6px">타임트래커 라벨에 목표를 연결하면 자동 집계돼요</div>
     </div>`;
   })()}
   <div class="chart-card" style="margin-bottom:14px">
