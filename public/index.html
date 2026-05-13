@@ -854,34 +854,33 @@ pre.report-content{font-family:inherit;font-size:13px;line-height:1.7;white-spac
 .memo-card:hover .memo-del-btn{opacity:1}
 .memo-del-btn:hover{color:var(--red)!important;background:#fde8e4}
 .memo-modal-body{min-height:200px;resize:vertical}
-/* ── Apple Notes 스타일 메모 에디터 ── */
+/* ── Editor.js 메모 에디터 ── */
 #memo-modal{backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:rgba(0,0,0,.32)}
-.memo-editor-panel{width:700px;max-width:96vw;max-height:88vh;background:rgba(253,251,248,.97);backdrop-filter:blur(28px) saturate(160%);-webkit-backdrop-filter:blur(28px) saturate(160%);border:1.5px solid rgba(255,255,255,.88);border-radius:22px;box-shadow:0 32px 80px rgba(59,47,37,.22),0 4px 16px rgba(59,47,37,.1);display:flex;flex-direction:column;overflow:hidden}
+.memo-editor-panel{width:720px;max-width:96vw;max-height:88vh;background:rgba(253,251,248,.97);backdrop-filter:blur(28px) saturate(160%);-webkit-backdrop-filter:blur(28px) saturate(160%);border:1.5px solid rgba(255,255,255,.88);border-radius:22px;box-shadow:0 32px 80px rgba(59,47,37,.22),0 4px 16px rgba(59,47,37,.1);display:flex;flex-direction:column;overflow:hidden}
 body.dark .memo-editor-panel{background:rgba(28,25,22,.97);border-color:rgba(255,255,255,.1)}
-.me-toolbar{display:flex;align-items:center;gap:2px;padding:9px 14px;border-bottom:1px solid rgba(0,0,0,.07);background:rgba(255,255,255,.5);flex-shrink:0}
-body.dark .me-toolbar{background:rgba(255,255,255,.05)}
-.me-tb-btn{background:none;border:none;cursor:pointer;padding:5px 9px;border-radius:8px;font-size:13px;color:var(--text2);transition:background .1s;line-height:1;font-weight:600}
+.me-actionbar{display:flex;align-items:center;gap:6px;padding:10px 16px;border-bottom:1px solid rgba(0,0,0,.07);background:rgba(255,255,255,.5);flex-shrink:0}
+body.dark .me-actionbar{background:rgba(255,255,255,.05)}
+.me-tb-btn{background:none;border:none;cursor:pointer;padding:5px 9px;border-radius:8px;font-size:14px;color:var(--text2);transition:background .1s}
 .me-tb-btn:hover{background:rgba(0,0,0,.07)}
-.me-tb-btn.active,.me-tb-btn:active{background:var(--accent-light);color:var(--accent)}
-.me-tb-sep{width:1px;height:18px;background:var(--border);margin:0 5px;flex-shrink:0}
-.me-canvas{flex:1;overflow-y:auto;padding:28px 38px 20px;font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;font-size:15px;line-height:1.85;color:var(--text);outline:none;min-height:260px;overscroll-behavior:contain}
-.me-canvas:empty::before{content:'제목을 입력하세요...';color:var(--text3);pointer-events:none;font-size:22px;font-weight:700}
-.me-h1{font-size:22px;font-weight:800;line-height:1.4;letter-spacing:-.4px;color:var(--text);min-height:1.4em}
-.me-h1:empty::before{content:attr(data-placeholder);color:var(--text3);pointer-events:none}
-.me-canvas div:not(.me-h1):not(.mc-check),.me-canvas p{min-height:1.85em}
-.me-canvas ul,.me-canvas ol{padding-left:22px;margin:4px 0}
-.me-canvas li{margin:2px 0}
-.me-canvas img.me-img{max-width:100%;border-radius:12px;margin:10px 0;display:block;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.1)}
-.mc-check{display:flex;align-items:flex-start;gap:8px;padding:2px 0;min-height:1.85em}
-.mc-check input[type=checkbox]{margin-top:5px;width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
-.mc-check span{flex:1;outline:none}
-.mc-check.done span{text-decoration:line-through;color:var(--text3)}
+.me-editorjs-holder{flex:1;overflow-y:auto;padding:8px 20px 20px;overscroll-behavior:contain;min-height:260px}
 .me-meta{display:flex;align-items:center;gap:10px;padding:9px 16px;border-top:1px solid rgba(0,0,0,.07);background:rgba(255,255,255,.4);flex-shrink:0;flex-wrap:wrap}
 body.dark .me-meta{background:rgba(255,255,255,.03)}
 .me-meta select,.me-meta input{background:transparent;border:none;font-size:12px;color:var(--text2);outline:none;padding:2px 4px;min-width:0}
 .me-meta select:hover,.me-meta input:hover{background:var(--surface2);border-radius:5px}
-.me-meta-sep{font-size:11px;color:var(--border)}
-@media(max-width:600px){.me-canvas{padding:18px 18px 12px}.memo-editor-panel{max-height:96vh;border-radius:18px}}
+/* Editor.js 스타일 오버라이드 */
+.codex-editor{font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif!important}
+.ce-block__content{max-width:100%!important}
+.ce-paragraph[data-placeholder]:empty::before{color:var(--text3)!important}
+.ce-header{letter-spacing:-.3px}
+.ce-paragraph,.cdx-block{font-size:15px;line-height:1.85}
+.cdx-checklist__item{font-size:15px!important;line-height:1.7!important}
+.cdx-checklist__item-checkbox{margin-top:3px!important;accent-color:var(--accent)}
+.cdx-simple-image img{border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.codex-editor__redactor{padding-bottom:60px!important}
+.ce-toolbar__plus,.ce-toolbar__settings-btn{color:var(--text3)!important}
+body.dark .codex-editor--empty .ce-block:first-child .ce-paragraph[data-placeholder]:empty::before{color:var(--text3)}
+body.dark .ce-toolbar__plus,.body.dark .ce-toolbar__settings-btn{color:var(--text3)!important}
+@media(max-width:600px){.me-editorjs-holder{padding:4px 4px 16px}.memo-editor-panel{max-height:96vh;border-radius:16px}}
 
 /* ── Pomodoro ── */
 .pomo-wrap{display:flex;flex-direction:column;align-items:center;gap:20px;max-width:380px;margin:0 auto;padding:16px 0}
@@ -1628,33 +1627,18 @@ body.dark .ab-btns{border-top-color:rgba(255,255,255,.07)}
 
 <div class="overlay" id="memo-modal">
   <div class="memo-editor-panel">
-    <!-- 툴바 -->
-    <div class="me-toolbar">
-      <button class="me-tb-btn" onclick="meCmd('bold')" title="굵게 (⌘B)"><b>B</b></button>
-      <button class="me-tb-btn" onclick="meCmd('italic')" title="기울임 (⌘I)"><i>I</i></button>
-      <div class="me-tb-sep"></div>
-      <button class="me-tb-btn" onclick="meInsertCheck()" title="체크리스트">☑</button>
-      <button class="me-tb-btn" onclick="meCmd('insertUnorderedList')" title="글머리 기호">• ≡</button>
-      <div class="me-tb-sep"></div>
-      <button class="me-tb-btn" onclick="meInsertPhoto()" title="사진 삽입">📷</button>
-      <input type="file" id="me-photo-inp" accept="image/*" style="display:none" onchange="mePhotoFromFile(this)">
+    <div class="me-actionbar">
+      <span style="font-size:12px;color:var(--text3);font-weight:600">메모</span>
       <div style="flex:1"></div>
-      <button class="me-tb-btn" style="color:var(--text3);font-size:16px;font-weight:400" onclick="closeModal('memo-modal')" title="닫기">✕</button>
+      <button class="me-tb-btn" onclick="closeModal('memo-modal')" title="닫기" style="font-size:16px;color:var(--text3)">✕</button>
       <button class="btn btn-primary btn-sm" onclick="saveMemo()" style="margin-left:6px">저장</button>
     </div>
-    <!-- 캔버스 -->
-    <div id="me-canvas" class="me-canvas" contenteditable="true"
-      onkeydown="meKeydown(event)"
-      onpaste="mePaste(event)"
-      ondragover="event.preventDefault()"
-      ondrop="meDrop(event)">
-    </div>
-    <!-- 메타데이터 -->
+    <div id="me-editorjs" class="me-editorjs-holder"></div>
     <div class="me-meta">
-      <span class="me-meta-label">📁</span>
+      <span style="font-size:11px;color:var(--text3)">📁</span>
       <select id="memo-folder-inp"><option value="">폴더 없음</option></select>
-      <span class="me-meta-sep">|</span>
-      <span class="me-meta-label">🏷</span>
+      <span style="font-size:11px;color:var(--border)">|</span>
+      <span style="font-size:11px;color:var(--text3)">🏷</span>
       <input id="memo-tags-inp" placeholder="태그 (콤마 구분)" list="memo-tag-datalist" autocomplete="off" style="flex:1;min-width:80px"/>
       <datalist id="memo-tag-datalist"></datalist>
     </div>
@@ -5300,144 +5284,139 @@ function renderMemos(){
   }).join('')}</div>`;
 }
 
-// ── Apple Notes 에디터 헬퍼 ──────────────────────────────────
+// ── Editor.js 메모 에디터 ──────────────────────────────────
+let _editorInst=null;
+
 function _memoText(body){
-  // HTML 바디 → 텍스트 미리보기
   if(!body)return'';
-  if(body.startsWith('<')){
-    const t=document.createElement('div');t.innerHTML=body;
-    return t.textContent.replace(/\s+/g,' ').trim();
+  // Editor.js JSON
+  if(body.trimStart().startsWith('{')){
+    try{
+      const d=JSON.parse(body);
+      return(d.blocks||[]).map(b=>{
+        if(b.type==='header'||b.type==='paragraph')return(b.data.text||'').replace(/<[^>]*>/g,'');
+        if(b.type==='list')return(b.data.items||[]).map(i=>typeof i==='string'?i:i.content||'').join(' ');
+        if(b.type==='checklist')return(b.data.items||[]).map(i=>i.text||'').join(' ');
+        return'';
+      }).filter(Boolean).join(' ').trim();
+    }catch{}
   }
+  // HTML legacy
+  if(body.startsWith('<')){const t=document.createElement('div');t.innerHTML=body;return t.textContent.replace(/\s+/g,' ').trim();}
   return body;
 }
-function _meSel(){return window.getSelection()}
-function _meRange(){const s=_meSel();return s.rangeCount?s.getRangeAt(0):null}
-function _meInsertNode(node){
-  const r=_meRange();if(!r)return;
-  r.deleteContents();r.insertNode(node);
-  r.setStartAfter(node);r.collapse(true);
-  _meSel().removeAllRanges();_meSel().addRange(r);
+
+function _loadScript(src){
+  return new Promise((resolve,reject)=>{
+    if(document.querySelector(`script[src="${src}"]`)){resolve();return;}
+    const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;
+    document.head.appendChild(s);
+  });
+}
+async function _loadEditorJs(){
+  if(window.EditorJS)return;
+  await _loadScript('https://cdn.jsdelivr.net/npm/@editorjs/editorjs@2.28.2');
+  await Promise.all([
+    _loadScript('https://cdn.jsdelivr.net/npm/@editorjs/header@2.8.1'),
+    _loadScript('https://cdn.jsdelivr.net/npm/@editorjs/list@1.9.0'),
+    _loadScript('https://cdn.jsdelivr.net/npm/@editorjs/checklist@1.6.0'),
+    _loadScript('https://cdn.jsdelivr.net/npm/@editorjs/simple-image@1.6.0'),
+  ]);
 }
 
-function meCmd(cmd){document.getElementById('me-canvas').focus();document.execCommand(cmd,false,null);}
-
-function meKeydown(e){
-  if(e.key==='Enter'){
-    const sel=_meSel();if(!sel.rangeCount)return;
-    const node=sel.anchorNode;
-    const h1=document.querySelector('#me-canvas .me-h1');
-    if(h1&&(node===h1||h1.contains(node))){
-      e.preventDefault();
-      const div=document.createElement('div');div.innerHTML='<br>';
-      h1.after(div);
-      const r=document.createRange();r.setStart(div,0);r.collapse(true);
-      sel.removeAllRanges();sel.addRange(r);
+function _legacyToBlocks(m){
+  const blocks=[];
+  const title=(m?.title||'').trim();
+  if(title)blocks.push({type:'header',data:{text:title,level:1}});
+  const body=m?.body||'';
+  if(body){
+    if(body.startsWith('<')){
+      const tmp=document.createElement('div');tmp.innerHTML=body;
+      const txt=tmp.textContent.trim();
+      if(txt)blocks.push({type:'paragraph',data:{text:txt}});
+    } else {
+      body.split('\n').forEach(l=>{if(l.trim())blocks.push({type:'paragraph',data:{text:l.trim()}});});
     }
   }
+  if(!blocks.length)blocks.push({type:'header',data:{text:'',level:1}});
+  return blocks;
 }
 
-function meInsertCheck(){
-  const canvas=document.getElementById('me-canvas');canvas.focus();
-  const wrap=document.createElement('div');wrap.className='mc-check';
-  const cb=document.createElement('input');cb.type='checkbox';
-  cb.onchange=function(){this.parentElement.classList.toggle('done',this.checked)};
-  const sp=document.createElement('span');sp.contentEditable='true';sp.innerHTML='';
-  wrap.append(cb,sp);
-  _meInsertNode(wrap);
-  // 커서를 span 안으로
-  const r=document.createRange();r.setStart(sp,0);r.collapse(true);
-  const s=_meSel();s.removeAllRanges();s.addRange(r);
-}
-
-function meInsertImg(src){
-  const canvas=document.getElementById('me-canvas');
-  const img=document.createElement('img');
-  img.src=src;img.className='me-img';
-  img.style.cssText='max-width:100%;border-radius:12px;margin:10px 0;display:block';
-  const r=_meRange();
-  if(r){r.insertNode(img);r.setStartAfter(img);r.collapse(true);_meSel().removeAllRanges();_meSel().addRange(r);}
-  else canvas.appendChild(img);
-  // 이미지 다음에 빈 줄
-  const br=document.createElement('div');br.innerHTML='<br>';
-  img.after(br);
-}
-
-function meInsertPhoto(){document.getElementById('me-photo-inp').click();}
-async function mePhotoFromFile(inp){
-  if(!inp.files?.[0])return;
-  const b64=await _compressImage(inp.files[0],1200,0.82);
-  document.getElementById('me-canvas').focus();
-  meInsertImg(b64);
-  inp.value='';
-}
-
-function mePaste(e){
-  const items=e.clipboardData?.items;if(!items)return;
+// 이미지 붙여넣기/드래그 (캡처 단계에서 Editor.js보다 먼저 처리)
+document.addEventListener('paste',async e=>{
+  if(!_editorInst||!document.getElementById('memo-modal')?.classList.contains('show'))return;
+  const items=e.clipboardData?.items||[];
   for(const item of items){
     if(item.type.startsWith('image/')){
-      e.preventDefault();
-      _compressImage(item.getAsFile(),1200,0.82).then(meInsertImg);
+      e.stopImmediatePropagation();e.preventDefault();
+      const b64=await _compressImage(item.getAsFile(),1200,0.82);
+      _editorInst.blocks.insert('image',{url:b64});
       return;
     }
   }
-}
-function meDrop(e){
+},true);
+document.addEventListener('drop',async e=>{
+  if(!_editorInst||!document.getElementById('memo-modal')?.classList.contains('show'))return;
+  const files=Array.from(e.dataTransfer?.files||[]).filter(f=>f.type.startsWith('image/'));
+  if(!files.length)return;
   e.preventDefault();
-  Array.from(e.dataTransfer.files).forEach(f=>{
-    if(f.type.startsWith('image/'))_compressImage(f,1200,0.82).then(meInsertImg);
-  });
-}
+  for(const f of files){const b64=await _compressImage(f,1200,0.82);_editorInst.blocks.insert('image',{url:b64});}
+},true);
 
-function openMemoModal(id){
+async function openMemoModal(id){
   _memoEditId=id||null;
   const m=id?(D.settings.memos||[]).find(x=>x.id===id):null;
-  // 캔버스 초기화
-  const canvas=document.getElementById('me-canvas');
-  if(m?.body?.startsWith('<')){
-    canvas.innerHTML=m.body;
-  } else {
-    // 레거시(텍스트) 또는 새 메모
-    canvas.innerHTML='';
-    const h1=document.createElement('div');h1.className='me-h1';
-    h1.setAttribute('data-placeholder','제목');
-    h1.textContent=m?.title||'';
-    canvas.appendChild(h1);
-    if(m?.body){const p=document.createElement('div');p.textContent=m.body;canvas.appendChild(p);}
-    else{const p=document.createElement('div');p.innerHTML='<br>';canvas.appendChild(p);}
-  }
-  // 폴더 셀렉트
+  // 폴더/태그 UI
   const sel=document.getElementById('memo-folder-inp');
   sel.innerHTML='<option value="">폴더 없음</option>'+D.folders.map(f=>`<option value="${f.id}"${m?.folderId===f.id?' selected':''}>${esc(f.name)}</option>`).join('');
   if(m?.folderId)sel.value=m.folderId;
-  // 태그
   document.getElementById('memo-tags-inp').value=(m?.tags||[]).join(', ');
   const dl=document.getElementById('memo-tag-datalist');
   if(dl)dl.innerHTML=Object.keys(D.tagReg||{}).map(tg=>`<option value="${esc(tg)}">`).join('');
   document.getElementById('memo-modal').classList.add('show');
-  setTimeout(()=>{
-    const h1=canvas.querySelector('.me-h1');
-    const target=h1||canvas;
-    target.focus();
-    // 커서 끝으로
-    const r=document.createRange();r.selectNodeContents(target);r.collapse(false);
-    const s=window.getSelection();s.removeAllRanges();s.addRange(r);
-  },60);
+  // 기존 인스턴스 정리
+  if(_editorInst){try{await _editorInst.isReady;_editorInst.destroy();}catch{}
+    _editorInst=null;document.getElementById('me-editorjs').innerHTML='';}
+  // Editor.js 로드 (첫 번째 열 때만 CDN 요청)
+  try{await _loadEditorJs();}catch(e){console.error('[EditorJS] CDN 로드 실패',e);return;}
+  // 데이터 파싱
+  let data;
+  if(m?.body){
+    try{data=JSON.parse(m.body);}catch{data={blocks:_legacyToBlocks(m)};}
+  } else {
+    data={blocks:[{type:'header',data:{text:'',level:1}},{type:'paragraph',data:{text:''}}]};
+  }
+  _editorInst=new EditorJS({
+    holder:'me-editorjs',
+    data,
+    placeholder:'내용을 입력하세요...',
+    tools:{
+      header:{class:Header,config:{levels:[1,2,3],defaultLevel:1},shortcut:'CMD+SHIFT+H'},
+      list:{class:List,inlineToolbar:true},
+      checklist:{class:Checklist,inlineToolbar:true},
+      image:{class:SimpleImage,inlineToolbar:true},
+    },
+    i18n:{messages:{toolNames:{Text:'텍스트',Heading:'제목',List:'목록',Checklist:'체크리스트',Quote:'인용',Image:'이미지'},tools:{list:{Unordered:'글머리',Ordered:'번호목록'}}}},
+  });
 }
 
-function saveMemo(){
-  const canvas=document.getElementById('me-canvas');
-  // 첫 번째 .me-h1에서 제목 추출, 없으면 첫 텍스트 줄
-  const h1=canvas.querySelector('.me-h1');
-  const title=(h1?.textContent||canvas.innerText.split('\n')[0]||'').trim()||'제목 없음';
-  const html=canvas.innerHTML;
+async function saveMemo(){
+  if(!_editorInst){closeModal('memo-modal');return;}
+  let output;
+  try{output=await _editorInst.save();}catch(e){console.error('[saveMemo]',e);return;}
+  // 제목: 첫 번째 header 블록 텍스트
+  const firstH=output.blocks.find(b=>b.type==='header');
+  const firstP=output.blocks.find(b=>b.type==='paragraph');
+  const title=((firstH||firstP)?.data?.text||'').replace(/<[^>]*>/g,'').trim()||'제목 없음';
+  const body=JSON.stringify(output);
   const folderId=document.getElementById('memo-folder-inp').value||null;
   const tags=document.getElementById('memo-tags-inp').value.split(',').map(t=>t.trim()).filter(Boolean);
   if(!D.settings.memos)D.settings.memos=[];
   if(_memoEditId){
     const m=D.settings.memos.find(x=>x.id===_memoEditId);
-    if(m){m.title=title;m.body=html;m.folderId=folderId;m.tags=tags;m.photo='';m.updatedAt=Date.now();}
+    if(m){m.title=title;m.body=body;m.folderId=folderId;m.tags=tags;m.photo='';m.updatedAt=Date.now();}
   } else {
-    D.settings.memos.push({id:uid(),title,body:html,folderId,tags,photo:'',createdAt:Date.now(),updatedAt:Date.now()});
+    D.settings.memos.push({id:uid(),title,body,folderId,tags,photo:'',createdAt:Date.now(),updatedAt:Date.now()});
   }
   saveD();
   closeModal('memo-modal');
