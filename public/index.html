@@ -745,6 +745,16 @@ body.dark .wfp-card{background:rgba(255,255,255,.07);border-color:rgba(255,255,2
   .no-date-btn{font-size:9px;padding:2px 5px;white-space:nowrap;flex-shrink:0}
   /* 바텀 네비 안전 영역 + view-area 여유 확보 */
   .bottom-nav{height:calc(56px + env(safe-area-inset-bottom,16px));padding-bottom:max(env(safe-area-inset-bottom,0px),8px)}
+  /* 모달 너비 — 좁은 화면에서 잘리지 않게 */
+  .modal{width:calc(100vw - 24px);max-width:360px}
+  /* 홈 FAB — 바텀 네비 위로 올리기 */
+  .home-fab{bottom:calc(56px + env(safe-area-inset-bottom,16px) + 16px);right:20px;width:52px;height:52px;font-size:24px}
+  /* 위젯 피커 — 모바일에서 FAB 위로 */
+  .wfp{right:12px;bottom:calc(56px + env(safe-area-inset-bottom,16px) + 80px);width:calc(100vw - 24px);max-width:none;border-radius:20px}
+  /* 할일 상세 옵션 셀렉트 — 터치 타겟 확대 */
+  .opt-item input[type=date],.opt-item select{padding:5px 7px;font-size:13px;min-height:32px}
+  /* 목표 모달 full-width */
+  #goal-modal .modal,#habit-modal .modal{width:calc(100vw - 20px)}
 }
 
 /* ── Report / Content gen ── */
@@ -982,68 +992,69 @@ body.dark .ce-toolbar__plus,.body.dark .ce-toolbar__settings-btn{color:var(--tex
 .routine-acts{display:flex;gap:6px;margin-top:10px;justify-content:flex-end}
 .routine-add-btn{width:100%;padding:11px;border-radius:12px;border:1.5px dashed var(--border);background:none;cursor:pointer;font-size:12.5px;font-weight:600;color:var(--text3);transition:all .12s}
 .routine-add-btn:hover{border-color:var(--accent);color:var(--accent)}
-/* ── Community ── */
-/* ── Community / Twitter style ── */
-.tw-wrap{max-width:600px;margin:0 auto;padding-bottom:40px}
-.tw-header{position:sticky;top:0;z-index:10;background:var(--surface);border-bottom:1px solid var(--border)}
-.tw-tabs{display:flex}
-.tw-tab{flex:1;padding:14px;text-align:center;font-size:14px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
-.tw-tab.active{color:var(--text);border-bottom-color:var(--accent)}
-.tw-tab:hover:not(.active){background:var(--surface2)}
-.tw-compose{padding:12px 16px;border-bottom:1px solid var(--border)}
-.tw-compose-row{display:flex;gap:12px;align-items:flex-start}
-.tw-av{border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;background:var(--surface2)}
-.tw-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
-.tw-compose-right{flex:1;min-width:0}
-.tw-textarea{width:100%;border:none;outline:none;background:transparent;font-size:18px;font-family:inherit;resize:none;min-height:52px;color:var(--text);line-height:1.5;padding:8px 0}
-.tw-textarea::placeholder{color:var(--text3)}
-.tw-compose-footer{display:flex;align-items:center;gap:8px;padding-top:10px;border-top:1px solid var(--border);margin-top:4px}
-.tw-compose-tools{display:flex;gap:2px;flex:1}
-.tw-tool-btn{background:none;border:none;cursor:pointer;padding:7px;border-radius:50%;font-size:16px;color:var(--accent);transition:background .12s;line-height:1}
-.tw-tool-btn:hover{background:var(--accent-light)}
-.tw-char-wrap{position:relative;width:28px;height:28px;flex-shrink:0}
-.tw-char-svg{transform:rotate(-90deg)}
-.tw-char-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--text3)}
-.tw-char-num.warn{color:#dc2626}
-.tw-post-btn{padding:7px 18px;border-radius:20px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:background .12s;white-space:nowrap}
-.tw-post-btn:hover{background:#234f25}
-.tw-post-btn:disabled{opacity:.4;cursor:not-allowed}
-.tw-tweet{display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);transition:background .12s}
-.tw-tweet:hover{background:var(--surface2)}
-.tw-tweet-left{flex-shrink:0}
-.tw-tweet-right{flex:1;min-width:0}
-.tw-tweet-meta{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:3px}
-.tw-tweet-name{font-size:14px;font-weight:700;color:var(--text)}
-.tw-tweet-handle{font-size:13px;color:var(--text3)}
-.tw-tweet-dot{font-size:13px;color:var(--text3)}
-.tw-tweet-time{font-size:13px;color:var(--text3);flex:1}
-.tw-tweet-body{font-size:15px;color:var(--text);line-height:1.55;white-space:pre-wrap;word-break:break-word;margin-bottom:10px}
-.tw-actions{display:flex;align-items:center;gap:0;margin:0 -8px}
-.tw-act{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;border:none;background:none;cursor:pointer;font-size:12.5px;color:var(--text3);font-weight:500;transition:all .12s;min-width:52px}
-.tw-act:hover{background:var(--accent-light);color:var(--accent)}
-.tw-act.liked{color:#e11d48}
-.tw-act.liked:hover{background:rgba(225,29,72,.08);color:#e11d48}
-.tw-act-del{min-width:0;color:var(--text3)}
-.tw-act-del:hover{color:#dc2626;background:rgba(220,38,38,.07)}
-.tw-replies{padding:8px 16px 8px 68px;border-bottom:1px solid var(--border);background:var(--surface2)}
-.tw-reply{display:flex;gap:8px;padding:7px 0;border-top:1px solid var(--border)}
-.tw-reply:first-child{border-top:none}
-.tw-reply-right{flex:1;min-width:0}
-.tw-reply-meta{display:flex;gap:5px;align-items:center;margin-bottom:2px}
-.tw-reply-name{font-size:12.5px;font-weight:700;color:var(--text)}
-.tw-reply-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:11px;padding:2px 5px;border-radius:8px;margin-left:auto;opacity:.5}
-.tw-reply-del:hover{opacity:1;color:#dc2626}
-.tw-reply-text{font-size:13px;color:var(--text2);line-height:1.5;white-space:pre-wrap;word-break:break-word}
-.tw-reply-row{display:flex;gap:8px;align-items:center;padding:8px 0 4px;border-top:1px solid var(--border);margin-top:6px}
-.tw-reply-inp{flex:1;border:1.5px solid var(--border);border-radius:20px;padding:7px 14px;font-size:12.5px;font-family:inherit;outline:none;background:var(--surface);color:var(--text);transition:border-color .15s}
-.tw-reply-inp:focus{border-color:var(--accent)}
-.tw-reply-send{padding:7px 14px;border-radius:20px;border:none;background:var(--accent);color:#fff;font-size:12.5px;font-weight:700;cursor:pointer}
-.tw-empty{text-align:center;padding:60px 0;color:var(--text3)}
-.tw-empty-ico{font-size:44px;margin-bottom:12px}
-.tw-empty-txt{font-size:14px;font-weight:600}
-.tw-empty-sub{font-size:12.5px;margin-top:4px;opacity:.7}
-.tw-refresh-btn{margin:12px auto;display:block;padding:7px 18px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--accent);font-size:13px;cursor:pointer;font-family:inherit}
-.tw-refresh-btn:hover{background:var(--accent-light)}
+/* ── Community (Threads/LinkedIn style) ── */
+.comm-wrap{max-width:680px;margin:0 auto;padding-bottom:40px}
+.comm-header{position:sticky;top:0;z-index:10;background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+.comm-header-title{font-size:17px;font-weight:800;color:var(--text)}
+.comm-header-refresh{background:none;border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--accent);cursor:pointer;font-family:inherit;transition:background .12s}
+.comm-header-refresh:hover{background:var(--accent-light)}
+.comm-compose{padding:16px 20px;border-bottom:2px solid var(--border);background:var(--surface)}
+.comm-compose-row{display:flex;gap:14px;align-items:flex-start}
+.comm-av{border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;font-weight:700}
+.comm-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.comm-compose-body{flex:1;min-width:0}
+.comm-compose-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px}
+.comm-ql-wrap{min-height:60px;cursor:text}
+.comm-ql .ql-editor{padding:0;min-height:52px;font-size:16px;font-family:inherit;line-height:1.55;color:var(--text)}
+.comm-ql .ql-editor.ql-blank::before{color:var(--text3);font-style:normal;left:0}
+.comm-ql .ql-editor p{margin:0}
+.comm-ql .ql-toolbar{display:none}
+.comm-ql .ql-container{border:none!important;font-family:inherit}
+.comm-textarea{width:100%;border:none;outline:none;background:transparent;font-size:16px;font-family:inherit;resize:none;min-height:52px;color:var(--text);line-height:1.55;padding:4px 0}
+.comm-textarea::placeholder{color:var(--text3)}
+.comm-compose-footer{display:flex;align-items:center;gap:10px;padding-top:10px;border-top:1px solid var(--border);margin-top:8px}
+.comm-char{font-size:11px;color:var(--text3);flex:1}
+.comm-char.warn{color:#dc2626;font-weight:700}
+.comm-post-btn{padding:8px 22px;border-radius:22px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:background .12s;white-space:nowrap}
+.comm-post-btn:hover{background:#234f25}
+.comm-post-btn:disabled{opacity:.4;cursor:not-allowed}
+.comm-card{display:flex;gap:14px;padding:18px 20px;border-bottom:1px solid var(--border);transition:background .12s}
+.comm-card:hover{background:var(--surface2)}
+.comm-card-left{display:flex;flex-direction:column;align-items:center;gap:4px}
+.comm-card-thread{width:2px;flex:1;background:var(--border);border-radius:1px;min-height:16px;margin-top:4px}
+.comm-card-body{flex:1;min-width:0}
+.comm-card-meta{display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap}
+.comm-card-name{font-size:14px;font-weight:700;color:var(--text)}
+.comm-card-handle{font-size:13px;color:var(--text3)}
+.comm-card-dot{font-size:12px;color:var(--text3)}
+.comm-card-time{font-size:13px;color:var(--text3);flex:1}
+.comm-card-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;padding:3px 7px;border-radius:8px;opacity:.5;transition:all .12s}
+.comm-card-del:hover{opacity:1;color:#dc2626}
+.comm-card-text{font-size:15px;color:var(--text);line-height:1.6;white-space:pre-wrap;word-break:break-word;margin-bottom:12px}
+.comm-acts{display:flex;align-items:center;gap:0;margin:0 -6px}
+.comm-act{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;border:none;background:none;cursor:pointer;font-size:12.5px;color:var(--text3);transition:all .12s}
+.comm-act:hover{color:var(--accent);background:var(--accent-light)}
+.comm-act.liked{color:#e11d48}
+.comm-act.liked:hover{background:rgba(225,29,72,.08)}
+.comm-act-del{color:var(--text3)}
+.comm-act-del:hover{color:#dc2626;background:rgba(220,38,38,.07)}
+.comm-replies{padding:12px 20px 12px 68px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.comm-reply{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--border)}
+.comm-reply:first-child{border-top:none}
+.comm-reply-body{flex:1;min-width:0}
+.comm-reply-meta{display:flex;gap:5px;align-items:center;margin-bottom:3px}
+.comm-reply-name{font-size:12.5px;font-weight:700;color:var(--text)}
+.comm-reply-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:11px;padding:2px 6px;border-radius:8px;margin-left:auto;opacity:.5;transition:all .12s}
+.comm-reply-del:hover{opacity:1;color:#dc2626}
+.comm-reply-text{font-size:13px;color:var(--text2);line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.comm-reply-row{display:flex;gap:8px;align-items:center;padding:10px 0 4px;border-top:1px solid var(--border);margin-top:6px}
+.comm-reply-inp{flex:1;border:1.5px solid var(--border);border-radius:22px;padding:8px 16px;font-size:13px;font-family:inherit;outline:none;background:var(--surface);color:var(--text);transition:border-color .15s}
+.comm-reply-inp:focus{border-color:var(--accent)}
+.comm-reply-send{padding:8px 16px;border-radius:22px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer}
+.comm-empty{text-align:center;padding:70px 0;color:var(--text3)}
+.comm-empty-ico{font-size:48px;margin-bottom:14px}
+.comm-empty-txt{font-size:15px;font-weight:700;margin-bottom:4px}
+.comm-empty-sub{font-size:13px;opacity:.7}
 
 .pomo-center{cursor:pointer}
 .pomo-center:hover .pomo-time{opacity:.85}
@@ -1797,6 +1808,7 @@ const HOME_WIDGET_LIBRARY=[
   {type:'community',icon:'🌐',title:'최근 커뮤니티',sub:'커뮤니티 최신 글을 홈에서',variant:'normal'},
   {type:'searchbar',icon:'🔍',title:'검색바',sub:'홈에서 바로 할일·메모 검색',variant:'wide'},
   {type:'calendar',icon:'📅',title:'오늘 일정',sub:'구글 캘린더 오늘 일정 미리보기',variant:'normal'},
+  {type:'weather',icon:'🌤️',title:'날씨',sub:'현재 위치 날씨·온도·강수량과 옷차림 추천',variant:'normal'},
 ];
 const HOME_QUOTES=[
   '작은 진전이 매일 쌓이면 큰 결과가 된다.',
@@ -1834,6 +1846,10 @@ const DEFAULT_TRACKER_LABELS=[
   {id:'work',name:'일',color:'#6aa8ff',text:'#0f2b5f'}
 ];
 let _homeWidgetDragId=null;
+let _weatherData=null;
+let _weatherLoading=false;
+let _weatherLoadedAt=null;
+const WEATHER_TTL=30*60*1000; // 30분
 let _trackerRangeStart=null;
 let _trackerLabelEditId=null;
 let _trackerDate=null; // 세션 변수 — 앱 시작 시마다 오늘로 초기화
@@ -2446,11 +2462,22 @@ function addSubtask(tid){
   const text=inp.value.trim();if(!text)return;
   const t=D.tasks.find(t=>t.id===tid);if(!t)return;
   inp.value='';
-  inp.blur(); // IME 조합 종료 후 DOM 교체 (한국어 마지막 음절 중복 방지)
   t.subtasks.push({id:uid(),text,done:false,sortOrder:t.subtasks.length});
   saveD();
   renderDetail(tid);
-  setTimeout(()=>document.getElementById('sub-inp-'+tid)?.focus(),50);
+  requestAnimationFrame(()=>{
+    const newInp=document.getElementById('sub-inp-'+tid);
+    if(!newInp)return;
+    newInp.focus();
+    // 한국어 IME 잔류 글자 방지: focus 직후 100ms 내 compositionstart는 이전 조합 잔류로 간주하고 제거
+    const focusedAt=Date.now();
+    const onCS=()=>{
+      newInp.removeEventListener('compositionstart',onCS);
+      if(Date.now()-focusedAt<100)newInp.value='';
+    };
+    newInp.addEventListener('compositionstart',onCS);
+    setTimeout(()=>newInp.removeEventListener('compositionstart',onCS),500);
+  });
   scheduleTaskSync(tid);
 }
 function handleSubKey(e,tid){if(e.key==='Enter'&&!e.isComposing&&e.keyCode!==229)addSubtask(tid)}
@@ -4491,7 +4518,7 @@ function render(){
   if(VIEW==='memo'){va.innerHTML=renderMemos();return}
   if(VIEW==='pomodoro'){va.innerHTML=renderPomodoro();return}
   if(VIEW==='routine'){va.innerHTML=renderRoutine();return}
-  if(VIEW==='community'){va.innerHTML=renderCommunity();loadCommunityPosts();return}
+  if(VIEW==='community'){va.innerHTML=renderCommunity();loadCommunityPosts();_loadQuill().then(()=>{_commQuillInst=null;_initCommQuill();});return}
   if(VIEW==='calendar'){setTimeout(()=>loadGcalEvents(),0);va.innerHTML=renderCalendar();return}
   va.innerHTML=renderTaskView();
   openTaskIds.forEach(id=>{
@@ -4554,7 +4581,7 @@ function renderHomeWidget(w){
 }
 
 function homeWidgetTitle(type){
-  return{profile:'👤 프로필',clock:'🕒 현재 시간',tracker:'📊 데일리 트래커',goals:'🎯 목표 진행',memo:'📝 메모',pomodoro:'⏱ 포모도로',focus:'🔥 오늘의 포커스',habits:'🌱 오늘 습관',photo:'🖼️ 사진',todayroutine:'🌅 오늘의 루틴',todaytasks:'☀️ 오늘 할일',streak:'🔥 스트릭',weekly:'📈 주간 요약',quote:'💬 오늘의 명언',community:'🌐 커뮤니티',searchbar:'🔍 검색',calendar:'📅 오늘 일정'}[type]||type;
+  return{profile:'👤 프로필',clock:'🕒 현재 시간',tracker:'📊 데일리 트래커',goals:'🎯 목표 진행',memo:'📝 메모',pomodoro:'⏱ 포모도로',focus:'🔥 오늘의 포커스',habits:'🌱 오늘 습관',photo:'🖼️ 사진',todayroutine:'🌅 오늘의 루틴',todaytasks:'☀️ 오늘 할일',streak:'🔥 스트릭',weekly:'📈 주간 요약',quote:'💬 오늘의 명언',community:'🌐 커뮤니티',searchbar:'🔍 검색',calendar:'📅 오늘 일정',weather:'🌤️ 날씨'}[type]||type;
 }
 
 function homeWidgetContent(w){
@@ -4576,6 +4603,7 @@ function homeWidgetContent(w){
     case 'community':    return renderHomeCommunity();
     case 'searchbar':    return renderHomeSearchbar();
     case 'calendar':     return renderHomeCalendar();
+    case 'weather':      return renderHomeWeather();
     default: return `<div class="home-empty">위젯 타입: ${esc(w.type)}</div>`;
   }
 }
@@ -4791,18 +4819,33 @@ function renderHomeTodaytasks(w){
   </div>`;
 }
 function renderHomeStreak(){
-  let streak=0;
-  for(let i=0;i<60;i++){
+  const DAYS=30;
+  const dots=[];
+  let streak=0;let counting=true;
+  for(let i=0;i<DAYS;i++){
     const d=new Date();d.setDate(d.getDate()-i);const ds=d.toISOString().slice(0,10);
     const has=D.events.some(e=>(e.type==='completed'||e.type==='complete')&&new Date(e.timestamp).toISOString().slice(0,10)===ds);
-    if(has)streak++;else if(i>0)break;
+    dots.unshift(has);
+    if(counting){if(has)streak++;else if(i>0)counting=false;}
   }
-  const badge=streak>=30?'🏆 30일 달성!':streak>=14?'🥈 14일 달성!':streak>=7?'⚡ 7일 달성!':'';
-  return`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100px;gap:8px;text-align:center;padding:8px 0">
-    <div style="font-size:44px;line-height:1">${streak>=1?'🔥':'💤'}</div>
-    <div style="font-size:34px;font-weight:900;color:var(--text);letter-spacing:-1.5px;line-height:1">${streak}</div>
-    <div style="font-size:11px;color:var(--text3)">일 연속 활동 중</div>
-    ${badge?`<div style="font-size:10px;background:var(--accent-light);color:var(--accent);padding:3px 12px;border-radius:20px;font-weight:700">${badge}</div>`:''}
+  const badge=streak>=30?'🏆 30일':streak>=14?'🥈 14일':streak>=7?'⚡ 7일':'';
+  const dotHtml=dots.map((on,i)=>{
+    const isToday=i===DAYS-1;
+    const bg=on?(isToday?'var(--accent)':'rgba(90,138,92,.75)'):'var(--border)';
+    const ring=isToday?`outline:2px solid var(--accent);outline-offset:1px;`:'';
+    return`<div style="width:8px;height:8px;border-radius:50%;background:${bg};${ring}flex-shrink:0"></div>`;
+  }).join('');
+  return`<div style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="font-size:36px;line-height:1">${streak>=1?'🔥':'💤'}</div>
+      <div>
+        <div style="font-size:30px;font-weight:900;color:var(--text);letter-spacing:-1.5px;line-height:1">${streak}<span style="font-size:14px;font-weight:600;color:var(--text3);margin-left:2px">일</span></div>
+        <div style="font-size:10.5px;color:var(--text3);margin-top:1px">연속 활동 중</div>
+      </div>
+      ${badge?`<div style="margin-left:auto;font-size:10px;background:var(--accent-light);color:var(--accent);padding:3px 10px;border-radius:20px;font-weight:700;white-space:nowrap">${badge}</div>`:''}
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px">${dotHtml}</div>
+    <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--text3)"><span>30일 전</span><span>오늘</span></div>
   </div>`;
 }
 function renderHomeWeekly(){
@@ -4898,6 +4941,110 @@ function renderHomeCalendar(){
     ${evts.length>4?`<div style="font-size:10.5px;color:var(--text3);text-align:center;padding-top:4px">+${evts.length-4}개 더</div>`:''}
   </div>`;
 }
+function _weatherCodeInfo(code){
+  if(code===0)return{icon:'☀️',label:'맑음'};
+  if(code<=2)return{icon:'🌤️',label:'구름 조금'};
+  if(code<=3)return{icon:'☁️',label:'흐림'};
+  if(code<=48)return{icon:'🌫️',label:'안개'};
+  if(code<=55)return{icon:'🌦️',label:'이슬비'};
+  if(code<=65)return{icon:'🌧️',label:'비'};
+  if(code<=75)return{icon:'❄️',label:'눈'};
+  if(code<=82)return{icon:'🌧️',label:'소나기'};
+  if(code<=95)return{icon:'⛈️',label:'뇌우'};
+  return{icon:'🌤️',label:''};
+}
+function _weatherTempTip(temp){
+  if(temp<0)return'🧥 매우 추워요! 두꺼운 패딩은 필수예요';
+  if(temp<5)return'🧥 두꺼운 코트를 꼭 챙기세요';
+  if(temp<10)return'🧣 코트나 패딩이 필요한 날씨예요';
+  if(temp<15)return'🧥 가디건이나 자켓을 걸치세요';
+  if(temp<20)return'👕 가벼운 자켓 정도면 딱 좋아요';
+  if(temp<25)return'😊 쾌적한 날씨예요! 가볍게 입으세요';
+  if(temp<30)return'☀️ 더운 날이에요. 시원하게 입으세요';
+  return'🌡️ 매우 더워요! 자외선 차단도 꼭 챙기세요';
+}
+function _weatherPrecipTip(precip){
+  if(!precip||precip<=0)return'';
+  if(precip<1)return'🌂 가벼운 비가 올 수 있어요. 우산 챙기면 좋아요';
+  if(precip<5)return'☂️ 우산을 꼭 챙기세요!';
+  return'🌧️ 비가 많이 와요! 우산 필수, 방수 신발도 추천해요';
+}
+function renderHomeWeatherInner(){
+  if(_weatherLoading)return`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:110px;gap:8px;color:var(--text3)"><div style="font-size:28px">🌍</div><div style="font-size:11px;font-weight:600">위치 정보 불러오는 중...</div></div>`;
+  if(!_weatherData)return`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:110px;gap:10px"><div style="font-size:34px">🌤️</div><div style="font-size:12px;color:var(--text2);font-weight:600">날씨 정보</div><div style="font-size:10.5px;color:var(--text3);text-align:center;line-height:1.4">위치 권한을 허용하면<br>현재 날씨를 볼 수 있어요</div><button class="btn btn-sm" style="font-size:11px" onclick="loadWeatherData(true);event.stopPropagation()">위치 허용 후 불러오기</button></div>`;
+  if(_weatherData.error){const msg=_weatherData.error==='permission'?'위치 권한이 필요해요':'날씨를 불러오지 못했어요';return`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:110px;gap:8px;color:var(--text3)"><div style="font-size:28px">😶‍🌫️</div><div style="font-size:11.5px;font-weight:600">${msg}</div><button class="btn btn-sm" style="font-size:11px;margin-top:2px" onclick="loadWeatherData(true);event.stopPropagation()">다시 시도</button></div>`;}
+  const w=_weatherData;
+  const wi=_weatherCodeInfo(w.code);
+  const tempTip=_weatherTempTip(w.temp);
+  const precipTip=_weatherPrecipTip(w.precip);
+  return`<div style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:10px;color:var(--text3);font-weight:600;margin-bottom:3px">📍 ${esc(w.location||'현재 위치')}</div>
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <span style="font-size:40px;font-weight:900;line-height:1;letter-spacing:-2px;color:var(--text)">${w.temp}°</span>
+          <span style="font-size:11.5px;color:var(--text3)">체감 ${w.feelsLike}°</span>
+        </div>
+        <div style="font-size:11.5px;color:var(--text2);margin-top:3px;font-weight:600">${wi.label}</div>
+      </div>
+      <div style="font-size:52px;line-height:1;flex-shrink:0">${wi.icon}</div>
+    </div>
+    <div style="display:flex;gap:7px">
+      <div style="flex:1;background:var(--surface2);border-radius:10px;padding:7px 10px;text-align:center">
+        <div style="font-size:9px;color:var(--text3);font-weight:600;margin-bottom:3px">최고 / 최저</div>
+        <div style="font-size:13.5px;font-weight:800"><span style="color:#e05c5c">${w.maxTemp}°</span><span style="color:var(--text3);font-size:11px;font-weight:400"> / </span><span style="color:#6699cc">${w.minTemp}°</span></div>
+      </div>
+      <div style="flex:1;background:var(--surface2);border-radius:10px;padding:7px 10px;text-align:center">
+        <div style="font-size:9px;color:var(--text3);font-weight:600;margin-bottom:3px">💧 강수량</div>
+        <div style="font-size:13.5px;font-weight:800;color:var(--text)">${w.precip}mm</div>
+      </div>
+    </div>
+    <div style="background:linear-gradient(135deg,rgba(255,235,180,.7),rgba(255,215,130,.5));border-radius:11px;padding:9px 12px;font-size:12px;color:var(--text);font-weight:600;line-height:1.45">${tempTip}</div>
+    ${precipTip?`<div style="background:linear-gradient(135deg,rgba(180,215,255,.7),rgba(155,200,255,.5));border-radius:11px;padding:9px 12px;font-size:12px;color:var(--text);font-weight:600;line-height:1.45">${precipTip}</div>`:''}
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:-2px">
+      <span style="font-size:10px;color:var(--text3);opacity:.7">${_weatherLoadedAt?(() => {const diff=Math.round((Date.now()-_weatherLoadedAt)/60000);return diff<1?'방금 전 기준':`${diff}분 전 기준`;})():''}</span>
+      <button onclick="loadWeatherData(true);event.stopPropagation()" style="background:none;border:none;font-size:10.5px;color:var(--text3);cursor:pointer;padding:0;opacity:.7">↻ 새로고침</button>
+    </div>
+  </div>`;
+}
+function renderHomeWeather(){
+  if(!_weatherData&&!_weatherLoading)setTimeout(()=>loadWeatherData(),80);
+  return`<div id="hw-weather-inner">${renderHomeWeatherInner()}</div>`;
+}
+async function loadWeatherData(force){
+  if(_weatherLoading)return;
+  if(_weatherData&&!force&&_weatherLoadedAt&&Date.now()-_weatherLoadedAt<WEATHER_TTL)return;
+  _weatherLoading=true;
+  if(VIEW==='home')render();
+  try{
+    const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:10000}));
+    const {latitude:lat,longitude:lon}=pos.coords;
+    const [wRes,gRes]=await Promise.all([
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,precipitation,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto&forecast_days=1`),
+      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ko`)
+    ]);
+    const wj=await wRes.json();
+    const gj=await gRes.json();
+    const a=gj.address||{};
+    const city=a.city||a.town||a.village||a.county||'';
+    const district=a.suburb||a.neighbourhood||a.quarter||a['city_district']||'';
+    _weatherData={
+      location:[city,district].filter(Boolean).join(' '),
+      temp:Math.round(wj.current.temperature_2m),
+      feelsLike:Math.round(wj.current.apparent_temperature),
+      code:wj.current.weather_code,
+      maxTemp:Math.round(wj.daily.temperature_2m_max[0]),
+      minTemp:Math.round(wj.daily.temperature_2m_min[0]),
+      precip:Math.round((wj.daily.precipitation_sum[0]??0)*10)/10,
+    };
+    _weatherLoadedAt=Date.now();
+    _weatherLoading=false;
+  }catch(err){
+    _weatherLoading=false;
+    _weatherData={error:err.code===1?'permission':'network'};
+  }
+  if(VIEW==='home')render();
+}
 function pickWidgetPhoto(iid,e){
   e&&e.stopPropagation();
   document.getElementById(iid)?.click();
@@ -4932,6 +5079,7 @@ function initHomeView(){
   const hw=D.settings.homeWidgets||[];
   if(hw.some(w=>w.type==='calendar')&&D.gcalConnected)loadGcalEvents();
   if(hw.some(w=>w.type==='community')&&!_communityPosts.length)loadCommunityPosts();
+  if(hw.some(w=>w.type==='weather')&&!_weatherLoading&&(!_weatherData||!_weatherLoadedAt||Date.now()-_weatherLoadedAt>WEATHER_TTL))loadWeatherData();
   // 시계 자동 업데이트
   if(_homeClockInterval) clearInterval(_homeClockInterval);
   _homeClockInterval=setInterval(()=>{
@@ -5096,6 +5244,27 @@ function _wfpPreview(type){
         <span style="font-size:22px">🖼️</span>
         <span style="font-size:8.5px;color:#a09080;font-weight:600">사진 추가</span>
       </div>`}
+    </div>`,
+    weather:`<div style="width:100%;height:100%;background:linear-gradient(135deg,#e8f4ff,#daeeff);display:flex;flex-direction:column;justify-content:center;padding:0 12px;gap:7px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:7px;color:#7aaac8;font-weight:600;margin-bottom:2px">📍 서울 종로구</div>
+          <div style="font-size:26px;font-weight:900;color:#2a5a8a;line-height:1;letter-spacing:-1.5px">18°</div>
+          <div style="font-size:8px;color:#5a8ab0;margin-top:2px;font-weight:600">구름 조금</div>
+        </div>
+        <div style="font-size:32px;line-height:1">🌤️</div>
+      </div>
+      <div style="display:flex;gap:5px">
+        <div style="flex:1;background:rgba(255,255,255,.55);border-radius:7px;padding:4px 6px;text-align:center">
+          <div style="font-size:6.5px;color:#7aaac8;font-weight:600;margin-bottom:1px">최고/최저</div>
+          <div style="font-size:9px;font-weight:800"><span style="color:#e05c5c">23°</span><span style="color:#aaa;font-size:7px"> / </span><span style="color:#6699cc">12°</span></div>
+        </div>
+        <div style="flex:1;background:rgba(255,255,255,.55);border-radius:7px;padding:4px 6px;text-align:center">
+          <div style="font-size:6.5px;color:#7aaac8;font-weight:600;margin-bottom:1px">💧 강수량</div>
+          <div style="font-size:9px;font-weight:800;color:#2a5a8a">0mm</div>
+        </div>
+      </div>
+      <div style="background:rgba(255,235,150,.6);border-radius:7px;padding:4px 7px;font-size:7.5px;color:#7a5a10;font-weight:600">👕 가벼운 자켓 정도면 딱 좋아요</div>
     </div>`,
     pomodoro:`<div style="width:100%;height:100%;background:linear-gradient(135deg,#fff5f5,#ffe6e6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px">
       <div style="position:relative;width:46px;height:46px">
@@ -5815,8 +5984,8 @@ function _commGrad(o){
 
 function _commAv(o,size=40){
   const sz=`width:${size}px;height:${size}px;font-size:${Math.round(size*.45)}px`;
-  if(o.avatarImg)return`<div class="tw-av" style="${sz}"><img src="${esc(o.avatarImg)}" alt=""></div>`;
-  return`<div class="tw-av" style="${sz};background:${_commGrad(o)};color:#fff">${esc(o.avatar||'😊')}</div>`;
+  if(o.avatarImg)return`<div class="comm-av" style="${sz}"><img src="${esc(o.avatarImg)}" alt=""></div>`;
+  return`<div class="comm-av" style="${sz};background:${_commGrad(o)};color:#fff">${esc(o.avatar||'😊')}</div>`;
 }
 
 function _commTimeAgo(ts){
@@ -5827,106 +5996,180 @@ function _commTimeAgo(ts){
   return Math.floor(s/86400)+'일 전';
 }
 
+let _commQuillInst=null;
+let _commQuillLoaded=false;
+let _commQuillLoading=false;
+
+function _buildFeedHTML(posts){
+  const s=D.settings;
+  if(_communityLoading&&!posts.length){
+    return`<div class="comm-empty"><div class="comm-empty-ico">⏳</div><div class="comm-empty-txt">불러오는 중...</div></div>`;
+  }
+  if(!posts.length){
+    return`<div class="comm-empty">
+      <div class="comm-empty-ico">🌐</div>
+      <div class="comm-empty-txt">아직 게시물이 없어요</div>
+      <div class="comm-empty-sub">첫 번째 생각을 공유해 보세요!</div>
+    </div>`;
+  }
+  return posts.map((p,i)=>{
+    const ts=p.created_at?_commTimeAgo(new Date(p.created_at).getTime()):_commTimeAgo(p.createdAt||0);
+    const cCount=(p.comments||[]).length;
+    const hasNext=i<posts.length-1;
+    const repliesHTML=p.showComments?`<div class="comm-replies">
+      ${(p.comments||[]).map(c=>`<div class="comm-reply">
+        ${_commAv(c,30)}
+        <div class="comm-reply-body">
+          <div class="comm-reply-meta">
+            <span class="comm-reply-name">${esc(c.author)}</span>
+            ${c.isOwn?`<button class="comm-reply-del" onclick="communityDeleteComment('${p.id}','${c.id}')">×</button>`:''}
+          </div>
+          <div class="comm-reply-text">${esc(c.content)}</div>
+        </div>
+      </div>`).join('')}
+      <div class="comm-reply-row">
+        ${_commAv(s,30)}
+        <input class="comm-reply-inp" id="comm-ci-${p.id}" placeholder="답글 달기..."
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();communityComment('${p.id}')}">
+        <button class="comm-reply-send" onclick="communityComment('${p.id}')">↵</button>
+      </div>
+    </div>`:'';
+    return`<article>
+      <div class="comm-card" id="commcard-${p.id}">
+        <div class="comm-card-left">
+          ${_commAv(p,40)}
+          ${hasNext?'<div class="comm-card-thread"></div>':''}
+        </div>
+        <div class="comm-card-body">
+          <div class="comm-card-meta">
+            <span class="comm-card-name">${esc(p.author)}</span>
+            ${p.handle?`<span class="comm-card-handle">@${esc(p.handle)}</span>`:''}
+            <span class="comm-card-dot">·</span>
+            <span class="comm-card-time">${ts}</span>
+            ${p.isOwn?`<button class="comm-act comm-act-del" onclick="communityDelete('${p.id}')" title="삭제">🗑</button>`:''}
+          </div>
+          <div class="comm-card-text">${esc(p.content)}</div>
+          <div class="comm-acts">
+            <button class="comm-act" onclick="communityToggleComments('${p.id}')">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01z"/></svg>
+              ${cCount?`<span>${cCount}</span>`:''}
+            </button>
+            <button class="comm-act${p.liked?' liked':''}" onclick="communityLike('${p.id}')">
+              <svg width="17" height="17" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="${p.liked?'#e11d48':'none'}"><path d="M20.884 13.19c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>
+              ${p.likes?`<span>${p.likes}</span>`:''}
+            </button>
+          </div>
+        </div>
+      </div>
+      ${repliesHTML}
+    </article>`;
+  }).join('');
+}
+
+function _refreshFeed(){
+  const el=document.getElementById('comm-feed-area');
+  if(el)el.innerHTML=_buildFeedHTML(_communityPosts);
+}
+
+async function _loadQuill(){
+  if(_commQuillLoaded||_commQuillLoading)return;
+  _commQuillLoading=true;
+  if(!document.getElementById('quill-css')){
+    const link=document.createElement('link');
+    link.id='quill-css';link.rel='stylesheet';
+    link.href='https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css';
+    document.head.appendChild(link);
+  }
+  await new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.js';
+    s.onload=res;s.onerror=rej;
+    document.head.appendChild(s);
+  }).catch(()=>null);
+  _commQuillLoaded=!!window.Quill;
+  _commQuillLoading=false;
+}
+
+function _initCommQuill(){
+  if(_commQuillInst)return;
+  const editorEl=document.getElementById('comm-ql-editor');
+  const fallback=document.getElementById('comm-textarea-fallback');
+  if(!window.Quill){
+    if(editorEl)editorEl.style.display='none';
+    if(fallback){
+      fallback.style.display='block';
+      fallback.oninput=function(){
+        const rem=280-this.value.length;
+        const charEl=document.getElementById('comm-char-count');
+        if(charEl){charEl.textContent=rem<=40?rem+'자 남음':'';charEl.className='comm-char'+(rem<=20?' warn':'');}
+        const btn=document.getElementById('comm-post-btn');
+        if(btn)btn.disabled=!this.value.trim()||this.value.length>280;
+      };
+    }
+    return;
+  }
+  if(!editorEl)return;
+  _commQuillInst=new Quill(editorEl,{
+    theme:'snow',
+    placeholder:'무슨 생각을 하고 있나요?',
+    modules:{toolbar:false},
+    formats:[]
+  });
+  _commQuillInst.on('text-change',()=>{
+    const len=_commQuillInst.getLength()-1;
+    const rem=280-len;
+    const charEl=document.getElementById('comm-char-count');
+    if(charEl){
+      charEl.textContent=rem<=40?rem+'자 남음':'';
+      charEl.className='comm-char'+(rem<=20?' warn':'');
+    }
+    const btn=document.getElementById('comm-post-btn');
+    if(btn)btn.disabled=len===0||len>280;
+  });
+}
+
+function _commGetContent(){
+  if(_commQuillInst){
+    const text=_commQuillInst.getText().trim().replace(/\n$/,'');
+    return text;
+  }
+  return(document.getElementById('comm-textarea-fallback')?.value||'').trim();
+}
+
+function _commClearContent(){
+  if(_commQuillInst){_commQuillInst.setText('');return;}
+  const ta=document.getElementById('comm-textarea-fallback');
+  if(ta)ta.value='';
+}
+
 function renderCommunity(){
   const s=D.settings;
-  const posts=_communityPosts;
-
-  const compose=`<div class="tw-compose">
-    <div class="tw-compose-row">
-      ${_commAv(s,40)}
-      <div class="tw-compose-right">
-        <textarea class="tw-textarea" id="comm-compose-input" placeholder="무슨 생각을 하고 있나요?" maxlength="280" rows="2"
-          oninput="communityCharCount(this)"
-          onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();communityPost()}"></textarea>
-        <div class="tw-compose-footer">
-          <div class="tw-compose-tools">
-            <button class="tw-tool-btn" title="이미지">🖼</button>
-            <button class="tw-tool-btn" title="이모지">😊</button>
-          </div>
-          <div class="tw-char-wrap">
-            <svg class="tw-char-svg" width="28" height="28" viewBox="0 0 28 28">
-              <circle cx="14" cy="14" r="11" fill="none" stroke="var(--border)" stroke-width="2.5"/>
-              <circle id="tw-char-fg" cx="14" cy="14" r="11" fill="none" stroke="var(--accent)" stroke-width="2.5"
-                stroke-dasharray="69.1" stroke-dashoffset="69.1" stroke-linecap="round"/>
-            </svg>
-            <div class="tw-char-num" id="tw-char-num" style="display:none"></div>
-          </div>
-          <button class="tw-post-btn" onclick="communityPost()">게시하기</button>
+  const compose=`<div class="comm-compose">
+    <div class="comm-compose-row">
+      ${_commAv(s,44)}
+      <div class="comm-compose-body">
+        <div class="comm-compose-name">${esc(s.name||'나')}</div>
+        <div class="comm-ql-wrap" id="comm-ql-wrap">
+          <div id="comm-ql-editor"></div>
+          <textarea id="comm-textarea-fallback" class="comm-textarea" placeholder="무슨 생각을 하고 있나요?" maxlength="280" rows="2"
+            style="display:none"
+            onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();communityPost()}"></textarea>
+        </div>
+        <div class="comm-compose-footer">
+          <span class="comm-char" id="comm-char-count"></span>
+          <button class="comm-post-btn" id="comm-post-btn" onclick="communityPost()">게시하기</button>
         </div>
       </div>
     </div>
   </div>`;
 
-  let feedHTML;
-  if(_communityLoading&&!posts.length){
-    feedHTML=`<div class="tw-empty"><div class="tw-empty-ico">⏳</div><div class="tw-empty-txt">불러오는 중...</div></div>`;
-  }else if(posts.length===0){
-    feedHTML=`<div class="tw-empty">
-      <div class="tw-empty-ico">🌐</div>
-      <div class="tw-empty-txt">아직 게시물이 없어요</div>
-      <div class="tw-empty-sub">첫 번째 생각을 공유해 보세요!</div>
-      <button class="tw-refresh-btn" onclick="refreshCommunity()">↻ 새로고침</button>
-    </div>`;
-  }else{
-    feedHTML=posts.map(p=>{
-      const ts=p.created_at?_commTimeAgo(new Date(p.created_at).getTime()):_commTimeAgo(p.createdAt||0);
-      const cCount=(p.comments||[]).length;
-      const repliesHTML=p.showComments?`<div class="tw-replies">
-        ${(p.comments||[]).map(c=>`<div class="tw-reply">
-          ${_commAv(c,32)}
-          <div class="tw-reply-right">
-            <div class="tw-reply-meta">
-              <span class="tw-reply-name">${esc(c.author)}</span>
-              ${c.isOwn?`<button class="tw-reply-del" onclick="communityDeleteComment('${p.id}','${c.id}')">×</button>`:''}
-            </div>
-            <div class="tw-reply-text">${esc(c.content)}</div>
-          </div>
-        </div>`).join('')}
-        <div class="tw-reply-row">
-          ${_commAv(s,32)}
-          <input class="tw-reply-inp" id="comm-ci-${p.id}" placeholder="답글 달기..."
-            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();communityComment('${p.id}')}">
-          <button class="tw-reply-send" onclick="communityComment('${p.id}')">↵</button>
-        </div>
-      </div>`:'';
-      return`<article>
-        <div class="tw-tweet" id="commcard-${p.id}">
-          <div class="tw-tweet-left">${_commAv(p,40)}</div>
-          <div class="tw-tweet-right">
-            <div class="tw-tweet-meta">
-              <span class="tw-tweet-name">${esc(p.author)}</span>
-              ${p.handle?`<span class="tw-tweet-handle">@${esc(p.handle)}</span>`:''}
-              <span class="tw-tweet-dot">·</span>
-              <span class="tw-tweet-time">${ts}</span>
-              ${p.isOwn?`<button class="tw-act tw-act-del" onclick="communityDelete('${p.id}')" title="삭제">🗑</button>`:''}
-            </div>
-            <div class="tw-tweet-body">${esc(p.content)}</div>
-            <div class="tw-actions">
-              <button class="tw-act" onclick="communityToggleComments('${p.id}')">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01z"/></svg>
-                ${cCount?`<span>${cCount}</span>`:''}
-              </button>
-              <button class="tw-act${p.liked?' liked':''}" onclick="communityLike('${p.id}')">
-                <svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="${p.liked?'#e11d48':'none'}"><path d="M20.884 13.19c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>
-                ${p.likes?`<span>${p.likes}</span>`:''}
-              </button>
-              <button class="tw-act" onclick="refreshCommunity()" title="새로고침" style="margin-left:auto;min-width:0">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v5h5M20 20v-5h-5M4 9a8 8 0 0114.93-2.69M20 15a8 8 0 01-14.93 2.69"/></svg>
-              </button>
-            </div>
-          </div>
-        </div>
-        ${repliesHTML}
-      </article>`;
-    }).join('');
-  }
-
-  return`<div class="tw-wrap">
-    <div class="tw-header">
-      <div class="tw-tabs"><div class="tw-tab active">전체 피드</div></div>
+  return`<div class="comm-wrap">
+    <div class="comm-header">
+      <span class="comm-header-title">커뮤니티</span>
+      <button class="comm-header-refresh" onclick="refreshCommunity()">↻ 새로고침</button>
     </div>
     ${compose}
-    <div class="tw-feed" id="comm-feed-area">${feedHTML}</div>
+    <div class="comm-feed" id="comm-feed-area">${_buildFeedHTML(_communityPosts)}</div>
   </div>`;
 }
 
@@ -5940,7 +6183,7 @@ async function loadCommunityPosts(force=false){
     if(Array.isArray(posts)){
       const pending=_communityPosts.filter(p=>String(p.id).startsWith('tmp_'));
       _communityPosts=[...pending,...posts];
-      if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
+      if(VIEW==='community')_refreshFeed();
     }
   }catch(e){console.warn('[Community] 로드 실패:',e.message)}
   _communityLoading=false;
@@ -5948,67 +6191,53 @@ async function loadCommunityPosts(force=false){
 
 function refreshCommunity(){ _communityPosts=[];loadCommunityPosts(true); }
 
-function communityCharCount(el){
-  const used=el.value.length;
-  const rem=280-used;
-  const r=11,circ=2*Math.PI*r;
-  const offset=circ*(1-used/280);
-  const color=rem<=20?'#dc2626':rem<=40?'#f59e0b':'var(--accent)';
-  const fg=document.getElementById('tw-char-fg');
-  const num=document.getElementById('tw-char-num');
-  if(fg){fg.setAttribute('stroke-dashoffset',offset.toFixed(2));fg.style.stroke=color;}
-  if(num){
-    if(rem<=20){num.textContent=rem;num.style.display='flex';num.className='tw-char-num'+(rem<=10?' warn':'');}
-    else num.style.display='none';
-  }
-}
 
 async function communityPost(){
-  const inp=document.getElementById('comm-compose-input');
-  const content=(inp?.value||'').trim();
+  const content=_commGetContent();
   if(!content)return;
   const s=D.settings;
   const tempId='tmp_'+Date.now();
   const tempPost={id:tempId,user_id:'me',author:s.name||'나',handle:s.userTag||'',
-    avatar:s.avatar||'😊',avatar_bg:s.avatarBg||0,avatar_img:s.avatarImg||'',
+    avatar:s.avatar||'😊',avatar_bg:s.avatarBg||0,
     content,created_at:new Date().toISOString(),likes:0,liked:false,isOwn:true,comments:[],showComments:false};
   _communityPosts=[tempPost,..._communityPosts];
-  inp.value='';
-  communityCharCount({value:''});
-  if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
+  _commClearContent();
+  const charEl=document.getElementById('comm-char-count');if(charEl)charEl.textContent='';
+  const btn=document.getElementById('comm-post-btn');if(btn)btn.disabled=true;
+  _refreshFeed();
   if(!window.GUEST_MODE&&ApiClient.isOnline()&&ApiClient.getToken()){
     try{
-      const srv=await ApiClient.createCommunityPost({content,author:s.name||'나',handle:s.userTag||'',avatar:s.avatar||'😊',avatarBg:s.avatarBg||0,avatarImg:s.avatarImg||''});
+      const srv=await ApiClient.createCommunityPost({
+        content,author:s.name||'나',handle:s.userTag||'',avatar:s.avatar||'😊',avatarBg:s.avatarBg||0
+      });
       if(srv){
         _communityPosts=_communityPosts.map(p=>p.id===tempId?{...srv,showComments:false}:p);
-        if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
+        _refreshFeed();
       }
-      // srv가 없어도 temp post는 유지 (사라지지 않음)
     }catch(e){
       console.warn('[Community] 게시 실패:',e.message);
-      // 에러가 나도 temp post를 삭제하지 않음 — 유저에게 글이 보임
     }
   }
+  if(btn)btn.disabled=false;
 }
 
 async function communityLike(id){
   const p=_communityPosts.find(p=>p.id===id);if(!p)return;
-  // 낙관적 업데이트
   p.liked=!p.liked;p.likes=Math.max(0,(p.likes||0)+(p.liked?1:-1));
-  if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
+  _refreshFeed();
   if(!window.GUEST_MODE&&ApiClient.isOnline()){
     try{
       const srv=await ApiClient.likeCommunityPost(id);
       if(srv){_communityPosts=_communityPosts.map(x=>x.id===id?{...srv,showComments:x.showComments}:x);}
     }catch(e){console.warn('[Community] 좋아요 실패:',e.message);}
-    if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
+    _refreshFeed();
   }
 }
 
 function communityToggleComments(id){
   const p=_communityPosts.find(p=>p.id===id);if(!p)return;
   p.showComments=!p.showComments;
-  if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
+  _refreshFeed();
   if(p.showComments)setTimeout(()=>document.getElementById('comm-ci-'+id)?.focus(),50);
 }
 
@@ -6019,19 +6248,19 @@ async function communityComment(postId){
   const s=D.settings;
   if(!window.GUEST_MODE&&ApiClient.isOnline()){
     try{
-      const srv=await ApiClient.commentCommunityPost(postId,{content,author:s.name||'나',avatar:s.avatar||'😊',avatarBg:s.avatarBg||0,avatarImg:s.avatarImg||''});
+      const srv=await ApiClient.commentCommunityPost(postId,{content,author:s.name||'나',avatar:s.avatar||'😊',avatarBg:s.avatarBg||0});
       if(srv){_communityPosts=_communityPosts.map(x=>x.id===postId?{...srv,showComments:true}:x);}
     }catch(e){console.warn('[Community] 댓글 실패:',e.message);}
   }else{
     if(!Array.isArray(p.comments))p.comments=[];
     p.comments.push({id:Date.now().toString(36),user_id:'me',author:s.name||'나',avatar:s.avatar||'😊',content,isOwn:true});
   }
-  if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
+  _refreshFeed();
 }
 
 async function communityDelete(id){
   _communityPosts=_communityPosts.filter(p=>p.id!==id);
-  if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
+  _refreshFeed();
   if(!window.GUEST_MODE&&ApiClient.isOnline()){
     ApiClient.deleteCommunityPost(id).catch(e=>console.warn('[Community] 삭제 실패:',e.message));
   }
@@ -6040,7 +6269,7 @@ async function communityDelete(id){
 async function communityDeleteComment(postId,commentId){
   const p=_communityPosts.find(p=>p.id===postId);if(!p)return;
   p.comments=(p.comments||[]).filter(c=>c.id!==commentId);
-  if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
+  _refreshFeed();
   if(!window.GUEST_MODE&&ApiClient.isOnline()){
     ApiClient.uncommentCommunityPost(postId,commentId).catch(e=>console.warn('[Community] 댓글삭제 실패:',e.message));
   }
@@ -6569,7 +6798,7 @@ function renderDetail(tid){
     <div>
       <div class="ds-label">${t('checklist')}</div>
       <div class="sub-list">${task.subtasks.map(s=>`<div class="sub-item" ondragover="event.preventDefault()" ondrop="onSubDrop(event,'${task.id}','${s.id}')"><span draggable="true" ondragstart="onSubDragStart(event,'${task.id}','${s.id}')" style="cursor:grab;color:var(--text3);font-size:11px;padding:0 3px">⠿</span><button class="sub-ck${s.done?' chk':''}" onclick="toggleSub('${task.id}','${s.id}');event.stopPropagation()">${s.done?'✓':''}</button><span class="sub-text${s.done?' dk':''}">${esc(s.text)}</span><button class="sub-del" onclick="delSub('${task.id}','${s.id}');event.stopPropagation()">✕</button></div>`).join('')}</div>
-      <div class="add-sub"><input id="sub-inp-${task.id}" placeholder="${t('addItem')}" onkeydown="handleSubKey(event,'${task.id}')" onclick="event.stopPropagation()"/><button class="btn btn-ghost btn-sm" onclick="addSubtask('${task.id}');event.stopPropagation()">${t('addBtn')}</button></div>
+      <div class="add-sub"><input id="sub-inp-${task.id}" placeholder="${t('addItem')}" onkeydown="handleSubKey(event,'${task.id}')" onclick="event.stopPropagation()"/><button class="btn btn-ghost btn-sm" onmousedown="event.preventDefault()" onclick="addSubtask('${task.id}');event.stopPropagation()">${t('addBtn')}</button></div>
     </div>
     <div>
       <div class="ds-label">${t('tagsLabel')} ${suggestedTags.length?`<span style="font-weight:400;font-size:11px;color:var(--text3)">${t('suggestLabel')}</span>`:''}
