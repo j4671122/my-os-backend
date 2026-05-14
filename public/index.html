@@ -8189,34 +8189,67 @@ let _agentHistory=[];
 let _agentPlan=[];
 let _agentFile=null;
 let _agentSending=false;
-let _agentRecog=null;
-let _agentListening=false;
+// Voice recording via MediaRecorder + Whisper.js (오프라인, 무료, Apache 2.0)
+let _voiceRecorder=null;
+let _voiceRecording=false;
+let _voiceChunks=[];
+let _whisperPipeline=null;
+let _whisperLoading=false;
 
-function toggleAgentVoice(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){showToast('이 브라우저는 음성 입력을 지원하지 않아요');return;}
-  if(_agentListening){_agentRecog?.stop();return;}
-  _agentRecog=new SR();
-  _agentRecog.lang=({ko:'ko-KR',en:'en-US',zh:'zh-CN'})[D.settings?.lang||'ko']||'ko-KR';
-  _agentRecog.continuous=false;
-  _agentRecog.interimResults=false;
-  _agentRecog.onresult=e=>{
-    const t=e.results[0][0].transcript;
-    const box=document.getElementById('agent-input-box');
-    if(box)box.value=(box.value+' '+t).trim();
-    _agentListening=false;_updateVoiceBtn();
+async function toggleAgentVoice(){
+  if(_voiceRecording){_voiceRecorder?.stop();return;}
+  if(!navigator.mediaDevices?.getUserMedia){showToast('이 브라우저는 마이크를 지원하지 않아요');return;}
+  let stream;
+  try{stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});}
+  catch(err){showToast(err.name==='NotAllowedError'?'마이크 권한을 허용해주세요 🎙️':'마이크를 사용할 수 없어요');return;}
+  _voiceChunks=[];
+  const mime=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'].find(m=>MediaRecorder.isTypeSupported(m))||'';
+  _voiceRecorder=new MediaRecorder(stream,mime?{mimeType:mime}:{});
+  _voiceRecorder.ondataavailable=e=>{if(e.data.size>0)_voiceChunks.push(e.data);};
+  _voiceRecorder.onstop=async()=>{
+    stream.getTracks().forEach(t=>t.stop());
+    _voiceRecording=false;
+    _updateVoiceBtn('transcribing');
+    try{
+      const blob=new Blob(_voiceChunks,{type:_voiceRecorder.mimeType||'audio/webm'});
+      const text=await _transcribeWithWhisper(blob);
+      const box=document.getElementById('agent-input-box');
+      if(box&&text)box.value=(box.value+' '+text).trim();
+      else if(!text)showToast('음성을 인식하지 못했어요. 다시 시도해주세요.');
+    }catch(err){showToast('음성 변환 오류가 발생했어요.');}
+    _updateVoiceBtn('idle');
   };
-  _agentRecog.onerror=()=>{_agentListening=false;_updateVoiceBtn();};
-  _agentRecog.onend=()=>{_agentListening=false;_updateVoiceBtn();};
-  _agentRecog.start();
-  _agentListening=true;_updateVoiceBtn();
+  _voiceRecorder.start(200);
+  _voiceRecording=true;
+  _updateVoiceBtn('recording');
 }
-function _updateVoiceBtn(){
+
+async function _transcribeWithWhisper(blob){
+  if(!_whisperPipeline){
+    if(_whisperLoading){showToast('모델 로딩 중입니다. 잠시만 기다려주세요.');return '';}
+    _whisperLoading=true;
+    showToast('🔄 음성 인식 모델 로딩 중... (최초 1회 약 40MB, 이후 캐시됨)');
+    const{pipeline}=await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2');
+    _whisperPipeline=await pipeline('automatic-speech-recognition','Xenova/whisper-tiny',{quantized:true});
+    _whisperLoading=false;
+    showToast('✅ 음성 인식 준비 완료!');
+  }
+  const arrayBuffer=await blob.arrayBuffer();
+  const audioCtx=new AudioContext({sampleRate:16000});
+  const decoded=await audioCtx.decodeAudioData(arrayBuffer);
+  audioCtx.close();
+  const channelData=decoded.getChannelData(0);
+  const lang=({ko:'korean',en:'english',zh:'chinese'})[D.settings?.lang||'ko']||'korean';
+  const result=await _whisperPipeline(channelData,{language:lang,task:'transcribe'});
+  return(result.text||'').trim().replace(/^[\s,\.，]+/,'');
+}
+
+function _updateVoiceBtn(state){
   const btn=document.getElementById('agent-voice-btn');
   if(!btn)return;
-  btn.textContent=_agentListening?'🔴':'🎤';
-  btn.style.animation=_agentListening?'pulse 1s infinite':'none';
-  btn.title=_agentListening?'음성 입력 중 (탭하면 종료)':'음성 입력';
+  const s={recording:['🔴','pulse 1s infinite','녹음 중 — 탭하면 종료'],transcribing:['⏳','none','변환 중...'],idle:['🎤','none','음성 입력']};
+  const[ico,anim,title]=(s[state]||s.idle);
+  btn.textContent=ico;btn.style.animation=anim;btn.title=title;
 }
 
 function openAIAgent(){
