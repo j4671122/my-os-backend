@@ -9698,6 +9698,9 @@ let _srBaseText='';
 let _srFinalText='';
 let _voiceFallbackStarting=false;
 let _voiceStopTimer=null;
+const _VOICE_MIC_GRANTED_KEY='myos.voice.micGranted';
+const _VOICE_WHISPER_READY_KEY='myos.voice.whisperReady';
+const _VOICE_LAST_SR_ERROR_KEY='myos.voice.lastSrError';
 
 // Firefox 등 SR 미지원 브라우저용: 백그라운드에서 Whisper 미리 로드
 function _preloadWhisper(){
@@ -9705,16 +9708,25 @@ function _preloadWhisper(){
   if(SR||_whisperPipeline||_whisperLoading)return;
   _whisperLoading=true;
   import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2')
-    .then(({pipeline})=>pipeline('automatic-speech-recognition','Xenova/whisper-tiny',{quantized:true}))
-    .then(p=>{_whisperPipeline=p;_whisperLoading=false;})
+    .then(({pipeline,env})=>{
+      if(env)env.useBrowserCache=true;
+      return pipeline('automatic-speech-recognition','Xenova/whisper-tiny',{quantized:true});
+    })
+    .then(p=>{_whisperPipeline=p;_whisperLoading=false;localStorage.setItem(_VOICE_WHISPER_READY_KEY,'1');})
     .catch(()=>{_whisperLoading=false;});
 }
 
 function toggleAgentVoice(){
   if(_voiceRecording){_stopVoiceInput();return;}
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(SR&&!_voiceFallbackStarting) _toggleSR(SR);
+  if(SR&&!_voiceFallbackStarting) _startSpeechRecognition(SR);
   else _toggleWhisper();
+}
+
+async function _startSpeechRecognition(SR){
+  const perm=await _getMicPermissionState();
+  if(perm==='denied'){showToast('브라우저 설정에서 마이크 권한을 허용해주세요.');return;}
+  _toggleSR(SR);
 }
 
 function _clearVoiceStopTimer(){
@@ -9748,6 +9760,16 @@ function _isMobileLike(){
   return /Android|iPhone|iPad|iPod|Mobile/i.test(ua)||(navigator.maxTouchPoints||0)>1;
 }
 
+async function _getMicPermissionState(){
+  try{
+    if(!navigator.permissions?.query)return null;
+    const status=await navigator.permissions.query({name:'microphone'});
+    return status.state;
+  }catch(e){
+    return null;
+  }
+}
+
 // ── SpeechRecognition 경로 (Chrome/Edge/Safari — 실시간, 딜레이 0) ──
 function _toggleSR(SR){
   if(_voiceSR){_voiceSR.stop();return;}
@@ -9769,9 +9791,10 @@ function _toggleSR(SR){
   _voiceSR.onerror=e=>{
     const err=e.error||'unknown';
     const shouldFallback=['service-not-allowed','not-allowed','network','audio-capture'].includes(err);
+    localStorage.setItem(_VOICE_LAST_SR_ERROR_KEY,err);
     if(shouldFallback){
       _voiceFallbackStarting=true;
-      showToast('브라우저 음성 인식이 막혀서 녹음 방식으로 전환할게요.');
+      showToast(`브라우저 음성 인식 실패(${err}). 로컬 변환으로 진행할게요.`);
     }else if(err!=='aborted'&&err!=='no-speech'){
       showToast('음성 인식 오류: '+err);
     }
@@ -9805,9 +9828,12 @@ async function _toggleWhisper(){
   if(_voiceRecording){_stopVoiceInput();return;}
   if(!navigator.mediaDevices?.getUserMedia){showToast('이 브라우저는 마이크를 지원하지 않아요');return;}
   if(!window.MediaRecorder){showToast('이 브라우저는 녹음 입력을 지원하지 않아요');return;}
+  const perm=await _getMicPermissionState();
+  if(perm==='denied'){_resetVoiceInput();showToast('브라우저 설정에서 마이크 권한을 허용해주세요.');return;}
   let stream;
   try{stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});}
   catch(err){_resetVoiceInput();showToast(err.name==='NotAllowedError'?'마이크 권한을 허용해주세요 🎙️':'마이크를 사용할 수 없어요');return;}
+  localStorage.setItem(_VOICE_MIC_GRANTED_KEY,'1');
   _voiceChunks=[];
   const mime=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'].find(m=>MediaRecorder.isTypeSupported(m))||'';
   _voiceRecorder=new MediaRecorder(stream,mime?{mimeType:mime}:{});
@@ -9838,15 +9864,18 @@ async function _toggleWhisper(){
 async function _transcribeWithWhisper(blob){
   if(!_whisperPipeline){
     if(_whisperLoading){
-      showToast('모델 로딩 중... 잠시만 기다려주세요.');
+      showToast('음성 인식 모델 준비 중... 잠시만 기다려주세요.');
       await new Promise(res=>{const t=setInterval(()=>{if(!_whisperLoading){clearInterval(t);res();}},300);setTimeout(()=>{clearInterval(t);res();},30000);});
     }else{
       _whisperLoading=true;
-      showToast('🔄 음성 인식 모델 로딩 중... (최초 1회 약 40MB, 이후 캐시됨)');
-      const{pipeline}=await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2');
+      const cached=localStorage.getItem(_VOICE_WHISPER_READY_KEY)==='1';
+      showToast(cached?'음성 인식 모델 준비 중...':'음성 인식 모델 받는 중... 최초 1회만 오래 걸려요.');
+      const{pipeline,env}=await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2');
+      if(env)env.useBrowserCache=true;
       _whisperPipeline=await pipeline('automatic-speech-recognition','Xenova/whisper-tiny',{quantized:true});
       _whisperLoading=false;
-      showToast('✅ 음성 인식 준비 완료!');
+      localStorage.setItem(_VOICE_WHISPER_READY_KEY,'1');
+      showToast(cached?'음성 인식 준비 완료':'음성 인식 모델 저장 완료!');
     }
   }
   const arrayBuffer=await blob.arrayBuffer();
