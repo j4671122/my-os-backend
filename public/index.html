@@ -9868,11 +9868,13 @@ function _updateVoiceBtn(state){
 }
 
 function openAIAgent(){
+  if(!_voiceRecording)_resetVoiceInput();
   document.getElementById('agent-overlay').classList.add('show');
   setTimeout(()=>document.getElementById('agent-input-box')?.focus(),150);
   _preloadWhisper(); // SR 미지원 브라우저: 패널 열 때 백그라운드 모델 로드
 }
 function closeAIAgent(){
+  _stopVoiceInput();
   document.getElementById('agent-overlay').classList.remove('show');
 }
 function clearAgentSession(){
