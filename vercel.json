@@ -1,6 +1,11 @@
 {
   "version": 2,
   "rewrites": [
+    { "source": "/api/group-profiles",   "destination": "/api/group-profiles.js" },
+    { "source": "/api/groups",           "destination": "/api/groups.js" },
+    { "source": "/api/resources",        "destination": "/api/resources.js" },
+    { "source": "/api/dm",               "destination": "/api/dm.js" },
+    { "source": "/api/channels",         "destination": "/api/channels.js" },
     { "source": "/api/ai/badges",        "destination": "/api/ai?action=badges" },
     { "source": "/api/ai/report",        "destination": "/api/ai?action=report" },
     { "source": "/api/ai/suggest",       "destination": "/api/ai?action=suggest" },
