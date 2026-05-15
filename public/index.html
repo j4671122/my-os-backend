@@ -164,12 +164,28 @@
     },
 
     // ── Community ──────────────────────────────────────────
-    async getCommunityPosts()             { if (!ONLINE) return []; return get('/api/community') },
+    async getCommunityPosts(groupId=null) { if (!ONLINE) return []; const q=groupId?'?group='+groupId:''; return get('/api/community'+q) },
     async createCommunityPost(data)       { if (!ONLINE) return null; return post('/api/community', data) },
     async likeCommunityPost(id)           { if (!ONLINE) return null; return api('PATCH', `/api/community?id=${id}&action=like`) },
     async commentCommunityPost(id, data)  { if (!ONLINE) return null; return api('PATCH', `/api/community?id=${id}&action=comment`, data) },
     async uncommentCommunityPost(id, cid) { if (!ONLINE) return null; return api('PATCH', `/api/community?id=${id}&action=uncomment`, { commentId: cid }) },
     async deleteCommunityPost(id)         { if (!ONLINE) return null; return del(`/api/community?id=${id}`) },
+
+    // ── Groups ─────────────────────────────────────────────
+    async getMyGroups()         { if (!ONLINE) return []; return get('/api/groups') },
+    async createGroup(d)        { if (!ONLINE) return null; return post('/api/groups', d) },
+    async lookupGroupByCode(code){ if (!ONLINE) return null; return get('/api/groups?code='+encodeURIComponent(code)) },
+    async joinGroup(id)         { if (!ONLINE) return null; return post('/api/groups?action=join&id='+id, {}) },
+    async leaveGroup(id)        { if (!ONLINE) return null; return del('/api/groups?id='+id) },
+
+    // ── Resources ──────────────────────────────────────────
+    async getResources()                { if (!ONLINE) return null; return get('/api/resources') },
+    async createResFolder(d)            { if (!ONLINE) return null; return post('/api/resources?type=folder', d) },
+    async createResource(d)             { if (!ONLINE) return null; return post('/api/resources?type=item', d) },
+    async updateResFolder(id, d)        { if (!ONLINE) return null; return put('/api/resources?id='+id+'&itemType=folder', d) },
+    async updateResource(id, d)         { if (!ONLINE) return null; return put('/api/resources?id='+id+'&itemType=item', d) },
+    async deleteResFolder(id)           { if (!ONLINE) return null; return del('/api/resources?id='+id+'&itemType=folder') },
+    async deleteResource(id)            { if (!ONLINE) return null; return del('/api/resources?id='+id+'&itemType=item') },
 
     // ── Google Calendar ────────────────────────────────────
     async gcalAuthUrl()                { if (!ONLINE) return null; return post('/api/gcal/auth', {}) },
@@ -1056,6 +1072,118 @@ body.dark .ce-toolbar__plus,.body.dark .ce-toolbar__settings-btn{color:var(--tex
 .comm-empty-txt{font-size:15px;font-weight:700;margin-bottom:4px}
 .comm-empty-sub{font-size:13px;opacity:.7}
 
+/* LinkedIn community style */
+.lk-wrap{max-width:720px;margin:0 auto;padding-bottom:48px}
+.lk-header{position:sticky;top:0;z-index:10;background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px}
+.lk-tabs{display:flex;gap:0;overflow-x:auto;scrollbar-width:none}
+.lk-tabs::-webkit-scrollbar{display:none}
+.lk-tab{flex-shrink:0;padding:14px 18px;font-size:13px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.lk-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.lk-tab:hover:not(.active){color:var(--text);background:var(--surface2)}
+.lk-tab-av{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.lk-tab-add{color:var(--accent);font-size:18px;line-height:1}
+.lk-compose-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 20px;margin:16px 20px 0}
+.lk-compose-row{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.lk-compose-input{flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:24px;padding:10px 18px;font-size:14px;font-family:inherit;color:var(--text);cursor:pointer;transition:border-color .15s}
+.lk-compose-input:focus{outline:none;border-color:var(--accent)}
+.lk-compose-actions{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.lk-compose-action{display:flex;align-items:center;gap:5px;padding:6px 12px;border:none;background:none;border-radius:8px;font-size:12.5px;color:var(--text3);cursor:pointer;font-family:inherit;font-weight:500;transition:background .12s}
+.lk-compose-action:hover{background:var(--surface2);color:var(--text)}
+.lk-post-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.lk-post-modal{background:var(--surface);border-radius:20px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.25)}
+.lk-post-modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border)}
+.lk-post-modal-title{font-size:16px;font-weight:800}
+.lk-post-modal-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3);padding:4px;border-radius:50%;line-height:1}
+.lk-post-modal-body{padding:20px}
+.lk-post-type-row{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.lk-type-btn{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:none;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--text3);transition:all .12s}
+.lk-type-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.lk-post-textarea{width:100%;border:none;outline:none;background:transparent;font-size:15px;font-family:inherit;resize:none;min-height:120px;color:var(--text);line-height:1.6;padding:0}
+.lk-post-textarea::placeholder{color:var(--text3)}
+.lk-post-modal-footer{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:1px solid var(--border)}
+.lk-post-char{font-size:12px;color:var(--text3)}
+.lk-post-char.warn{color:#dc2626;font-weight:700}
+.lk-post-submit{padding:9px 24px;border-radius:22px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer}
+.lk-post-submit:disabled{opacity:.4;cursor:not-allowed}
+.lk-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin:12px 20px;padding:20px;transition:box-shadow .15s}
+.lk-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.08)}
+.lk-card-header{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
+.lk-card-info{flex:1;min-width:0}
+.lk-card-name{font-size:14px;font-weight:700;color:var(--text)}
+.lk-card-handle{font-size:12.5px;color:var(--text3);margin-top:1px}
+.lk-card-meta{font-size:12px;color:var(--text3);margin-top:2px;display:flex;align-items:center;gap:6px}
+.lk-card-actions-top{display:flex;gap:4px;align-items:center;flex-shrink:0}
+.lk-card-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;padding:5px 8px;border-radius:8px;opacity:.6;transition:all .12s}
+.lk-card-del:hover{opacity:1;color:#dc2626}
+.lk-type-badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;margin-bottom:10px}
+.lk-type-badge.general{background:var(--surface2);color:var(--text3)}
+.lk-type-badge.question{background:#eff6ff;color:#3b82f6}
+.lk-type-badge.notice{background:#fff7ed;color:#f97316}
+.lk-type-badge.resource{background:#f0fdf4;color:#16a34a}
+.lk-card-text{font-size:15px;color:var(--text);line-height:1.65;white-space:pre-wrap;word-break:break-word;margin-bottom:16px}
+.lk-card-footer{display:flex;align-items:center;gap:0;border-top:1px solid var(--border);padding-top:10px;margin-top:4px}
+.lk-act{display:flex;align-items:center;gap:5px;padding:6px 12px;border:none;background:none;border-radius:10px;cursor:pointer;font-size:13px;color:var(--text3);font-weight:500;transition:all .12s}
+.lk-act:hover{color:var(--accent);background:var(--accent-light)}
+.lk-act.liked{color:#e11d48}
+.lk-act.liked:hover{background:rgba(225,29,72,.08)}
+.lk-replies{border-top:1px solid var(--border);margin-top:14px;padding-top:14px}
+.lk-reply{display:flex;gap:10px;margin-bottom:12px}
+.lk-reply-body{flex:1;background:var(--surface2);border-radius:12px;padding:10px 14px}
+.lk-reply-meta{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.lk-reply-name{font-size:13px;font-weight:700;color:var(--text)}
+.lk-reply-time{font-size:11.5px;color:var(--text3)}
+.lk-reply-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:11px;padding:2px 6px;border-radius:6px;margin-left:auto;opacity:.5;transition:all .12s}
+.lk-reply-del:hover{opacity:1;color:#dc2626}
+.lk-reply-text{font-size:13.5px;color:var(--text);line-height:1.5}
+.lk-reply-input-row{display:flex;gap:8px;align-items:center;margin-top:10px}
+.lk-reply-inp{flex:1;border:1.5px solid var(--border);border-radius:22px;padding:8px 16px;font-size:13px;font-family:inherit;outline:none;background:var(--surface);color:var(--text);transition:border-color .15s}
+.lk-reply-inp:focus{border-color:var(--accent)}
+.lk-reply-send{padding:8px 16px;border-radius:22px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer}
+.lk-empty{text-align:center;padding:60px 20px;color:var(--text3)}
+.lk-empty-ico{font-size:48px;margin-bottom:12px}
+.lk-empty-txt{font-size:15px;font-weight:700;margin-bottom:6px}
+.lk-empty-sub{font-size:13px;opacity:.7}
+.lk-group-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.lk-group-modal{background:var(--surface);border-radius:20px;width:440px;max-width:95vw;box-shadow:0 24px 60px rgba(0,0,0,.25);overflow:hidden}
+.lk-gm-header{padding:20px 20px 16px;border-bottom:1px solid var(--border)}
+.lk-gm-title{font-size:16px;font-weight:800}
+.lk-gm-tabs{display:flex;gap:0;margin-top:14px}
+.lk-gm-tab{flex:1;padding:8px;text-align:center;font-size:13px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent}
+.lk-gm-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.lk-gm-body{padding:20px}
+.lk-gm-input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;font-family:inherit;outline:none;background:var(--surface);color:var(--text);margin-bottom:10px;transition:border-color .15s;box-sizing:border-box}
+.lk-gm-input:focus{border-color:var(--accent)}
+.lk-gm-btn{width:100%;padding:11px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px}
+.lk-gm-close{position:absolute;top:16px;right:16px;background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3)}
+/* Resource Room */
+.res-layout{display:flex;height:calc(100vh - 120px);gap:0}
+.res-sidebar{width:220px;flex-shrink:0;border-right:1px solid var(--border);padding:16px 12px;overflow-y:auto}
+.res-sidebar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.res-sidebar-title{font-size:13px;font-weight:800;color:var(--text3);letter-spacing:.5px}
+.res-folder-btn{background:none;border:none;cursor:pointer;color:var(--accent);font-size:18px;padding:2px 6px;border-radius:6px;line-height:1}
+.res-folder-btn:hover{background:var(--accent-light)}
+.res-folder-item{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:9px;cursor:pointer;transition:background .12s;font-size:13px;color:var(--text);font-weight:500}
+.res-folder-item:hover,.res-folder-item.active{background:var(--accent-light);color:var(--accent)}
+.res-folder-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.res-folder-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.res-folder-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:11px;padding:1px 5px;border-radius:5px;opacity:0;transition:opacity .12s}
+.res-folder-item:hover .res-folder-del{opacity:.7}
+.res-folder-del:hover{opacity:1!important;color:#dc2626}
+.res-main{flex:1;min-width:0;padding:20px;overflow-y:auto}
+.res-main-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.res-main-title{font-size:16px;font-weight:800;color:var(--text)}
+.res-add-btn{padding:7px 16px;border-radius:20px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.res-item{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;cursor:pointer;transition:all .15s;position:relative}
+.res-item:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);border-color:var(--accent)}
+.res-item-ico{font-size:28px;margin-bottom:10px}
+.res-item-title{font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:4px;word-break:break-word}
+.res-item-meta{font-size:11.5px;color:var(--text3)}
+.res-item-del{position:absolute;top:10px;right:10px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;opacity:0;transition:opacity .12s;padding:3px 6px;border-radius:6px}
+.res-item:hover .res-item-del{opacity:.6}
+.res-item-del:hover{opacity:1!important;color:#dc2626}
+.res-empty{text-align:center;padding:60px 20px;color:var(--text3)}
+
 .pomo-center{cursor:pointer}
 .pomo-center:hover .pomo-time{opacity:.85}
 .pomo-edit-hint{font-size:9px;color:var(--text3);letter-spacing:.3px;margin-top:1px;opacity:.7}
@@ -1389,6 +1517,7 @@ body.dark .ab-btns{border-top-color:rgba(255,255,255,.07)}
   <div class="sb-item" id="nav-time" onclick="setView('time')"><span class="ico">🕒</span>Time Tracker</div>
   <div class="sb-item" id="nav-routine" onclick="setView('routine')"><span class="ico">🌅</span>루틴</div>
   <div class="sb-item" id="nav-community" onclick="setView('community')"><span class="ico">🌐</span>커뮤니티</div>
+  <div class="sb-item" id="nav-resources" onclick="setView('resources')"><span class="ico">📂</span>자료실</div>
   <div class="sb-item" id="nav-calendar" onclick="setView('calendar')"><span class="ico">📅</span>캘린더</div>
   <div class="sb-label" style="margin-top:6px">태그</div>
   <div class="tag-cloud" id="sb-tags"></div>
@@ -1768,6 +1897,11 @@ let D={tasks:[],folders:[],goals:[],habits:[],tagReg:{},events:[],gcalConnected:
 let VIEW='today';
 let _communityPosts=[];
 let _communityLoading=false;
+let _myGroups=[];
+let _activeGroupId=null;
+let _resFolders=[];
+let _resItems=[];
+let _resFolderId=null;
 let openTaskIds=new Set();
 let dragId=null,dragOver=null;
 let FOLDER_EDIT=null;
@@ -4519,6 +4653,7 @@ function render(){
   if(VIEW==='pomodoro'){va.innerHTML=renderPomodoro();return}
   if(VIEW==='routine'){va.innerHTML=renderRoutine();return}
   if(VIEW==='community'){va.innerHTML=renderCommunity();loadCommunityPosts();_loadQuill().then(()=>{_commQuillInst=null;_initCommQuill();});return}
+  if(VIEW==='resources'){va.innerHTML=renderResources();loadResources();return}
   if(VIEW==='calendar'){setTimeout(()=>loadGcalEvents(),0);va.innerHTML=renderCalendar();return}
   va.innerHTML=renderTaskView();
   openTaskIds.forEach(id=>{
@@ -6003,66 +6138,65 @@ let _commQuillLoading=false;
 function _buildFeedHTML(posts){
   const s=D.settings;
   if(_communityLoading&&!posts.length){
-    return`<div class="comm-empty"><div class="comm-empty-ico">⏳</div><div class="comm-empty-txt">불러오는 중...</div></div>`;
+    return`<div class="lk-empty"><div class="lk-empty-ico">⏳</div><div class="lk-empty-txt">불러오는 중...</div></div>`;
   }
   if(!posts.length){
-    return`<div class="comm-empty">
-      <div class="comm-empty-ico">🌐</div>
-      <div class="comm-empty-txt">아직 게시물이 없어요</div>
-      <div class="comm-empty-sub">첫 번째 생각을 공유해 보세요!</div>
+    return`<div class="lk-empty">
+      <div class="lk-empty-ico">🌐</div>
+      <div class="lk-empty-txt">아직 게시물이 없어요</div>
+      <div class="lk-empty-sub">첫 번째 생각을 공유해 보세요!</div>
     </div>`;
   }
-  return posts.map((p,i)=>{
+  const typeLabel={general:'일반',question:'질문',notice:'공지',resource:'자료'};
+  const typeClass={general:'general',question:'question',notice:'notice',resource:'resource'};
+  return posts.map(p=>{
     const ts=p.created_at?_commTimeAgo(new Date(p.created_at).getTime()):_commTimeAgo(p.createdAt||0);
     const cCount=(p.comments||[]).length;
-    const hasNext=i<posts.length-1;
-    const repliesHTML=p.showComments?`<div class="comm-replies">
-      ${(p.comments||[]).map(c=>`<div class="comm-reply">
-        ${_commAv(c,30)}
-        <div class="comm-reply-body">
-          <div class="comm-reply-meta">
-            <span class="comm-reply-name">${esc(c.author)}</span>
-            ${c.isOwn?`<button class="comm-reply-del" onclick="communityDeleteComment('${p.id}','${c.id}')">×</button>`:''}
+    const pt=p.post_type||'general';
+    const repliesHTML=p.showComments?`<div class="lk-replies">
+      ${(p.comments||[]).map(c=>`<div class="lk-reply">
+        ${_commAv(c,32)}
+        <div class="lk-reply-body">
+          <div class="lk-reply-meta">
+            <span class="lk-reply-name">${esc(c.author)}</span>
+            ${c.isOwn?`<button class="lk-reply-del" onclick="communityDeleteComment('${p.id}','${c.id}')">×</button>`:''}
           </div>
-          <div class="comm-reply-text">${esc(c.content)}</div>
+          <div class="lk-reply-text">${esc(c.content)}</div>
         </div>
       </div>`).join('')}
-      <div class="comm-reply-row">
-        ${_commAv(s,30)}
-        <input class="comm-reply-inp" id="comm-ci-${p.id}" placeholder="답글 달기..."
+      <div class="lk-reply-input-row">
+        ${_commAv(s,32)}
+        <input class="lk-reply-inp" id="comm-ci-${p.id}" placeholder="댓글 달기..."
           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();communityComment('${p.id}')}">
-        <button class="comm-reply-send" onclick="communityComment('${p.id}')">↵</button>
+        <button class="lk-reply-send" onclick="communityComment('${p.id}')">↵</button>
       </div>
     </div>`:'';
-    return`<article>
-      <div class="comm-card" id="commcard-${p.id}">
-        <div class="comm-card-left">
-          ${_commAv(p,40)}
-          ${hasNext?'<div class="comm-card-thread"></div>':''}
+    return`<div class="lk-card" id="commcard-${p.id}">
+      <div class="lk-card-header">
+        ${_commAv(p,44)}
+        <div class="lk-card-info">
+          <div class="lk-card-name">${esc(p.author)}</div>
+          ${p.handle?`<div class="lk-card-handle">@${esc(p.handle)}</div>`:''}
+          <div class="lk-card-meta">${ts}</div>
         </div>
-        <div class="comm-card-body">
-          <div class="comm-card-meta">
-            <span class="comm-card-name">${esc(p.author)}</span>
-            ${p.handle?`<span class="comm-card-handle">@${esc(p.handle)}</span>`:''}
-            <span class="comm-card-dot">·</span>
-            <span class="comm-card-time">${ts}</span>
-            ${p.isOwn?`<button class="comm-act comm-act-del" onclick="communityDelete('${p.id}')" title="삭제">🗑</button>`:''}
-          </div>
-          <div class="comm-card-text">${esc(p.content)}</div>
-          <div class="comm-acts">
-            <button class="comm-act" onclick="communityToggleComments('${p.id}')">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01z"/></svg>
-              ${cCount?`<span>${cCount}</span>`:''}
-            </button>
-            <button class="comm-act${p.liked?' liked':''}" onclick="communityLike('${p.id}')">
-              <svg width="17" height="17" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="${p.liked?'#e11d48':'none'}"><path d="M20.884 13.19c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>
-              ${p.likes?`<span>${p.likes}</span>`:''}
-            </button>
-          </div>
+        <div class="lk-card-actions-top">
+          ${p.isOwn?`<button class="lk-card-del" onclick="communityDelete('${p.id}')" title="삭제">🗑</button>`:''}
         </div>
       </div>
+      ${pt!=='general'?`<div class="lk-type-badge ${typeClass[pt]||'general'}">${typeLabel[pt]||pt}</div>`:''}
+      <div class="lk-card-text">${esc(p.content)}</div>
+      <div class="lk-card-footer">
+        <button class="lk-act" onclick="communityToggleComments('${p.id}')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01z"/></svg>
+          ${cCount?`<span>${cCount}개 댓글</span>`:'<span>댓글</span>'}
+        </button>
+        <button class="lk-act${p.liked?' liked':''}" onclick="communityLike('${p.id}')">
+          <svg width="16" height="16" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="${p.liked?'#e11d48':'none'}"><path d="M20.884 13.19c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z"/></svg>
+          ${p.likes?`<span>${p.likes}</span>`:'<span>좋아요</span>'}
+        </button>
+      </div>
       ${repliesHTML}
-    </article>`;
+    </div>`;
   }).join('');
 }
 
@@ -6144,32 +6278,41 @@ function _commClearContent(){
 
 function renderCommunity(){
   const s=D.settings;
-  const compose=`<div class="comm-compose">
-    <div class="comm-compose-row">
-      ${_commAv(s,44)}
-      <div class="comm-compose-body">
-        <div class="comm-compose-name">${esc(s.name||'나')}</div>
-        <div class="comm-ql-wrap" id="comm-ql-wrap">
-          <div id="comm-ql-editor"></div>
-          <textarea id="comm-textarea-fallback" class="comm-textarea" placeholder="무슨 생각을 하고 있나요?" maxlength="280" rows="2"
-            style="display:none"
-            onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();communityPost()}"></textarea>
-        </div>
-        <div class="comm-compose-footer">
-          <span class="comm-char" id="comm-char-count"></span>
-          <button class="comm-post-btn" id="comm-post-btn" onclick="communityPost()">게시하기</button>
-        </div>
-      </div>
+  const grp=_myGroups.find(g=>g.id===_activeGroupId);
+
+  const tabs=`<div class="lk-tabs">
+    <div class="lk-tab${!_activeGroupId?' active':''}" onclick="switchCommFeed(null)">전체 피드</div>
+    ${_myGroups.map(g=>`
+      <div class="lk-tab${_activeGroupId===g.id?' active':''}" onclick="switchCommFeed('${g.id}')">
+        <span class="lk-tab-av" style="background:${g.avatar_color||'var(--accent)'}">
+          ${esc(g.avatar||'👥')}
+        </span>
+        ${esc(g.name)}
+      </div>`).join('')}
+    <div class="lk-tab" onclick="openGroupModal()" title="그룹 참가/생성">
+      <span class="lk-tab-add">＋</span>
     </div>
   </div>`;
 
-  return`<div class="comm-wrap">
-    <div class="comm-header">
-      <span class="comm-header-title">커뮤니티</span>
-      <button class="comm-header-refresh" onclick="refreshCommunity()">↻ 새로고침</button>
+  const compose=`<div class="lk-compose-card">
+    <div class="lk-compose-row">
+      ${_commAv(s,40)}
+      <div class="lk-compose-input" onclick="openPostModal()" tabindex="0"
+        onkeydown="if(event.key==='Enter')openPostModal()">
+        ${grp?`${esc(grp.name)}에 공유하기...`:'무슨 생각을 하고 있나요?'}
+      </div>
     </div>
+    <div class="lk-compose-actions">
+      <button class="lk-compose-action" onclick="openPostModal('resource')">📎 자료 공유</button>
+      <button class="lk-compose-action" onclick="openPostModal('question')">❓ 질문하기</button>
+      <button class="lk-compose-action" onclick="openPostModal('notice')">📢 공지하기</button>
+    </div>
+  </div>`;
+
+  return`<div class="lk-wrap">
+    <div class="lk-header">${tabs}</div>
     ${compose}
-    <div class="comm-feed" id="comm-feed-area">${_buildFeedHTML(_communityPosts)}</div>
+    <div id="comm-feed-area">${_buildFeedHTML(_communityPosts)}</div>
   </div>`;
 }
 
@@ -6179,7 +6322,7 @@ async function loadCommunityPosts(force=false){
   if(window.GUEST_MODE||!ApiClient.isOnline()||!ApiClient.getToken())return;
   _communityLoading=true;
   try{
-    const posts=await ApiClient.getCommunityPosts();
+    const posts=await ApiClient.getCommunityPosts(_activeGroupId);
     if(Array.isArray(posts)){
       const pending=_communityPosts.filter(p=>String(p.id).startsWith('tmp_'));
       _communityPosts=[...pending,...posts];
@@ -6191,34 +6334,177 @@ async function loadCommunityPosts(force=false){
 
 function refreshCommunity(){ _communityPosts=[];loadCommunityPosts(true); }
 
+// Post modal
+let _postModalType='general';
+function openPostModal(type='general'){
+  _postModalType=type;
+  const grp=_myGroups.find(g=>g.id===_activeGroupId);
+  const typeLabels={general:'일반',question:'질문',notice:'공지',resource:'자료'};
+  const modal=document.createElement('div');
+  modal.className='lk-post-modal-overlay';
+  modal.id='lk-post-overlay';
+  modal.innerHTML=`<div class="lk-post-modal">
+    <div class="lk-post-modal-header">
+      <span class="lk-post-modal-title">${grp?esc(grp.name)+'에 게시':'게시물 작성'}</span>
+      <button class="lk-post-modal-close" onclick="document.getElementById('lk-post-overlay')?.remove()">×</button>
+    </div>
+    <div class="lk-post-modal-body">
+      <div class="lk-post-type-row">
+        ${['general','question','notice','resource'].map(t=>`
+          <button class="lk-type-btn${_postModalType===t?' active':''}" onclick="setPostType('${t}')">${typeLabels[t]}</button>
+        `).join('')}
+      </div>
+      <textarea class="lk-post-textarea" id="lk-post-content" placeholder="무슨 생각을 하고 있나요?" maxlength="1000"
+        oninput="const r=1000-this.value.length;const el=document.getElementById('lk-post-char');if(el){el.textContent=r<=100?r+'자 남음':'';el.className='lk-post-char'+(r<=30?' warn':'');}
+        document.getElementById('lk-post-submit').disabled=!this.value.trim();"></textarea>
+    </div>
+    <div class="lk-post-modal-footer">
+      <span class="lk-post-char" id="lk-post-char"></span>
+      <button class="lk-post-submit" id="lk-post-submit" onclick="communityPost()" disabled>게시하기</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+  setTimeout(()=>document.getElementById('lk-post-content')?.focus(),50);
+}
+
+function setPostType(t){
+  _postModalType=t;
+  const labels={general:'일반',question:'질문',notice:'공지',resource:'자료'};
+  document.querySelectorAll('.lk-type-btn').forEach(b=>{
+    b.classList.toggle('active',b.textContent.trim()===labels[t]);
+  });
+}
+
+// Group modal
+let _groupModalTab='join';
+function openGroupModal(){
+  const modal=document.createElement('div');
+  modal.className='lk-group-modal-overlay';
+  modal.id='lk-group-overlay';
+  modal.innerHTML=`<div class="lk-group-modal" style="position:relative">
+    <button class="lk-gm-close" onclick="document.getElementById('lk-group-overlay')?.remove()">×</button>
+    <div class="lk-gm-header">
+      <div class="lk-gm-title">그룹</div>
+      <div class="lk-gm-tabs">
+        <div class="lk-gm-tab active" id="gmt-join" onclick="switchGroupModalTab('join')">참가하기</div>
+        <div class="lk-gm-tab" id="gmt-create" onclick="switchGroupModalTab('create')">만들기</div>
+      </div>
+    </div>
+    <div class="lk-gm-body" id="gm-body">
+      ${_groupJoinBody()}
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+}
+
+function _groupJoinBody(){
+  return`<p style="font-size:13px;color:var(--text3);margin-bottom:14px">초대 코드로 그룹에 참가하세요</p>
+    <input class="lk-gm-input" id="gm-invite-code" placeholder="초대 코드 8자리" maxlength="8"
+      oninput="this.value=this.value.toLowerCase()"
+      onkeydown="if(event.key==='Enter')joinGroupByCode()">
+    <button class="lk-gm-btn" onclick="joinGroupByCode()">참가하기</button>
+    <div id="gm-msg" style="font-size:12.5px;margin-top:10px;text-align:center;color:var(--text3)"></div>
+    ${_myGroups.length?`<div style="margin-top:20px">
+      <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:10px">내 그룹</div>
+      ${_myGroups.map(g=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:20px">${esc(g.avatar||'👥')}</span>
+        <span style="flex:1;font-size:13px;font-weight:600">${esc(g.name)}</span>
+        <span style="font-size:11px;color:var(--text3);font-family:monospace">${esc(g.invite_code||'')}</span>
+        <button onclick="leaveGroup('${g.id}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:11px;padding:3px 6px;border-radius:6px" title="나가기">나가기</button>
+      </div>`).join('')}
+    </div>`:''}`;
+}
+
+function _groupCreateBody(){
+  return`<p style="font-size:13px;color:var(--text3);margin-bottom:14px">새 그룹을 만들어 멤버를 초대하세요</p>
+    <input class="lk-gm-input" id="gm-grp-name" placeholder="그룹 이름" maxlength="30">
+    <input class="lk-gm-input" id="gm-grp-desc" placeholder="설명 (선택)" maxlength="100">
+    <button class="lk-gm-btn" onclick="createGroup()">그룹 만들기</button>
+    <div id="gm-msg" style="font-size:12.5px;margin-top:10px;text-align:center;color:var(--text3)"></div>`;
+}
+
+function switchGroupModalTab(tab){
+  _groupModalTab=tab;
+  document.getElementById('gmt-join')?.classList.toggle('active',tab==='join');
+  document.getElementById('gmt-create')?.classList.toggle('active',tab==='create');
+  const body=document.getElementById('gm-body');
+  if(body)body.innerHTML=tab==='join'?_groupJoinBody():_groupCreateBody();
+}
+
+async function joinGroupByCode(){
+  const code=(document.getElementById('gm-invite-code')?.value||'').trim();
+  const msg=document.getElementById('gm-msg');
+  if(!code){if(msg)msg.textContent='코드를 입력해주세요';return;}
+  if(msg)msg.textContent='확인 중...';
+  try{
+    const grp=await ApiClient.lookupGroupByCode(code);
+    if(!grp){if(msg)msg.textContent='코드를 찾을 수 없어요';return;}
+    await ApiClient.joinGroup(grp.id);
+    _myGroups=await ApiClient.getMyGroups()||[];
+    document.getElementById('lk-group-overlay')?.remove();
+    switchCommFeed(grp.id);
+  }catch(e){if(msg)msg.textContent=e.message||'오류가 발생했어요';}
+}
+
+async function createGroup(){
+  const name=(document.getElementById('gm-grp-name')?.value||'').trim();
+  const desc=(document.getElementById('gm-grp-desc')?.value||'').trim();
+  const msg=document.getElementById('gm-msg');
+  if(!name){if(msg)msg.textContent='이름을 입력해주세요';return;}
+  if(msg)msg.textContent='만드는 중...';
+  try{
+    const grp=await ApiClient.createGroup({name,description:desc,avatar:'👥'});
+    _myGroups=await ApiClient.getMyGroups()||[];
+    document.getElementById('lk-group-overlay')?.remove();
+    switchCommFeed(grp.id);
+    showToast(`그룹 "${name}" 생성! 초대코드: ${grp.invite_code}`);
+  }catch(e){if(msg)msg.textContent=e.message||'오류가 발생했어요';}
+}
+
+async function leaveGroup(id){
+  if(!confirm('그룹에서 나가시겠어요?'))return;
+  await ApiClient.leaveGroup(id).catch(()=>null);
+  _myGroups=_myGroups.filter(g=>g.id!==id);
+  if(_activeGroupId===id){switchCommFeed(null);}
+  else{document.getElementById('lk-group-overlay')?.remove();openGroupModal();}
+}
+
+function switchCommFeed(groupId){
+  _activeGroupId=groupId;
+  _communityPosts=[];
+  if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
+  loadCommunityPosts(true);
+}
 
 async function communityPost(){
-  const content=_commGetContent();
+  const contentEl=document.getElementById('lk-post-content');
+  const content=(contentEl?.value||_commGetContent()).trim();
   if(!content)return;
+  document.getElementById('lk-post-overlay')?.remove();
   const s=D.settings;
   const tempId='tmp_'+Date.now();
   const tempPost={id:tempId,user_id:'me',author:s.name||'나',handle:s.userTag||'',
     avatar:s.avatar||'😊',avatar_bg:s.avatarBg||0,
-    content,created_at:new Date().toISOString(),likes:0,liked:false,isOwn:true,comments:[],showComments:false};
+    content,post_type:_postModalType||'general',
+    group_id:_activeGroupId||null,
+    created_at:new Date().toISOString(),likes:0,liked:false,isOwn:true,comments:[],showComments:false};
   _communityPosts=[tempPost,..._communityPosts];
   _commClearContent();
-  const charEl=document.getElementById('comm-char-count');if(charEl)charEl.textContent='';
-  const btn=document.getElementById('comm-post-btn');if(btn)btn.disabled=true;
   _refreshFeed();
   if(!window.GUEST_MODE&&ApiClient.isOnline()&&ApiClient.getToken()){
     try{
       const srv=await ApiClient.createCommunityPost({
-        content,author:s.name||'나',handle:s.userTag||'',avatar:s.avatar||'😊',avatarBg:s.avatarBg||0
+        content,author:s.name||'나',handle:s.userTag||'',avatar:s.avatar||'😊',avatarBg:s.avatarBg||0,
+        groupId:_activeGroupId||null,postType:_postModalType||'general'
       });
       if(srv){
         _communityPosts=_communityPosts.map(p=>p.id===tempId?{...srv,showComments:false}:p);
         _refreshFeed();
       }
-    }catch(e){
-      console.warn('[Community] 게시 실패:',e.message);
-    }
+    }catch(e){console.warn('[Community] 게시 실패:',e.message);}
   }
-  if(btn)btn.disabled=false;
 }
 
 async function communityLike(id){
@@ -6273,6 +6559,166 @@ async function communityDeleteComment(postId,commentId){
   if(!window.GUEST_MODE&&ApiClient.isOnline()){
     ApiClient.uncommentCommunityPost(postId,commentId).catch(e=>console.warn('[Community] 댓글삭제 실패:',e.message));
   }
+}
+
+// ── Resource Room ──────────────────────────────────────────
+function renderResources(){
+  const folders=_resFolders;
+  const items=_resItems.filter(it=>(it.folder_id||null)===_resFolderId);
+  const activeFolder=folders.find(f=>f.id===_resFolderId);
+  const typeIco={note:'📝',link:'🔗',file:'📄'};
+
+  const sidebarItems=`
+    <div class="res-folder-item${_resFolderId===null?' active':''}" onclick="selectResFolder(null)">
+      <span style="font-size:16px">🗂</span>
+      <span class="res-folder-name">전체</span>
+    </div>
+    ${folders.filter(f=>!f.parent_id).map(f=>`
+      <div class="res-folder-item${_resFolderId===f.id?' active':''}" onclick="selectResFolder('${f.id}')">
+        <span class="res-folder-dot" style="background:${f.color||'#6b7280'}"></span>
+        <span class="res-folder-name">${esc(f.name)}</span>
+        <button class="res-folder-del" onclick="event.stopPropagation();deleteResFolder('${f.id}')">×</button>
+      </div>
+    `).join('')}`;
+
+  const gridItems=items.length?items.map(it=>`
+    <div class="res-item" onclick="openResItem('${it.id}')">
+      <button class="res-item-del" onclick="event.stopPropagation();deleteResItem('${it.id}')">🗑</button>
+      <div class="res-item-ico">${typeIco[it.type]||'📄'}</div>
+      <div class="res-item-title">${esc(it.title)}</div>
+      <div class="res-item-meta">${it.type==='link'&&it.url?`<a href="${esc(it.url)}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent)">${esc(it.url.slice(0,30))}...</a>`:it.content?it.content.slice(0,40)+'...':''}</div>
+    </div>
+  `).join(''):`<div class="res-empty"><div style="font-size:40px;margin-bottom:10px">📂</div><div style="font-size:14px;font-weight:700;margin-bottom:4px">자료가 없어요</div><div style="font-size:12px">+ 추가로 자료를 넣어보세요</div></div>`;
+
+  return`<div class="res-layout">
+    <div class="res-sidebar">
+      <div class="res-sidebar-header">
+        <span class="res-sidebar-title">폴더</span>
+        <button class="res-folder-btn" onclick="openCreateFolderModal()" title="폴더 추가">＋</button>
+      </div>
+      ${sidebarItems}
+    </div>
+    <div class="res-main">
+      <div class="res-main-header">
+        <span class="res-main-title">${activeFolder?esc(activeFolder.name):'전체 자료'}</span>
+        <button class="res-add-btn" onclick="openAddResModal()">＋ 자료 추가</button>
+      </div>
+      <div class="res-grid">${gridItems}</div>
+    </div>
+  </div>`;
+}
+
+async function loadResources(){
+  if(window.GUEST_MODE||!ApiClient.getToken())return;
+  try{
+    const d=await ApiClient.getResources();
+    if(d){_resFolders=d.folders||[];_resItems=d.items||[];}
+    if(VIEW==='resources')document.getElementById('view-area').innerHTML=renderResources();
+  }catch(e){console.warn('[Resources] 로드 실패:',e);}
+}
+
+function selectResFolder(id){
+  _resFolderId=id;
+  if(VIEW==='resources')document.getElementById('view-area').innerHTML=renderResources();
+}
+
+async function openCreateFolderModal(){
+  const name=await showInputModal('폴더 이름','새 폴더');
+  if(!name?.trim())return;
+  const colors=['#6b7280','#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6'];
+  const color=colors[Math.floor(Math.random()*colors.length)];
+  try{
+    const f=await ApiClient.createResFolder({name:name.trim(),color,parentId:_resFolderId});
+    _resFolders=[..._resFolders,f];
+    if(VIEW==='resources')document.getElementById('view-area').innerHTML=renderResources();
+  }catch(e){showToast('폴더 생성 실패');}
+}
+
+async function deleteResFolder(id){
+  if(!confirm('폴더와 안의 자료가 모두 삭제돼요. 계속할까요?'))return;
+  await ApiClient.deleteResFolder(id).catch(()=>null);
+  _resFolders=_resFolders.filter(f=>f.id!==id);
+  _resItems=_resItems.filter(it=>it.folder_id!==id);
+  if(_resFolderId===id)_resFolderId=null;
+  if(VIEW==='resources')document.getElementById('view-area').innerHTML=renderResources();
+}
+
+async function openAddResModal(){
+  const overlay=document.createElement('div');
+  overlay.className='lk-post-modal-overlay';
+  overlay.id='res-add-overlay';
+  overlay.innerHTML=`<div class="lk-post-modal">
+    <div class="lk-post-modal-header">
+      <span class="lk-post-modal-title">자료 추가</span>
+      <button class="lk-post-modal-close" onclick="document.getElementById('res-add-overlay')?.remove()">×</button>
+    </div>
+    <div class="lk-post-modal-body">
+      <div class="lk-post-type-row" style="margin-bottom:16px">
+        <button class="lk-type-btn active" id="rtype-note" onclick="setResType('note')">📝 메모</button>
+        <button class="lk-type-btn" id="rtype-link" onclick="setResType('link')">🔗 링크</button>
+        <button class="lk-type-btn" id="rtype-file" onclick="setResType('file')">📄 파일명</button>
+      </div>
+      <input id="res-add-title" placeholder="제목" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;font-family:inherit;outline:none;background:var(--surface);color:var(--text);margin-bottom:10px;box-sizing:border-box">
+      <div id="res-add-url-row" style="display:none;margin-bottom:10px">
+        <input id="res-add-url" placeholder="https://..." style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;font-family:inherit;outline:none;background:var(--surface);color:var(--text);box-sizing:border-box">
+      </div>
+      <textarea id="res-add-content" placeholder="내용 (선택)" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:14px;font-family:inherit;outline:none;background:var(--surface);color:var(--text);resize:vertical;min-height:80px;box-sizing:border-box"></textarea>
+    </div>
+    <div class="lk-post-modal-footer">
+      <span></span>
+      <button class="lk-post-submit" onclick="submitAddRes()">추가</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
+  window._resAddType='note';
+}
+
+function setResType(t){
+  window._resAddType=t;
+  ['note','link','file'].forEach(x=>{
+    document.getElementById('rtype-'+x)?.classList.toggle('active',x===t);
+  });
+  document.getElementById('res-add-url-row').style.display=t==='link'?'block':'none';
+}
+
+async function submitAddRes(){
+  const title=(document.getElementById('res-add-title')?.value||'').trim();
+  if(!title){showToast('제목을 입력해주세요');return;}
+  const type=window._resAddType||'note';
+  const url=(document.getElementById('res-add-url')?.value||'').trim();
+  const content=(document.getElementById('res-add-content')?.value||'').trim();
+  document.getElementById('res-add-overlay')?.remove();
+  try{
+    const item=await ApiClient.createResource({folderId:_resFolderId,type,title,content,url});
+    _resItems=[..._resItems,item];
+    if(VIEW==='resources')document.getElementById('view-area').innerHTML=renderResources();
+    showToast('자료가 추가됐어요');
+  }catch(e){showToast('추가 실패');}
+}
+
+async function deleteResItem(id){
+  await ApiClient.deleteResource(id).catch(()=>null);
+  _resItems=_resItems.filter(it=>it.id!==id);
+  if(VIEW==='resources')document.getElementById('view-area').innerHTML=renderResources();
+}
+
+function openResItem(id){
+  const it=_resItems.find(x=>x.id===id);if(!it)return;
+  if(it.type==='link'&&it.url){window.open(it.url,'_blank');return;}
+  const overlay=document.createElement('div');
+  overlay.className='lk-post-modal-overlay';
+  overlay.innerHTML=`<div class="lk-post-modal">
+    <div class="lk-post-modal-header">
+      <span class="lk-post-modal-title">${esc(it.title)}</span>
+      <button class="lk-post-modal-close" onclick="this.closest('.lk-post-modal-overlay').remove()">×</button>
+    </div>
+    <div class="lk-post-modal-body">
+      <div style="font-size:15px;color:var(--text);line-height:1.65;white-space:pre-wrap">${esc(it.content||'내용 없음')}</div>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
 }
 
 // RENDER: POMODORO
@@ -8189,14 +8635,67 @@ let _agentHistory=[];
 let _agentPlan=[];
 let _agentFile=null;
 let _agentSending=false;
-// Voice recording via MediaRecorder + Whisper.js (오프라인, 무료, Apache 2.0)
+// Voice: 하이브리드 (SpeechRecognition 실시간 → Whisper 폴백)
 let _voiceRecorder=null;
 let _voiceRecording=false;
 let _voiceChunks=[];
 let _whisperPipeline=null;
 let _whisperLoading=false;
+let _voiceSR=null;
+let _srBaseText='';
+let _srFinalText='';
 
-async function toggleAgentVoice(){
+// Firefox 등 SR 미지원 브라우저용: 백그라운드에서 Whisper 미리 로드
+function _preloadWhisper(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(SR||_whisperPipeline||_whisperLoading)return;
+  _whisperLoading=true;
+  import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2')
+    .then(({pipeline})=>pipeline('automatic-speech-recognition','Xenova/whisper-tiny',{quantized:true}))
+    .then(p=>{_whisperPipeline=p;_whisperLoading=false;})
+    .catch(()=>{_whisperLoading=false;});
+}
+
+function toggleAgentVoice(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(SR) _toggleSR(SR);
+  else    _toggleWhisper();
+}
+
+// ── SpeechRecognition 경로 (Chrome/Edge/Safari — 실시간, 딜레이 0) ──
+function _toggleSR(SR){
+  if(_voiceSR){_voiceSR.stop();return;}
+  const box=document.getElementById('agent-input-box');
+  _srBaseText=box?.value||'';
+  _srFinalText='';
+  _voiceSR=new SR();
+  _voiceSR.lang=({ko:'ko-KR',en:'en-US',zh:'zh-CN'})[D.settings?.lang||'ko']||'ko-KR';
+  _voiceSR.continuous=true;
+  _voiceSR.interimResults=true;
+  _voiceSR.onresult=e=>{
+    let interim='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal)_srFinalText+=e.results[i][0].transcript;
+      else interim+=e.results[i][0].transcript;
+    }
+    if(box)box.value=(_srBaseText+' '+_srFinalText+interim).trim();
+  };
+  _voiceSR.onerror=e=>{
+    if(e.error!=='aborted'&&e.error!=='no-speech')showToast('음성 인식 오류: '+e.error);
+    _voiceSR=null;_voiceRecording=false;_updateVoiceBtn('idle');
+  };
+  _voiceSR.onend=()=>{
+    // 최종 확정 텍스트만 남기기
+    if(box&&_srFinalText)box.value=(_srBaseText+' '+_srFinalText).trim();
+    _voiceSR=null;_voiceRecording=false;_updateVoiceBtn('idle');
+  };
+  _voiceSR.start();
+  _voiceRecording=true;
+  _updateVoiceBtn('recording');
+}
+
+// ── Whisper 경로 (Firefox 등 SR 미지원 — 녹음 후 오프라인 변환) ──
+async function _toggleWhisper(){
   if(_voiceRecording){_voiceRecorder?.stop();return;}
   if(!navigator.mediaDevices?.getUserMedia){showToast('이 브라우저는 마이크를 지원하지 않아요');return;}
   let stream;
@@ -8208,31 +8707,33 @@ async function toggleAgentVoice(){
   _voiceRecorder.ondataavailable=e=>{if(e.data.size>0)_voiceChunks.push(e.data);};
   _voiceRecorder.onstop=async()=>{
     stream.getTracks().forEach(t=>t.stop());
-    _voiceRecording=false;
-    _updateVoiceBtn('transcribing');
+    _voiceRecording=false;_updateVoiceBtn('transcribing');
     try{
       const blob=new Blob(_voiceChunks,{type:_voiceRecorder.mimeType||'audio/webm'});
       const text=await _transcribeWithWhisper(blob);
       const box=document.getElementById('agent-input-box');
       if(box&&text)box.value=(box.value+' '+text).trim();
       else if(!text)showToast('음성을 인식하지 못했어요. 다시 시도해주세요.');
-    }catch(err){showToast('음성 변환 오류가 발생했어요.');}
+    }catch(e){showToast('음성 변환 오류가 발생했어요.');}
     _updateVoiceBtn('idle');
   };
   _voiceRecorder.start(200);
-  _voiceRecording=true;
-  _updateVoiceBtn('recording');
+  _voiceRecording=true;_updateVoiceBtn('recording');
 }
 
 async function _transcribeWithWhisper(blob){
   if(!_whisperPipeline){
-    if(_whisperLoading){showToast('모델 로딩 중입니다. 잠시만 기다려주세요.');return '';}
-    _whisperLoading=true;
-    showToast('🔄 음성 인식 모델 로딩 중... (최초 1회 약 40MB, 이후 캐시됨)');
-    const{pipeline}=await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2');
-    _whisperPipeline=await pipeline('automatic-speech-recognition','Xenova/whisper-tiny',{quantized:true});
-    _whisperLoading=false;
-    showToast('✅ 음성 인식 준비 완료!');
+    if(_whisperLoading){
+      showToast('모델 로딩 중... 잠시만 기다려주세요.');
+      await new Promise(res=>{const t=setInterval(()=>{if(!_whisperLoading){clearInterval(t);res();}},300);setTimeout(()=>{clearInterval(t);res();},30000);});
+    }else{
+      _whisperLoading=true;
+      showToast('🔄 음성 인식 모델 로딩 중... (최초 1회 약 40MB, 이후 캐시됨)');
+      const{pipeline}=await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2');
+      _whisperPipeline=await pipeline('automatic-speech-recognition','Xenova/whisper-tiny',{quantized:true});
+      _whisperLoading=false;
+      showToast('✅ 음성 인식 준비 완료!');
+    }
   }
   const arrayBuffer=await blob.arrayBuffer();
   const audioCtx=new AudioContext({sampleRate:16000});
@@ -8248,13 +8749,14 @@ function _updateVoiceBtn(state){
   const btn=document.getElementById('agent-voice-btn');
   if(!btn)return;
   const s={recording:['🔴','pulse 1s infinite','녹음 중 — 탭하면 종료'],transcribing:['⏳','none','변환 중...'],idle:['🎤','none','음성 입력']};
-  const[ico,anim,title]=(s[state]||s.idle);
+  const[ico,anim,title]=s[state]||s.idle;
   btn.textContent=ico;btn.style.animation=anim;btn.title=title;
 }
 
 function openAIAgent(){
   document.getElementById('agent-overlay').classList.add('show');
   setTimeout(()=>document.getElementById('agent-input-box')?.focus(),150);
+  _preloadWhisper(); // SR 미지원 브라우저: 패널 열 때 백그라운드 모델 로드
 }
 function closeAIAgent(){
   document.getElementById('agent-overlay').classList.remove('show');
@@ -8592,7 +9094,7 @@ function startApp(){
   }
   if(!D.notifications) D.notifications = [];
   // 뷰 기본값
-  const valid=['today','todayonly','all','done','high','dashboard','goals','habits','search','settings','home','time','memo','pomodoro','routine','community','calendar'];
+  const valid=['today','todayonly','all','done','high','dashboard','goals','habits','search','settings','home','time','memo','pomodoro','routine','community','calendar','resources'];
   const preferredView=D.settings.currentView||VIEW;
   VIEW=valid.includes(preferredView)?preferredView:'today';
 
@@ -8615,6 +9117,9 @@ function startApp(){
   setTimeout(()=>showCoachTip(),3000);
   setTimeout(()=>loadGcalEvents(),1500);
   setTimeout(()=>triggerDailyBadge(),90000);
+  if(!window.GUEST_MODE && ApiClient.getToken()){
+    ApiClient.getMyGroups().then(gs=>{if(Array.isArray(gs))_myGroups=gs;}).catch(()=>null);
+  }
 }
 
 // 30분마다 정적 코치 팁 갱신
