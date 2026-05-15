@@ -244,6 +244,16 @@
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
+button,[role=button],.btn,.sb-item,.folder-row,.bn-item,.bell-btn,.agent-file-btn,.agent-hint-chip,.filter-btn,.lk-tab,.lk-gm-tab,.gd-pill,.hd-cell{
+  -webkit-tap-highlight-color:transparent;
+  -webkit-touch-callout:none;
+  touch-action:manipulation;
+  user-select:none;
+}
+button{
+  -webkit-appearance:none;
+  appearance:none;
+}
 html{overflow-x:hidden;overscroll-behavior-x:none;touch-action:pan-x pan-y}
 :root{
   --bg:#f4f3ef;--surface:#fff;--surface2:#f0ede8;--surface3:#e8e4de;
@@ -9611,6 +9621,7 @@ let _whisperLoading=false;
 let _voiceSR=null;
 let _srBaseText='';
 let _srFinalText='';
+let _voiceFallbackStarting=false;
 
 // Firefox 등 SR 미지원 브라우저용: 백그라운드에서 Whisper 미리 로드
 function _preloadWhisper(){
@@ -9625,8 +9636,8 @@ function _preloadWhisper(){
 
 function toggleAgentVoice(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(SR) _toggleSR(SR);
-  else    _toggleWhisper();
+  if(SR&&!_voiceFallbackStarting) _toggleSR(SR);
+  else _toggleWhisper();
 }
 
 // ── SpeechRecognition 경로 (Chrome/Edge/Safari — 실시간, 딜레이 0) ──
@@ -9648,23 +9659,39 @@ function _toggleSR(SR){
     if(box)box.value=(_srBaseText+' '+_srFinalText+interim).trim();
   };
   _voiceSR.onerror=e=>{
-    if(e.error!=='aborted'&&e.error!=='no-speech')showToast('음성 인식 오류: '+e.error);
+    const err=e.error||'unknown';
+    const shouldFallback=['service-not-allowed','not-allowed','network','audio-capture'].includes(err);
+    if(shouldFallback){
+      _voiceFallbackStarting=true;
+      showToast('브라우저 음성 인식이 막혀서 녹음 방식으로 전환할게요.');
+    }else if(err!=='aborted'&&err!=='no-speech'){
+      showToast('음성 인식 오류: '+err);
+    }
     _voiceSR=null;_voiceRecording=false;_updateVoiceBtn('idle');
+    if(shouldFallback)setTimeout(()=>_toggleWhisper(),80);
   };
   _voiceSR.onend=()=>{
     // 최종 확정 텍스트만 남기기
     if(box&&_srFinalText)box.value=(_srBaseText+' '+_srFinalText).trim();
-    _voiceSR=null;_voiceRecording=false;_updateVoiceBtn('idle');
+    _voiceSR=null;_voiceRecording=false;
+    if(!_voiceFallbackStarting)_updateVoiceBtn('idle');
   };
-  _voiceSR.start();
-  _voiceRecording=true;
-  _updateVoiceBtn('recording');
+  try{
+    _voiceSR.start();
+    _voiceRecording=true;
+    _updateVoiceBtn('recording');
+  }catch(err){
+    _voiceSR=null;_voiceRecording=false;_updateVoiceBtn('idle');
+    _toggleWhisper();
+  }
 }
 
 // ── Whisper 경로 (Firefox 등 SR 미지원 — 녹음 후 오프라인 변환) ──
 async function _toggleWhisper(){
+  _voiceFallbackStarting=false;
   if(_voiceRecording){_voiceRecorder?.stop();return;}
   if(!navigator.mediaDevices?.getUserMedia){showToast('이 브라우저는 마이크를 지원하지 않아요');return;}
+  if(!window.MediaRecorder){showToast('이 브라우저는 녹음 입력을 지원하지 않아요');return;}
   let stream;
   try{stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});}
   catch(err){showToast(err.name==='NotAllowedError'?'마이크 권한을 허용해주세요 🎙️':'마이크를 사용할 수 없어요');return;}
