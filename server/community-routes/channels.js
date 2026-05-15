@@ -13,9 +13,9 @@
  *   PATCH ?messageId=<id>&action=react          → 리액션 토글 { emoji, userId }
  *   PATCH ?messageId=<id>&action=pin            → 핀 토글
  */
-import supabase from './_lib/supabase.js'
-import { withCors, getUserId } from './_lib/cors.js'
-import { getAuthUser } from './_lib/auth.js'
+import supabase from '../../api/_lib/supabase.js'
+import { withCors, getUserId } from '../../api/_lib/cors.js'
+import { getAuthUser } from '../../api/_lib/auth.js'
 
 export default withCors(async (req, res) => {
   const user = await getAuthUser(req)

@@ -6,9 +6,9 @@
  * PATCH ?id=<msgId>     → 읽음 처리 (수신자만)
  * DELETE ?id=<msgId>    → 내 메시지 삭제
  */
-import supabase from './_lib/supabase.js'
-import { withCors, getUserId } from './_lib/cors.js'
-import { getAuthUser } from './_lib/auth.js'
+import supabase from '../../api/_lib/supabase.js'
+import { withCors, getUserId } from '../../api/_lib/cors.js'
+import { getAuthUser } from '../../api/_lib/auth.js'
 
 export default withCors(async (req, res) => {
   const user = await getAuthUser(req)

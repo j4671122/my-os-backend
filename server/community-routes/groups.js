@@ -6,9 +6,9 @@
  * POST ?action=join&id=    → 그룹 참가
  * DELETE ?id=              → 그룹 탈퇴 (admin이면 그룹 삭제)
  */
-import supabase from './_lib/supabase.js'
-import { withCors, getUserId } from './_lib/cors.js'
-import { getAuthUser } from './_lib/auth.js'
+import supabase from '../../api/_lib/supabase.js'
+import { withCors, getUserId } from '../../api/_lib/cors.js'
+import { getAuthUser } from '../../api/_lib/auth.js'
 
 function generateInviteCode() {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
