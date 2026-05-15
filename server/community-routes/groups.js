@@ -114,7 +114,6 @@ export default withCors(async (req, res) => {
         name: name.trim(),
         description: description?.trim() || '',
         avatar: avatar || '👥',
-        avatar_color: '#2c5f2e',
         invite_code,
         created_by: uid,
       })
