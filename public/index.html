@@ -174,6 +174,7 @@
     // ── Groups ─────────────────────────────────────────────
     async getMyGroups()         { if (!ONLINE) return []; return get('/api/groups') },
     async createGroup(d)        { if (!ONLINE) return null; return post('/api/groups', d) },
+    async updateGroup(id, d)    { if (!ONLINE) return null; return put('/api/groups?id='+id, d) },
     async lookupGroupByCode(code){ if (!ONLINE) return null; return get('/api/groups?code='+encodeURIComponent(code)) },
     async joinGroup(id)         { if (!ONLINE) return null; return post('/api/groups?action=join&id='+id, {}) },
     async leaveGroup(id)        { if (!ONLINE) return null; return del('/api/groups?id='+id) },
@@ -6516,6 +6517,10 @@ function _commClearContent(){
 function renderCommunity(){
   const s=D.settings;
   const grp=_myGroups.find(g=>g.id===_activeGroupId);
+  if(_activeGroupId&&!grp){
+    _activeGroupId=null;
+    _activeChannelId=null;
+  }
 
   const tabs=`<div class="lk-tabs">
     <div class="lk-tab${!_activeGroupId?' active':''}" onclick="switchCommFeed(null)">전체 피드</div>
@@ -6531,18 +6536,24 @@ function renderCommunity(){
     </div>
   </div>`;
 
-  const compose=`<div class="lk-compose-card">
+  const composeHint=_activeGroupId&&grp?`${esc(grp.name)}에 공유하기...`:'무슨 생각을 하고 있나요?';
+  const composeActions=_activeGroupId
+    ? `<button class="lk-compose-action" onclick="openPostModal('resource')">📎 자료 공유</button>
+      <button class="lk-compose-action" onclick="openPostModal('question')">❓ 질문하기</button>
+      <button class="lk-compose-action" onclick="openPostModal('notice')">📢 공지하기</button>`
+    : `<button class="lk-compose-action" onclick="openPostModal('general')">✍️ 글쓰기</button>
+      <button class="lk-compose-action" onclick="openPostModal('question')">❓ 질문하기</button>`;
+
+  const compose=`<div class="lk-compose-card${_activeGroupId?' group-compose':' global-compose'}">
     <div class="lk-compose-row">
       ${_commAv(s,40)}
       <div class="lk-compose-input" onclick="openPostModal()" tabindex="0"
         onkeydown="if(event.key==='Enter')openPostModal()">
-        ${grp?`${esc(grp.name)}에 공유하기...`:'무슨 생각을 하고 있나요?'}
+        ${composeHint}
       </div>
     </div>
     <div class="lk-compose-actions">
-      <button class="lk-compose-action" onclick="openPostModal('resource')">📎 자료 공유</button>
-      <button class="lk-compose-action" onclick="openPostModal('question')">❓ 질문하기</button>
-      <button class="lk-compose-action" onclick="openPostModal('notice')">📢 공지하기</button>
+      ${composeActions}
     </div>
   </div>`;
 
@@ -6558,7 +6569,8 @@ function renderCommunity(){
     <div onclick="openCreateChannelModal()" style="padding:5px 10px;border-radius:20px;font-size:12.5px;color:var(--accent);cursor:pointer;background:var(--surface2)">＋</div>
   </div>`:'';
 
-  const groupProfileBtn=_activeGroupId?`<div style="display:flex;justify-content:flex-end;padding:6px 20px 0">
+  const groupProfileBtn=_activeGroupId?`<div style="display:flex;gap:6px;justify-content:flex-end;padding:6px 20px 0">
+    <button class="btn btn-ghost btn-sm" onclick="openGroupSettingsModal()" title="그룹 설정">⚙️ 그룹 설정</button>
     <button class="btn btn-ghost btn-sm" onclick="openGroupProfileModal()" title="내 그룹 프로필">👤 내 프로필</button>
   </div>`:''
   return`<div class="lk-wrap">
@@ -6575,9 +6587,11 @@ async function loadCommunityPosts(force=false){
   if(!force&&_communityPosts.length>0)return;
   if(window.GUEST_MODE||!ApiClient.isOnline()||!ApiClient.getToken())return;
   _communityLoading=true;
+  const requestedGroupId=_activeGroupId||null;
   try{
-    const posts=await ApiClient.getCommunityPosts(_activeGroupId);
+    const posts=await ApiClient.getCommunityPosts(requestedGroupId);
     if(Array.isArray(posts)){
+      if((requestedGroupId||null)!==(_activeGroupId||null))return;
       const pending=_communityPosts.filter(p=>String(p.id).startsWith('tmp_'));
       _communityPosts=[...pending,...posts];
       if(VIEW==='community')_refreshFeed();
@@ -6712,15 +6726,76 @@ async function createGroup(){
     const grp=await ApiClient.createGroup({name,description:desc,avatar:'👥'});
     _myGroups=await ApiClient.getMyGroups()||[];
     document.getElementById('lk-group-overlay')?.remove();
-    switchCommFeed(grp.id);
+    switchCommFeed(null);
     showToast(`그룹 "${name}" 생성! 초대코드: ${grp.invite_code}`);
   }catch(e){if(msg)msg.textContent=e.message||'오류가 발생했어요';}
+}
+
+function openGroupSettingsModal(){
+  const grp=_myGroups.find(g=>g.id===_activeGroupId);
+  if(!grp)return;
+  const canEdit=grp.my_role==='admin'||grp.created_by===D.settings?.userId;
+  const modal=document.createElement('div');
+  modal.className='lk-group-modal-overlay';
+  modal.id='group-settings-overlay';
+  modal.innerHTML=`<div class="lk-group-modal" style="position:relative">
+    <button class="lk-gm-close" onclick="document.getElementById('group-settings-overlay')?.remove()">×</button>
+    <div class="lk-gm-header">
+      <div class="lk-gm-title">그룹 설정</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:5px">${esc(grp.name)}</div>
+    </div>
+    <div class="lk-gm-body">
+      <label style="font-size:12px;color:var(--text3);font-weight:700">초대 코드</label>
+      <div style="display:flex;gap:8px;margin:6px 0 14px">
+        <input class="lk-gm-input" id="gs-code" value="${esc(grp.invite_code||'')}" readonly style="margin:0;font-family:monospace">
+        <button class="btn btn-ghost" onclick="navigator.clipboard?.writeText(document.getElementById('gs-code')?.value||'');showToast('초대 코드를 복사했어요')" style="flex-shrink:0">복사</button>
+      </div>
+      <label style="font-size:12px;color:var(--text3);font-weight:700">그룹 이름</label>
+      <input class="lk-gm-input" id="gs-name" value="${esc(grp.name||'')}" maxlength="30" ${canEdit?'':'readonly'}>
+      <label style="font-size:12px;color:var(--text3);font-weight:700">설명</label>
+      <input class="lk-gm-input" id="gs-desc" value="${esc(grp.description||'')}" maxlength="100" ${canEdit?'':'readonly'}>
+      <label style="font-size:12px;color:var(--text3);font-weight:700">아바타</label>
+      <input class="lk-gm-input" id="gs-avatar" value="${esc(grp.avatar||'👥')}" maxlength="4" ${canEdit?'':'readonly'} style="width:80px">
+      <div style="font-size:12px;color:var(--text3);margin:8px 0 10px">멤버 ${grp.member_count||grp.members?.length||1}명 · 내 권한 ${esc(grp.my_role||'member')}</div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="leaveGroup('${grp.id}')">나가기</button>
+        ${canEdit?`<button class="btn btn-primary" onclick="saveGroupSettings()">저장</button>`:''}
+      </div>
+      ${canEdit?'':'<div style="font-size:11px;color:var(--text3);text-align:right;margin-top:8px">관리자만 그룹 정보를 수정할 수 있어요.</div>'}
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+}
+
+async function saveGroupSettings(){
+  const grp=_myGroups.find(g=>g.id===_activeGroupId);
+  if(!grp)return;
+  const name=(document.getElementById('gs-name')?.value||'').trim();
+  if(!name){showToast('그룹 이름을 입력해주세요');return;}
+  const payload={
+    name,
+    description:(document.getElementById('gs-desc')?.value||'').trim(),
+    avatar:(document.getElementById('gs-avatar')?.value||'👥').trim()||'👥',
+  };
+  try{
+    const updated=await ApiClient.updateGroup(grp.id,payload);
+    if(updated){
+      _myGroups=_myGroups.map(g=>g.id===grp.id?{...g,...updated,members:g.members,my_role:g.my_role,member_count:g.member_count}:g);
+    }else{
+      Object.assign(grp,payload);
+    }
+    document.getElementById('group-settings-overlay')?.remove();
+    if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
+    showToast('그룹 설정을 저장했어요');
+  }catch(e){showToast(e.message||'그룹 설정 저장 실패');}
 }
 
 async function leaveGroup(id){
   if(!confirm('그룹에서 나가시겠어요?'))return;
   await ApiClient.leaveGroup(id).catch(()=>null);
   _myGroups=_myGroups.filter(g=>g.id!==id);
+  document.getElementById('group-settings-overlay')?.remove();
   if(_activeGroupId===id){switchCommFeed(null);}
   else{document.getElementById('lk-group-overlay')?.remove();openGroupModal();}
 }
@@ -7326,7 +7401,7 @@ async function saveGroupProfile() {
     })
     if (!r.ok) throw new Error(await r.text())
     document.getElementById('gp-modal-overlay')?.remove()
-    loadCommunityFeed()
+    refreshCommunity()
   } catch(e) { alert('저장 실패: ' + e.message) }
 }
 
@@ -9622,6 +9697,7 @@ let _voiceSR=null;
 let _srBaseText='';
 let _srFinalText='';
 let _voiceFallbackStarting=false;
+let _voiceStopTimer=null;
 
 // Firefox 등 SR 미지원 브라우저용: 백그라운드에서 Whisper 미리 로드
 function _preloadWhisper(){
@@ -9635,9 +9711,41 @@ function _preloadWhisper(){
 }
 
 function toggleAgentVoice(){
+  if(_voiceRecording){_stopVoiceInput();return;}
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(SR&&!_voiceFallbackStarting) _toggleSR(SR);
   else _toggleWhisper();
+}
+
+function _clearVoiceStopTimer(){
+  if(_voiceStopTimer){clearTimeout(_voiceStopTimer);_voiceStopTimer=null;}
+}
+
+function _resetVoiceInput(state='idle'){
+  _clearVoiceStopTimer();
+  _voiceSR=null;
+  _voiceRecorder=null;
+  _voiceRecording=false;
+  _voiceFallbackStarting=false;
+  _updateVoiceBtn(state);
+}
+
+function _stopVoiceInput(){
+  _clearVoiceStopTimer();
+  if(_voiceSR){
+    try{_voiceSR.stop();}catch(e){_resetVoiceInput();}
+    return;
+  }
+  if(_voiceRecorder&&_voiceRecorder.state!=='inactive'){
+    try{_voiceRecorder.stop();}catch(e){_resetVoiceInput();}
+    return;
+  }
+  _resetVoiceInput();
+}
+
+function _isMobileLike(){
+  const ua=navigator.userAgent||'';
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(ua)||(navigator.maxTouchPoints||0)>1;
 }
 
 // ── SpeechRecognition 경로 (Chrome/Edge/Safari — 실시간, 딜레이 0) ──
@@ -9648,7 +9756,7 @@ function _toggleSR(SR){
   _srFinalText='';
   _voiceSR=new SR();
   _voiceSR.lang=({ko:'ko-KR',en:'en-US',zh:'zh-CN'})[D.settings?.lang||'ko']||'ko-KR';
-  _voiceSR.continuous=true;
+  _voiceSR.continuous=!_isMobileLike();
   _voiceSR.interimResults=true;
   _voiceSR.onresult=e=>{
     let interim='';
@@ -9667,21 +9775,26 @@ function _toggleSR(SR){
     }else if(err!=='aborted'&&err!=='no-speech'){
       showToast('음성 인식 오류: '+err);
     }
-    _voiceSR=null;_voiceRecording=false;_updateVoiceBtn('idle');
+    _voiceSR=null;_voiceRecording=false;
+    if(!shouldFallback)_updateVoiceBtn('idle');
     if(shouldFallback)setTimeout(()=>_toggleWhisper(),80);
   };
   _voiceSR.onend=()=>{
     // 최종 확정 텍스트만 남기기
     if(box&&_srFinalText)box.value=(_srBaseText+' '+_srFinalText).trim();
-    _voiceSR=null;_voiceRecording=false;
-    if(!_voiceFallbackStarting)_updateVoiceBtn('idle');
+    if(_voiceFallbackStarting){
+      _voiceSR=null;_voiceRecording=false;
+      return;
+    }
+    _resetVoiceInput();
   };
   try{
     _voiceSR.start();
     _voiceRecording=true;
     _updateVoiceBtn('recording');
   }catch(err){
-    _voiceSR=null;_voiceRecording=false;_updateVoiceBtn('idle');
+    _voiceSR=null;_voiceRecording=false;
+    _voiceFallbackStarting=true;
     _toggleWhisper();
   }
 }
@@ -9689,17 +9802,18 @@ function _toggleSR(SR){
 // ── Whisper 경로 (Firefox 등 SR 미지원 — 녹음 후 오프라인 변환) ──
 async function _toggleWhisper(){
   _voiceFallbackStarting=false;
-  if(_voiceRecording){_voiceRecorder?.stop();return;}
+  if(_voiceRecording){_stopVoiceInput();return;}
   if(!navigator.mediaDevices?.getUserMedia){showToast('이 브라우저는 마이크를 지원하지 않아요');return;}
   if(!window.MediaRecorder){showToast('이 브라우저는 녹음 입력을 지원하지 않아요');return;}
   let stream;
   try{stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});}
-  catch(err){showToast(err.name==='NotAllowedError'?'마이크 권한을 허용해주세요 🎙️':'마이크를 사용할 수 없어요');return;}
+  catch(err){_resetVoiceInput();showToast(err.name==='NotAllowedError'?'마이크 권한을 허용해주세요 🎙️':'마이크를 사용할 수 없어요');return;}
   _voiceChunks=[];
   const mime=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'].find(m=>MediaRecorder.isTypeSupported(m))||'';
   _voiceRecorder=new MediaRecorder(stream,mime?{mimeType:mime}:{});
   _voiceRecorder.ondataavailable=e=>{if(e.data.size>0)_voiceChunks.push(e.data);};
   _voiceRecorder.onstop=async()=>{
+    _clearVoiceStopTimer();
     stream.getTracks().forEach(t=>t.stop());
     _voiceRecording=false;_updateVoiceBtn('transcribing');
     try{
@@ -9709,10 +9823,16 @@ async function _toggleWhisper(){
       if(box&&text)box.value=(box.value+' '+text).trim();
       else if(!text)showToast('음성을 인식하지 못했어요. 다시 시도해주세요.');
     }catch(e){showToast('음성 변환 오류가 발생했어요.');}
-    _updateVoiceBtn('idle');
+    _resetVoiceInput();
+  };
+  _voiceRecorder.onerror=()=>{
+    stream.getTracks().forEach(t=>t.stop());
+    showToast('녹음을 시작하지 못했어요.');
+    _resetVoiceInput();
   };
   _voiceRecorder.start(200);
   _voiceRecording=true;_updateVoiceBtn('recording');
+  _voiceStopTimer=setTimeout(()=>_stopVoiceInput(),15000);
 }
 
 async function _transcribeWithWhisper(blob){
