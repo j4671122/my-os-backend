@@ -186,6 +186,10 @@
     async updateResource(id, d)         { if (!ONLINE) return null; return put('/api/resources?id='+id+'&itemType=item', d) },
     async deleteResFolder(id)           { if (!ONLINE) return null; return del('/api/resources?id='+id+'&itemType=folder') },
     async deleteResource(id)            { if (!ONLINE) return null; return del('/api/resources?id='+id+'&itemType=item') },
+    async assignTask(id, assigneeId, assigneeName, assigneeAvatar) {
+      if (!ONLINE) return null
+      return api('PATCH', '/api/tasks?action=assign&id='+id, {assigneeId, assigneeName, assigneeAvatar})
+    },
 
     // ── Google Calendar ────────────────────────────────────
     async gcalAuthUrl()                { if (!ONLINE) return null; return post('/api/gcal/auth', {}) },
@@ -281,6 +285,13 @@ body{font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;b
 .sb-item .ico{font-size:14px;width:17px;text-align:center}
 .sb-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:10px;min-width:16px;text-align:center}
 .sb-badge.gray{background:var(--border);color:var(--text3)}
+.sb-mode-toggle{display:flex;gap:0;margin:8px 12px 6px;background:var(--surface2);border-radius:10px;padding:3px;flex-shrink:0}
+.sb-mode-btn{flex:1;padding:7px 0;border:none;background:none;border-radius:7px;font-size:12px;font-weight:700;color:var(--text3);cursor:pointer;transition:all .18s;letter-spacing:.2px}
+.sb-mode-btn.active{background:var(--surface);color:var(--text);box-shadow:0 1px 6px rgba(0,0,0,.10)}
+.sb-mode-btn.work-btn.active{color:var(--accent)}
+.sb-section{display:none}
+.sb-section.visible{display:block}
+.sb-work-empty{padding:40px 16px;text-align:center;color:var(--text3);font-size:12.5px;line-height:1.7}
 .folder-row{display:flex;align-items:center;gap:7px;padding:5px 16px;font-size:12.5px;color:var(--text2);cursor:pointer;position:relative}
 .folder-row:hover{background:var(--surface2)}
 .folder-row.active{background:var(--accent-light);color:var(--accent);font-weight:600}
@@ -1122,6 +1133,39 @@ body.dark .ce-toolbar__plus,.body.dark .ce-toolbar__settings-btn{color:var(--tex
 .lk-type-badge.resource{background:#f0fdf4;color:#16a34a}
 .lk-card-text{font-size:15px;color:var(--text);line-height:1.65;white-space:pre-wrap;word-break:break-word;margin-bottom:16px}
 .lk-card-footer{display:flex;align-items:center;gap:0;border-top:1px solid var(--border);padding-top:10px;margin-top:4px}
+.lk-reactions{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.lk-reaction{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;border:1.5px solid var(--border);background:none;cursor:pointer;font-size:13px;transition:all .12s;font-family:inherit}
+.lk-reaction:hover,.lk-reaction.mine{background:var(--accent-light);border-color:var(--accent)}
+.lk-reaction-count{font-size:12px;font-weight:700;color:var(--text3)}
+.lk-reaction.mine .lk-reaction-count{color:var(--accent)}
+.lk-emoji-picker{position:absolute;z-index:100;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px;box-shadow:0 8px 30px rgba(0,0,0,.15);display:flex;flex-wrap:wrap;gap:4px;width:220px}
+.lk-emoji-opt{font-size:20px;cursor:pointer;padding:4px 6px;border-radius:8px;border:none;background:none;transition:background .1s}
+.lk-emoji-opt:hover{background:var(--surface2)}
+.dm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;display:flex;align-items:flex-end;justify-content:flex-end;padding:20px;pointer-events:none}
+.dm-overlay.show{pointer-events:all}
+.dm-panel{width:340px;height:500px;background:var(--surface);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.25);display:flex;flex-direction:column;transform:translateY(20px);opacity:0;transition:all .2s;overflow:hidden}
+.dm-overlay.show .dm-panel{transform:translateY(0);opacity:1}
+.dm-panel-header{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);background:var(--surface)}
+.dm-panel-title{font-size:14px;font-weight:800;flex:1;color:var(--text)}
+.dm-panel-close{background:none;border:none;cursor:pointer;font-size:18px;color:var(--text3);padding:3px;border-radius:50%}
+.dm-list{flex:1;overflow-y:auto;padding:8px}
+.dm-thread{display:flex;gap:10px;align-items:center;padding:10px;border-radius:12px;cursor:pointer;transition:background .12s}
+.dm-thread:hover{background:var(--surface2)}
+.dm-thread-name{font-size:13.5px;font-weight:700;color:var(--text)}
+.dm-thread-preview{font-size:12px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.dm-thread-unread{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-left:auto}
+.dm-conv{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+.dm-msg{max-width:80%;padding:9px 13px;border-radius:16px;font-size:13.5px;line-height:1.5;word-break:break-word}
+.dm-msg.mine{background:var(--accent);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.dm-msg.theirs{background:var(--surface2);color:var(--text);align-self:flex-start;border-bottom-left-radius:4px}
+.dm-msg-time{font-size:10px;opacity:.6;margin-top:3px}
+.dm-input-row{display:flex;gap:8px;padding:12px;border-top:1px solid var(--border)}
+.dm-input{flex:1;border:1.5px solid var(--border);border-radius:22px;padding:8px 14px;font-size:13px;font-family:inherit;outline:none;background:var(--surface);color:var(--text)}
+.dm-input:focus{border-color:var(--accent)}
+.dm-send{padding:8px 14px;border-radius:22px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer}
+.dm-fab{position:fixed;bottom:80px;right:20px;width:50px;height:50px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:200;display:none;align-items:center;justify-content:center;transition:all .15s}
+.dm-fab.show{display:flex}
+.dm-fab-badge{position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:10px;min-width:16px;text-align:center}
 .lk-act{display:flex;align-items:center;gap:5px;padding:6px 12px;border:none;background:none;border-radius:10px;cursor:pointer;font-size:13px;color:var(--text3);font-weight:500;transition:all .12s}
 .lk-act:hover{color:var(--accent);background:var(--accent-light)}
 .lk-act.liked{color:#e11d48}
@@ -1155,6 +1199,84 @@ body.dark .ce-toolbar__plus,.body.dark .ce-toolbar__settings-btn{color:var(--tex
 .lk-gm-input:focus{border-color:var(--accent)}
 .lk-gm-btn{width:100%;padding:11px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px}
 .lk-gm-close{position:absolute;top:16px;right:16px;background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3)}
+/* ── Team Board ── */
+.tb-wrap{padding:20px;min-height:100%}
+.tb-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap}
+.tb-title{font-size:17px;font-weight:800;color:var(--text)}
+.tb-add-member{padding:7px 16px;border-radius:20px;border:1.5px solid var(--accent);background:none;color:var(--accent);font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .12s}
+.tb-add-member:hover{background:var(--accent-light)}
+.tb-board{display:flex;gap:14px;overflow-x:auto;padding-bottom:16px;align-items:flex-start}
+.tb-board::-webkit-scrollbar{height:5px}
+.tb-board::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.tb-col{flex-shrink:0;width:240px;background:var(--surface2);border-radius:16px;padding:14px;transition:background .15s}
+.tb-col.drag-over{background:var(--accent-light);outline:2px dashed var(--accent)}
+.tb-col-header{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.tb-col-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;font-weight:700;color:#fff}
+.tb-col-name{font-size:13px;font-weight:700;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tb-col-count{font-size:11px;color:var(--text3);background:var(--border);padding:1px 7px;border-radius:10px}
+.tb-col-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;padding:3px 6px;border-radius:6px;opacity:.5;transition:opacity .12s}
+.tb-col-del:hover{opacity:1;color:#dc2626}
+.tb-task-list{min-height:80px;display:flex;flex-direction:column;gap:7px}
+.tb-card{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:11px 13px;cursor:grab;transition:all .15s;user-select:none}
+.tb-card:hover{box-shadow:0 3px 12px rgba(0,0,0,.08);border-color:var(--accent)}
+.tb-card.dragging{opacity:.4;cursor:grabbing}
+.tb-card-text{font-size:13px;color:var(--text);line-height:1.45;margin-bottom:6px;word-break:break-word}
+.tb-card-text.done{text-decoration:line-through;color:var(--text3)}
+.tb-card-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.tb-card-folder{font-size:10.5px;color:var(--text3);background:var(--surface2);padding:1px 7px;border-radius:8px}
+.tb-card-due{font-size:10.5px;color:var(--text3)}
+.tb-card-due.overdue{color:#ef4444}
+.tb-card-pri{font-size:9px;font-weight:700;padding:1px 6px;border-radius:6px}
+.tb-card-pri.high{background:#fef2f2;color:#ef4444}
+.tb-card-pri.medium{background:#fffbeb;color:#f59e0b}
+.tb-empty-col{text-align:center;padding:20px 8px;color:var(--text3);font-size:12px;opacity:.6;border:1.5px dashed var(--border);border-radius:10px}
+/* ── Share Goal Modal ── */
+.sg-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.sg-modal{background:var(--surface);border-radius:20px;width:340px;max-width:95vw;box-shadow:0 24px 60px rgba(0,0,0,.25);padding:24px}
+.sg-modal-title{font-size:16px;font-weight:800;margin-bottom:16px}
+.sg-radio-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:14px;color:var(--text)}
+.sg-radio-row:last-child{border-bottom:none}
+.sg-radio-row input{accent-color:var(--accent)}
+.sg-save-btn{width:100%;margin-top:16px;padding:10px;border-radius:10px;background:var(--accent);color:#fff;font-weight:700;font-size:14px;border:none;cursor:pointer}
+.sg-save-btn:hover{opacity:.9}
+.sg-shared-badge{display:inline-block;font-size:10px;background:#3b82f622;color:#3b82f6;border-radius:4px;padding:1px 5px;margin-left:4px;font-weight:600}
+/* ── Group Dashboard ── */
+.gd-wrap{padding:0 0 40px}
+.gd-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.gd-pill{padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;background:var(--surface2);color:var(--text2);border:1.5px solid var(--border);transition:all .15s}
+.gd-pill.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.gd-section{background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:18px 20px;margin-bottom:16px}
+.gd-section-title{font-size:14px;font-weight:800;margin-bottom:14px;color:var(--text)}
+.gd-empty{color:var(--text3);font-size:13px;text-align:center;padding:18px 0}
+.gd-goal-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.gd-goal-row:last-child{border-bottom:none}
+.gd-goal-name{flex:1;font-size:13px;font-weight:600;color:var(--text)}
+.gd-prog-track{flex:0 0 100px;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.gd-prog-fill{height:100%;background:var(--accent);border-radius:3px}
+.gd-prog-pct{font-size:11px;color:var(--text3);min-width:32px;text-align:right}
+.gd-post-row{padding:9px 0;border-bottom:1px solid var(--border)}
+.gd-post-row:last-child{border-bottom:none}
+.gd-post-author{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:2px}
+.gd-post-content{font-size:13px;color:var(--text);line-height:1.4;white-space:pre-line;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.gd-post-time{font-size:11px;color:var(--text3);margin-top:3px}
+.gd-member-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.gd-member-row:last-child{border-bottom:none}
+.gd-member-av{width:30px;height:30px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.gd-member-name{flex:1;font-size:13px;font-weight:600;color:var(--text)}
+.gd-member-stat{font-size:12px;color:var(--text3)}
+.tb-member-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.tb-member-modal{background:var(--surface);border-radius:20px;width:360px;max-width:95vw;box-shadow:0 24px 60px rgba(0,0,0,.25);padding:24px}
+.tb-mm-title{font-size:16px;font-weight:800;margin-bottom:18px}
+.tb-mm-row{display:flex;gap:10px;margin-bottom:10px}
+.tb-mm-inp{flex:1;border:1.5px solid var(--border);border-radius:10px;padding:9px 13px;font-size:14px;font-family:inherit;outline:none;background:var(--surface);color:var(--text);transition:border-color .15s}
+.tb-mm-inp:focus{border-color:var(--accent)}
+.tb-mm-av-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.tb-mm-av-opt{width:36px;height:36px;border-radius:50%;border:2px solid transparent;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.tb-mm-av-opt.selected{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-light)}
+.tb-mm-colors{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.tb-mm-color{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .12s}
+.tb-mm-color.selected{border-color:var(--text);transform:scale(1.15)}
+.tb-mm-btn{width:100%;padding:11px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer}
 /* Resource Room */
 .res-layout{display:flex;height:calc(100vh - 120px);gap:0}
 .res-sidebar{width:220px;flex-shrink:0;border-right:1px solid var(--border);padding:16px 12px;overflow-y:auto}
@@ -1413,6 +1535,8 @@ body.dark .ab-btns{border-top-color:rgba(255,255,255,.07)}
   .agent-body{flex-direction:column}
   .agent-chat-panel{border-right:none}
 }
+.lk-title-badge{font-size:10px;background:var(--accent-light);color:var(--accent);border-radius:10px;padding:1px 7px;margin-left:4px;font-weight:600;}
+.sg-shared-badge{font-size:11px;background:#3b82f622;color:#3b82f6;border-radius:6px;padding:2px 8px;}
 </style>
 </head>
 <body>
@@ -1497,30 +1621,51 @@ body.dark .ab-btns{border-top-color:rgba(255,255,255,.07)}
     </div>
     <span class="profile-settings-ico">⚙️</span>
   </div>
-  <div class="sb-label">스마트 목록</div>
-  <div class="sb-item" id="nav-home" onclick="setView('home')"><span class="ico">🏠</span>홈</div>
-  <div class="sb-item" id="nav-today" onclick="setView('today')"><span class="ico">📋</span>Todo<span class="sb-badge" id="b-today">0</span></div>
-  <div class="sb-item" id="nav-todayonly" onclick="setView('todayonly')"><span class="ico">☀️</span>오늘<span class="sb-badge" id="b-todayonly">0</span></div>
-  <div class="sb-item" id="nav-all" onclick="setView('all')"><span class="ico">📋</span>전체<span class="sb-badge gray" id="b-all">0</span></div>
-  <div class="sb-item" id="nav-done" onclick="setView('done')"><span class="ico">✔️</span>완료<span class="sb-badge gray" id="b-done">0</span></div>
-  <div class="sb-item" id="nav-high" onclick="setView('high')"><span class="ico">🔴</span>중요<span class="sb-badge gray" id="b-high">0</span></div>
-  <div class="sb-item" id="nav-dashboard" onclick="setView('dashboard')"><span class="ico">📊</span>대시보드</div>
-  <div class="sb-item" id="nav-search" onclick="setView('search')"><span class="ico">🔍</span>검색</div>
-  <div class="sb-item" id="nav-settings" onclick="setView('settings')"><span class="ico">⚙️</span>설정</div>
-  <div class="sb-label">폴더</div>
-  <div id="sb-folders"></div>
-  <button class="sb-add-btn" onclick="openFolderModal()"><span style="font-size:14px">＋</span> 폴더 추가</button>
-  <div class="sb-item" id="nav-habits" onclick="setView('habits')" style="margin-top:4px"><span class="ico">💪</span>습관</div>
-  <div class="sb-item" id="nav-goals" onclick="setView('goals')"><span class="ico">🎯</span>목표</div>
-  <div class="sb-item" id="nav-memo" onclick="setView('memo')"><span class="ico">📝</span>메모</div>
-  <div class="sb-item" id="nav-pomodoro" onclick="setView('pomodoro')"><span class="ico">⏱</span>포모도로</div>
-  <div class="sb-item" id="nav-time" onclick="setView('time')"><span class="ico">🕒</span>Time Tracker</div>
-  <div class="sb-item" id="nav-routine" onclick="setView('routine')"><span class="ico">🌅</span>루틴</div>
-  <div class="sb-item" id="nav-community" onclick="setView('community')"><span class="ico">🌐</span>커뮤니티</div>
-  <div class="sb-item" id="nav-resources" onclick="setView('resources')"><span class="ico">📂</span>자료실</div>
-  <div class="sb-item" id="nav-calendar" onclick="setView('calendar')"><span class="ico">📅</span>캘린더</div>
-  <div class="sb-label" style="margin-top:6px">태그</div>
-  <div class="tag-cloud" id="sb-tags"></div>
+  <!-- 개인 / 워크 모드 토글 -->
+  <div class="sb-mode-toggle">
+    <button class="sb-mode-btn active" data-mode="personal" onclick="setNavMode('personal',true)">나</button>
+    <button class="sb-mode-btn work-btn" data-mode="work" onclick="setNavMode('work',true)">워크</button>
+  </div>
+
+  <!-- ── 개인 섹션 ── -->
+  <div class="sb-section visible" id="sb-personal">
+    <div class="sb-label">스마트 목록</div>
+    <div class="sb-item" id="nav-home" onclick="setView('home')"><span class="ico">🏠</span>홈</div>
+    <div class="sb-item" id="nav-today" onclick="setView('today')"><span class="ico">📋</span>Todo<span class="sb-badge" id="b-today">0</span></div>
+    <div class="sb-item" id="nav-todayonly" onclick="setView('todayonly')"><span class="ico">☀️</span>오늘<span class="sb-badge" id="b-todayonly">0</span></div>
+    <div class="sb-item" id="nav-all" onclick="setView('all')"><span class="ico">📋</span>전체<span class="sb-badge gray" id="b-all">0</span></div>
+    <div class="sb-item" id="nav-done" onclick="setView('done')"><span class="ico">✔️</span>완료<span class="sb-badge gray" id="b-done">0</span></div>
+    <div class="sb-item" id="nav-high" onclick="setView('high')"><span class="ico">🔴</span>중요<span class="sb-badge gray" id="b-high">0</span></div>
+    <div class="sb-item" id="nav-dashboard" onclick="setView('dashboard')"><span class="ico">📊</span>대시보드</div>
+    <div class="sb-item" id="nav-search" onclick="setView('search')"><span class="ico">🔍</span>검색</div>
+    <div class="sb-item" id="nav-profile" onclick="setView('profile')"><span class="ico">👤</span>프로필</div>
+    <div class="sb-item" id="nav-settings" onclick="setView('settings')"><span class="ico">⚙️</span>설정</div>
+    <div class="sb-label">폴더</div>
+    <div id="sb-folders"></div>
+    <button class="sb-add-btn" onclick="openFolderModal()"><span style="font-size:14px">＋</span> 폴더 추가</button>
+    <div class="sb-item" id="nav-habits" onclick="setView('habits')" style="margin-top:4px"><span class="ico">💪</span>습관</div>
+    <div class="sb-item" id="nav-goals" onclick="setView('goals')"><span class="ico">🎯</span>목표</div>
+    <div class="sb-item" id="nav-memo" onclick="setView('memo')"><span class="ico">📝</span>메모</div>
+    <div class="sb-item" id="nav-pomodoro" onclick="setView('pomodoro')"><span class="ico">⏱</span>포모도로</div>
+    <div class="sb-item" id="nav-time" onclick="setView('time')"><span class="ico">🕒</span>Time Tracker</div>
+    <div class="sb-item" id="nav-routine" onclick="setView('routine')"><span class="ico">🌅</span>루틴</div>
+    <div class="sb-item" id="nav-calendar" onclick="setView('calendar')"><span class="ico">📅</span>캘린더</div>
+    <div class="sb-label" style="margin-top:6px">태그</div>
+    <div class="tag-cloud" id="sb-tags"></div>
+  </div>
+
+  <!-- ── 워크 섹션 ── -->
+  <div class="sb-section" id="sb-work">
+    <div class="sb-label">커뮤니티</div>
+    <div class="sb-item" id="nav-community" onclick="setView('community')"><span class="ico">🌐</span>커뮤니티</div>
+    <div class="sb-label">자료</div>
+    <div class="sb-item" id="nav-resources" onclick="setView('resources')"><span class="ico">📂</span>자료실</div>
+    <div class="sb-label">팀</div>
+    <div class="sb-item" id="nav-teamboard" onclick="setView('teamboard')"><span class="ico">🗂</span>팀 보드</div>
+    <div class="sb-item" id="nav-groupdash" onclick="setView('groupdash')"><span class="ico">📊</span>그룹 대시보드</div>
+    <div class="sb-label" style="margin-top:6px">더 보기</div>
+    <div class="sb-item" id="nav-settings-work" onclick="setView('settings')"><span class="ico">⚙️</span>설정</div>
+  </div>
 </aside>
 
 <!-- Main -->
@@ -1895,13 +2040,28 @@ const TAG_COLORS=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#
 
 let D={tasks:[],folders:[],goals:[],habits:[],tagReg:{},events:[],gcalConnected:false,gcalEvents:[],settings:{name:'',goal:'',notionKey:'',notionDb:''}};
 let VIEW='today';
+let _navMode='personal'; // 'personal' | 'work'
 let _communityPosts=[];
 let _communityLoading=false;
 let _myGroups=[];
 let _activeGroupId=null;
+let _groupProfiles = {};      // { [groupId]: { [userId]: gpData } }
+let _myProfilePresets = [];   // loaded from server
+let _profilePageUserId = null; // for profile page
+let _gdGroupId=null;
+let _gdData=null;
+let _gdLoading=false;
+let _activeChannelId=null;
+let _groupChannels={};
+let _channelMessages={};
+let _dmOpen=false;
+let _dmWithUserId=null;
+let _dmMessages=[];
+let _dmThreads=[];
 let _resFolders=[];
 let _resItems=[];
 let _resFolderId=null;
+let _tbDragTaskId=null;
 let openTaskIds=new Set();
 let dragId=null,dragOver=null;
 let FOLDER_EDIT=null;
@@ -3563,6 +3723,10 @@ const AVATAR_EMOJIS=['😊','😎','🤓','🧑‍💻','👨‍🎨','🦊','�
 function renderSettings(){
   const s=D.settings;
   const tab=s.settingsTab||'profile';
+  if (!_myProfilePresets.length) {
+    fetch('/api/profile?presets=1', { headers: { Authorization: 'Bearer ' + ApiClient.getToken() } })
+      .then(r => r.json()).then(d => { _myProfilePresets = d.presets || []; render() }).catch(()=>{})
+  }
   const badgesHTML=badgePoolHTML(); // 칭호 풀 (최대 5개, 홀드 포함)
   const tabsHTML=getSettingTabs().map(tb=>`<div class="stab${tab===tb.id?' active':''}" onclick="switchSettingsTab('${tb.id}')">${tb.label}</div>`).join('');
   let content='';
@@ -3618,6 +3782,7 @@ function renderSettings(){
       </div>
       <p style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.6">권한 등급은 관리자가 원격으로 설정합니다. 나중에 관리자 패널이 추가될 예정이에요.</p>
     </div>
+    ${_renderPresetsSection()}
     <button class="btn btn-primary" onclick="saveSettings()" style="width:100%">💾 프로필 저장</button>`;
   }
   else if(tab==='ai'){
@@ -4494,7 +4659,7 @@ document.getElementById('confirm-overlay').addEventListener('click',function(e){
 // RENDER: SIDEBAR
 // ═══════════════════════════════════════════════════════════
 function renderSidebar(){
-  ['today','todayonly','all','done','high','dashboard','goals','habits','search','settings','home','time','memo','pomodoro','routine','community','calendar'].forEach(v=>{
+  ['today','todayonly','all','done','high','dashboard','goals','habits','search','settings','home','time','memo','pomodoro','routine','community','calendar','resources','teamboard','groupdash','profile'].forEach(v=>{
     document.getElementById('nav-'+v)?.classList.toggle('active',VIEW===v);
   });
   // Profile section highlight when in settings
@@ -4626,14 +4791,33 @@ function updateBottomNav(){
   document.getElementById('bn-more')?.classList.toggle('active',!ids.includes(VIEW));
 }
 
+const _WORK_VIEWS=new Set(['community','resources','teamboard','groupdash']);
+
+function setNavMode(mode, autoNav=false){
+  _navMode=mode;
+  document.querySelectorAll('.sb-mode-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.mode===mode);
+  });
+  document.getElementById('sb-personal')?.classList.toggle('visible',mode==='personal');
+  document.getElementById('sb-work')?.classList.toggle('visible',mode==='work');
+  if(D.settings){D.settings.navMode=mode;saveD();}
+  // 탭 수동 전환 시 해당 공간 기본 뷰로 이동
+  if(autoNav){
+    if(mode==='work'&&!_WORK_VIEWS.has(VIEW))setView('community');
+    if(mode==='personal'&&_WORK_VIEWS.has(VIEW))setView('home');
+  }
+}
+
 function setView(v){
   VIEW=v;
   D.settings.currentView=v;
+  // 뷰에 맞춰 nav 모드 자동 전환
+  const targetMode=_WORK_VIEWS.has(v)?'work':'personal';
+  if(_navMode!==targetMode)setNavMode(targetMode);
   saveD();
   if(v!=='done'){_doneSelectMode=false;_selectedDoneIds.clear();}
   closeNotifPanel();
   closeMobileSidebar();
-  // 포모도로 타이머 떠나도 유지 (인터벌 유지)
   render();
 }
 function render(){
@@ -4641,6 +4825,9 @@ function render(){
   // FAB: home 뷰에서만 표시
   const fab=document.getElementById('home-fab');
   if(fab)fab.classList.toggle('show',VIEW==='home');
+  // DM FAB: work 뷰에서 표시
+  const dmFab=document.getElementById('dm-fab');
+  if(dmFab)dmFab.classList.toggle('show',_WORK_VIEWS.has(VIEW));
   const va=document.getElementById('view-area');
   if(VIEW==='dashboard'){va.innerHTML=renderDashboard();return}
   if(VIEW==='goals'){va.innerHTML=renderGoals();return}
@@ -4654,6 +4841,9 @@ function render(){
   if(VIEW==='routine'){va.innerHTML=renderRoutine();return}
   if(VIEW==='community'){va.innerHTML=renderCommunity();loadCommunityPosts();_loadQuill().then(()=>{_commQuillInst=null;_initCommQuill();});return}
   if(VIEW==='resources'){va.innerHTML=renderResources();loadResources();return}
+  if(VIEW==='teamboard'){va.innerHTML=renderTeamBoard();return}
+  if(VIEW==='groupdash'){va.innerHTML=renderGroupDash();return}
+  if(VIEW==='profile'){va.innerHTML=renderProfilePage();return}
   if(VIEW==='calendar'){setTimeout(()=>loadGcalEvents(),0);va.innerHTML=renderCalendar();return}
   va.innerHTML=renderTaskView();
   openTaskIds.forEach(id=>{
@@ -6135,6 +6325,22 @@ let _commQuillInst=null;
 let _commQuillLoaded=false;
 let _commQuillLoading=false;
 
+function _parseContent(text){
+  return esc(text).replace(/@([a-zA-Z0-9_]+)/g,'<span style="color:var(--accent);font-weight:600">@$1</span>');
+}
+
+function _resolveAuthor(post) {
+  if (!_activeGroupId) return { name: post.author, avatar: post.avatar, avatarImg: post.avatar_img, showTitle: true, showAvatar: true }
+  // Use server-enriched group profile fields if present
+  return {
+    name:      post.group_nickname || post.author,
+    avatar:    (post.show_avatar === false ? '?' : (post.group_avatar || post.avatar)),
+    avatarImg: (post.show_avatar === false ? '' : (post.group_avatar_img || post.avatar_img || '')),
+    showTitle: post.show_title !== false,
+    showAvatar: post.show_avatar !== false,
+  }
+}
+
 function _buildFeedHTML(posts){
   const s=D.settings;
   if(_communityLoading&&!posts.length){
@@ -6149,10 +6355,28 @@ function _buildFeedHTML(posts){
   }
   const typeLabel={general:'일반',question:'질문',notice:'공지',resource:'자료'};
   const typeClass={general:'general',question:'question',notice:'notice',resource:'resource'};
-  return posts.map(p=>{
+  const pinnedPosts=posts.filter(p=>p.pinned);
+  const pinnedBanner=pinnedPosts.length?`<div style="background:var(--accent-light);border-left:3px solid var(--accent);border-radius:10px;padding:8px 14px;margin:8px 20px;font-size:13px;color:var(--accent);font-weight:600">
+    📌 고정된 게시물: ${pinnedPosts.map(p=>`<span style="cursor:pointer;text-decoration:underline" onclick="document.getElementById('commcard-${p.id}')?.scrollIntoView({behavior:'smooth'})">${esc(p.author)}의 글</span>`).join(', ')}
+  </div>`:'';
+  return pinnedBanner+posts.map(p=>{
     const ts=p.created_at?_commTimeAgo(new Date(p.created_at).getTime()):_commTimeAgo(p.createdAt||0);
     const cCount=(p.comments||[]).length;
     const pt=p.post_type||'general';
+    const myUid=D.settings?.userId||'me';
+    const reactions=p.reactions||{};
+    const reactionsHTML=Object.keys(reactions).length?`
+      <div class="lk-reactions">
+        ${Object.entries(reactions).map(([emoji,users])=>{
+          const mine=users.includes(myUid);
+          return`<button class="lk-reaction${mine?' mine':''}" onclick="communityReact('${p.id}','${emoji}')">
+            ${emoji}<span class="lk-reaction-count">${users.length}</span>
+          </button>`;
+        }).join('')}
+        <button class="lk-reaction" onclick="openEmojiPicker(event,'${p.id}')" style="padding:3px 7px">＋</button>
+      </div>`:`<div class="lk-reactions" style="border:none;padding:0;margin-top:4px">
+        <button class="lk-reaction" onclick="openEmojiPicker(event,'${p.id}')" style="opacity:.5">😊 반응</button>
+      </div>`;
     const repliesHTML=p.showComments?`<div class="lk-replies">
       ${(p.comments||[]).map(c=>`<div class="lk-reply">
         ${_commAv(c,32)}
@@ -6171,20 +6395,22 @@ function _buildFeedHTML(posts){
         <button class="lk-reply-send" onclick="communityComment('${p.id}')">↵</button>
       </div>
     </div>`:'';
-    return`<div class="lk-card" id="commcard-${p.id}">
+    const ra = _resolveAuthor(p)
+    return`<div class="lk-card${p.pinned?' pinned':''}" id="commcard-${p.id}"${p.pinned?' style="border-color:var(--accent);border-width:2px"':''}>
       <div class="lk-card-header">
-        ${_commAv(p,44)}
+        ${_commAv({avatar:ra.avatar,avatarImg:ra.avatarImg,avatarBg:p.avatarBg,avatarBgGrad:p.avatarBgGrad},44)}
         <div class="lk-card-info">
-          <div class="lk-card-name">${esc(p.author)}</div>
-          ${p.handle?`<div class="lk-card-handle">@${esc(p.handle)}</div>`:''}
-          <div class="lk-card-meta">${ts}</div>
+          <div class="lk-card-name">${esc(ra.name)}${ra.showTitle && p.badge ? `<span class="lk-title-badge">${esc(p.badge)}</span>` : ''}</div>
+          ${!_activeGroupId && p.handle?`<div class="lk-card-handle">@${esc(p.handle)}</div>`:''}
+          <div class="lk-card-meta">${ts}${p.pinned?' · 📌 고정':''}</div>
         </div>
         <div class="lk-card-actions-top">
+          ${_activeGroupId?`<button class="lk-card-del" onclick="communityPin('${p.id}')" title="${p.pinned?'핀 해제':'핀 고정'}" style="opacity:${p.pinned?.8:.4}">${p.pinned?'📌':'📍'}</button>`:''}
           ${p.isOwn?`<button class="lk-card-del" onclick="communityDelete('${p.id}')" title="삭제">🗑</button>`:''}
         </div>
       </div>
       ${pt!=='general'?`<div class="lk-type-badge ${typeClass[pt]||'general'}">${typeLabel[pt]||pt}</div>`:''}
-      <div class="lk-card-text">${esc(p.content)}</div>
+      <div class="lk-card-text">${_parseContent(p.content)}</div>
       <div class="lk-card-footer">
         <button class="lk-act" onclick="communityToggleComments('${p.id}')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01z"/></svg>
@@ -6195,6 +6421,7 @@ function _buildFeedHTML(posts){
           ${p.likes?`<span>${p.likes}</span>`:'<span>좋아요</span>'}
         </button>
       </div>
+      ${reactionsHTML}
       ${repliesHTML}
     </div>`;
   }).join('');
@@ -6309,9 +6536,26 @@ function renderCommunity(){
     </div>
   </div>`;
 
+  const channelBar=_activeGroupId?`<div style="display:flex;gap:6px;padding:8px 20px;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none">
+    <div onclick="switchChannel(null)" style="padding:5px 12px;border-radius:20px;font-size:12.5px;font-weight:600;cursor:pointer;background:${!_activeChannelId?'var(--accent)':'var(--surface2)'};color:${!_activeChannelId?'#fff':'var(--text3)'}">
+      # 전체 피드
+    </div>
+    ${(_groupChannels[_activeGroupId]||[]).map(ch=>`
+      <div onclick="switchChannel('${ch.id}')" style="padding:5px 12px;border-radius:20px;font-size:12.5px;font-weight:600;cursor:pointer;background:${_activeChannelId===ch.id?'var(--accent)':'var(--surface2)'};color:${_activeChannelId===ch.id?'#fff':'var(--text3)'}">
+        # ${esc(ch.name)}
+      </div>
+    `).join('')}
+    <div onclick="openCreateChannelModal()" style="padding:5px 10px;border-radius:20px;font-size:12.5px;color:var(--accent);cursor:pointer;background:var(--surface2)">＋</div>
+  </div>`:'';
+
+  const groupProfileBtn=_activeGroupId?`<div style="display:flex;justify-content:flex-end;padding:6px 20px 0">
+    <button class="btn btn-ghost btn-sm" onclick="openGroupProfileModal()" title="내 그룹 프로필">👤 내 프로필</button>
+  </div>`:''
   return`<div class="lk-wrap">
     <div class="lk-header">${tabs}</div>
+    ${groupProfileBtn}
     ${compose}
+    ${channelBar}
     <div id="comm-feed-area">${_buildFeedHTML(_communityPosts)}</div>
   </div>`;
 }
@@ -6354,7 +6598,7 @@ function openPostModal(type='general'){
           <button class="lk-type-btn${_postModalType===t?' active':''}" onclick="setPostType('${t}')">${typeLabels[t]}</button>
         `).join('')}
       </div>
-      <textarea class="lk-post-textarea" id="lk-post-content" placeholder="무슨 생각을 하고 있나요?" maxlength="1000"
+      <textarea class="lk-post-textarea" id="lk-post-content" placeholder="무슨 생각을 하고 있나요? (@이름 으로 멘션)" maxlength="1000"
         oninput="const r=1000-this.value.length;const el=document.getElementById('lk-post-char');if(el){el.textContent=r<=100?r+'자 남음':'';el.className='lk-post-char'+(r<=30?' warn':'');}
         document.getElementById('lk-post-submit').disabled=!this.value.trim();"></textarea>
     </div>
@@ -6473,9 +6717,12 @@ async function leaveGroup(id){
 
 function switchCommFeed(groupId){
   _activeGroupId=groupId;
+  _activeChannelId=null;
   _communityPosts=[];
   if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
   loadCommunityPosts(true);
+  if(groupId)loadGroupChannels(groupId);
+  _loadQuill().then(()=>{_commQuillInst=null;_initCommQuill();});
 }
 
 async function communityPost(){
@@ -6559,6 +6806,728 @@ async function communityDeleteComment(postId,commentId){
   if(!window.GUEST_MODE&&ApiClient.isOnline()){
     ApiClient.uncommentCommunityPost(postId,commentId).catch(e=>console.warn('[Community] 댓글삭제 실패:',e.message));
   }
+}
+
+// ── Emoji Reactions ────────────────────────────────────────
+const _QUICK_EMOJIS=['👍','❤️','😂','😮','😢','🔥','✅','💯','🎉','👏','🙏','💪','🤔','👀','⭐'];
+
+function openEmojiPicker(e,postId){
+  e.stopPropagation();
+  document.getElementById('lk-emoji-picker')?.remove();
+  const picker=document.createElement('div');
+  picker.className='lk-emoji-picker';
+  picker.id='lk-emoji-picker';
+  picker.innerHTML=_QUICK_EMOJIS.map(em=>
+    `<button class="lk-emoji-opt" onclick="communityReact('${postId}','${em}');document.getElementById('lk-emoji-picker')?.remove()">${em}</button>`
+  ).join('');
+  const rect=e.target.getBoundingClientRect();
+  picker.style.cssText=`position:fixed;top:${rect.bottom+4}px;left:${Math.min(rect.left,window.innerWidth-240)}px`;
+  document.body.appendChild(picker);
+  setTimeout(()=>document.addEventListener('click',()=>picker.remove(),{once:true}),10);
+}
+
+async function communityReact(postId,emoji){
+  const p=_communityPosts.find(p=>p.id===postId);if(!p)return;
+  const uid=D.settings?.userId||'me';
+  if(!p.reactions)p.reactions={};
+  const users=p.reactions[emoji]||[];
+  const mine=users.includes(uid);
+  if(mine){
+    p.reactions[emoji]=users.filter(u=>u!==uid);
+    if(!p.reactions[emoji].length)delete p.reactions[emoji];
+  }else{
+    p.reactions[emoji]=[...users,uid];
+  }
+  _refreshFeed();
+  if(!window.GUEST_MODE&&ApiClient.isOnline()){
+    const token=ApiClient.getToken();
+    fetch('/api/community?id='+postId+'&action=react',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({emoji,userId:uid})}).catch(()=>null);
+  }
+}
+
+async function communityPin(postId){
+  const p=_communityPosts.find(p=>p.id===postId);if(!p)return;
+  p.pinned=!p.pinned;
+  _refreshFeed();
+  if(!window.GUEST_MODE&&ApiClient.isOnline()){
+    const token=ApiClient.getToken();
+    fetch('/api/community?id='+postId+'&action=pin',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({})}).catch(()=>null);
+  }
+}
+
+// ── Channels ───────────────────────────────────────────────
+async function loadGroupChannels(groupId){
+  if(!groupId||window.GUEST_MODE||!ApiClient.isOnline())return;
+  try{
+    const token=ApiClient.getToken();
+    const channels=await fetch('/api/channels?groupId='+groupId,{headers:{'Authorization':'Bearer '+token}}).then(r=>r.ok?r.json():[]);
+    if(Array.isArray(channels))_groupChannels[groupId]=channels;
+  }catch(e){console.warn('[Channels] 로드 실패:',e);}
+}
+
+async function switchChannel(channelId){
+  _activeChannelId=channelId;
+  if(VIEW==='community')document.getElementById('view-area').innerHTML=renderCommunity();
+  if(channelId){
+    loadChannelMessages(channelId);
+  }else{
+    loadCommunityPosts(true);
+  }
+}
+
+async function loadChannelMessages(channelId){
+  if(!channelId||window.GUEST_MODE||!ApiClient.isOnline())return;
+  try{
+    const token=ApiClient.getToken();
+    const msgs=await fetch('/api/channels?messages=1&channelId='+channelId,{headers:{'Authorization':'Bearer '+token}}).then(r=>r.ok?r.json():[]);
+    if(Array.isArray(msgs)){
+      _channelMessages[channelId]=msgs;
+      const feedEl=document.getElementById('comm-feed-area');
+      if(feedEl)feedEl.innerHTML=_buildChannelHTML(msgs,channelId);
+    }
+  }catch(e){}
+}
+
+function _buildChannelHTML(messages,channelId){
+  if(!messages.length)return`<div class="lk-empty"><div class="lk-empty-ico">💬</div><div class="lk-empty-txt">채널에 첫 메시지를 보내세요</div></div>`;
+  return messages.map(m=>{
+    const ts=_commTimeAgo(new Date(m.created_at).getTime());
+    return`<div class="lk-card" style="border-radius:12px;margin:8px 20px;padding:14px">
+      <div class="lk-card-header" style="margin-bottom:8px">
+        ${_commAv({avatar:m.avatar||'😊',avatar_bg:m.avatar_bg||0},36)}
+        <div class="lk-card-info">
+          <div class="lk-card-name">${esc(m.author||'멤버')}</div>
+          <div class="lk-card-meta">${ts}</div>
+        </div>
+        ${m.pinned?'<span style="font-size:14px">📌</span>':''}
+      </div>
+      <div style="font-size:14px;line-height:1.6;color:var(--text);white-space:pre-wrap;word-break:break-word">${_parseContent(m.content)}</div>
+    </div>`;
+  }).join('');
+}
+
+async function sendChannelMessage(){
+  if(!_activeChannelId)return;
+  const inp=document.getElementById('lk-post-content')||document.querySelector('.lk-post-textarea');
+  const content=(inp?.value||'').trim();if(!content)return;
+  document.getElementById('lk-post-overlay')?.remove();
+  const s=D.settings;
+  const tempMsg={id:'tmp_'+Date.now(),channel_id:_activeChannelId,user_id:'me',author:s.name||'나',avatar:s.avatar||'😊',content,created_at:new Date().toISOString()};
+  if(!_channelMessages[_activeChannelId])_channelMessages[_activeChannelId]=[];
+  _channelMessages[_activeChannelId].push(tempMsg);
+  const feedEl=document.getElementById('comm-feed-area');
+  if(feedEl)feedEl.innerHTML=_buildChannelHTML(_channelMessages[_activeChannelId],_activeChannelId);
+  if(!window.GUEST_MODE&&ApiClient.isOnline()){
+    const token=ApiClient.getToken();
+    fetch('/api/channels?message=1&channelId='+_activeChannelId,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({content,author:s.name||'나',avatar:s.avatar||'😊',avatarBg:s.avatarBg||0})}).catch(()=>null);
+  }
+}
+
+async function openCreateChannelModal(){
+  const name=await showInputModal('채널 이름 (예: 공지, 일반)','');
+  if(!name?.trim()||!_activeGroupId)return;
+  try{
+    const token=ApiClient.getToken();
+    const ch=await fetch('/api/channels?groupId='+_activeGroupId,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({name:name.trim()})}).then(r=>r.ok?r.json():null);
+    if(!ch)throw new Error('채널 생성 실패');
+    if(!_groupChannels[_activeGroupId])_groupChannels[_activeGroupId]=[];
+    _groupChannels[_activeGroupId].push(ch);
+    switchChannel(ch.id);
+  }catch(e){showToast('채널 생성 실패','error');}
+}
+
+// ── DM System ──────────────────────────────────────────────
+function openDMList(){
+  const overlay=document.getElementById('dm-overlay');
+  overlay?.classList.add('show');
+  _dmOpen=true;
+  document.getElementById('dm-panel-title').textContent='메시지';
+  const body=document.getElementById('dm-body');
+  const inputArea=document.getElementById('dm-input-area');
+  if(inputArea)inputArea.innerHTML='';
+  _dmWithUserId=null;
+  if(!_myGroups.length){
+    if(body)body.innerHTML='<div style="padding:30px;text-align:center;color:var(--text3);font-size:13px">그룹에 참가하면<br>팀원에게 메시지를 보낼 수 있어요</div>';
+    return;
+  }
+  const members=_myGroups.flatMap(g=>(g.members||[])).filter(m=>m.user_id!==(D.settings?.userId||''));
+  const uniqueMembers=[...new Map(members.map(m=>[m.user_id,m])).values()];
+  if(body)body.innerHTML=`<div class="dm-list">${
+    uniqueMembers.length?uniqueMembers.map(m=>`
+      <div class="dm-thread" onclick="openDMConv('${m.user_id}','${esc(m.display_name||m.user_id)}','${esc(m.avatar||'😊')}')">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${esc(m.avatar||'😊')}</div>
+        <div style="flex:1;min-width:0">
+          <div class="dm-thread-name">${esc(m.display_name||m.user_id)}</div>
+          <div class="dm-thread-preview">메시지 보내기...</div>
+        </div>
+      </div>`).join(''):'<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px">그룹 멤버가 없어요</div>'
+  }</div>`;
+}
+
+function openDMConv(userId,name,avatar){
+  _dmWithUserId=userId;
+  document.getElementById('dm-panel-title').textContent=name;
+  const body=document.getElementById('dm-body');
+  const inputArea=document.getElementById('dm-input-area');
+  if(body)body.innerHTML=`<div class="dm-conv" id="dm-conv"><div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">대화 시작</div></div>`;
+  if(inputArea)inputArea.innerHTML=`<div class="dm-input-row">
+    <input class="dm-input" id="dm-inp" placeholder="메시지 입력..."
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendDM()}">
+    <button class="dm-send" onclick="sendDM()">↵</button>
+  </div>`;
+  setTimeout(()=>document.getElementById('dm-inp')?.focus(),50);
+  if(!window.GUEST_MODE&&ApiClient.isOnline()){
+    const token=ApiClient.getToken();
+    fetch('/api/dm?with='+userId,{headers:{'Authorization':'Bearer '+token}}).then(r=>r.ok?r.json():[]).then(msgs=>{
+      if(!Array.isArray(msgs))return;
+      _dmMessages=msgs;
+      renderDMConv();
+    }).catch(()=>null);
+  }
+}
+
+function renderDMConv(){
+  const conv=document.getElementById('dm-conv');if(!conv)return;
+  const myUid=D.settings?.userId||'me';
+  conv.innerHTML=_dmMessages.map(m=>{
+    const mine=m.from_user_id===myUid;
+    return`<div style="display:flex;flex-direction:column;align-items:${mine?'flex-end':'flex-start'}">
+      <div class="dm-msg ${mine?'mine':'theirs'}">${esc(m.content)}</div>
+    </div>`;
+  }).join('')||'<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">대화 시작</div>';
+  conv.scrollTop=conv.scrollHeight;
+}
+
+async function sendDM(){
+  const inp=document.getElementById('dm-inp');
+  const content=(inp?.value||'').trim();if(!content)return;
+  if(inp)inp.value='';
+  const myUid=D.settings?.userId||'me';
+  const tempMsg={id:'tmp_'+Date.now(),from_user_id:myUid,to_user_id:_dmWithUserId,content,created_at:new Date().toISOString()};
+  _dmMessages.push(tempMsg);
+  renderDMConv();
+  if(!window.GUEST_MODE&&ApiClient.isOnline()){
+    const token=ApiClient.getToken();
+    const groupId=_activeGroupId||(_myGroups[0]?.id||null);
+    fetch('/api/dm',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({toUserId:_dmWithUserId,groupId,content})}).catch(()=>null);
+  }
+}
+
+function closeDM(){
+  document.getElementById('dm-overlay')?.classList.remove('show');
+  _dmOpen=false;
+}
+
+// ── Team Board ─────────────────────────────────────────────
+function renderTeamBoard(){
+  if(!D.settings.teamMembers)D.settings.teamMembers=[];
+  const members=D.settings.teamMembers;
+  const allTasks=(D.tasks||[]).filter(t=>!t.done||t.assignee_name);
+
+  // unassigned = tasks with no assignee
+  const unassigned=allTasks.filter(t=>!t.assignee_id&&!t.assignee_name);
+
+  function taskCard(t){
+    const folder=D.folders?.find(f=>f.id===t.folder_id);
+    const isOverdue=t.due&&new Date(t.due)<new Date()&&!t.done;
+    const priLabel={high:'높음',medium:'보통'}[t.priority];
+    return`<div class="tb-card${t.done?' done-card':''}" id="tb-card-${t.id}"
+      draggable="true"
+      ondragstart="tbDragStart(event,'${t.id}')"
+      ondragend="tbDragEnd(event)">
+      <div class="tb-card-text${t.done?' done':''}">${esc(t.title)}</div>
+      <div class="tb-card-meta">
+        ${folder?`<span class="tb-card-folder">${esc(folder.name)}</span>`:''}
+        ${t.due?`<span class="tb-card-due${isOverdue?' overdue':''}">${isOverdue?'⚠️ ':''} ${t.due}</span>`:''}
+        ${priLabel?`<span class="tb-card-pri ${t.priority}">${priLabel}</span>`:''}
+      </div>
+    </div>`;
+  }
+
+  const unassignedCol=`<div class="tb-col" id="tbcol-unassigned"
+    ondragover="tbDragOver(event,this)" ondragleave="tbDragLeave(this)" ondrop="tbDrop(event,null,null,null)">
+    <div class="tb-col-header">
+      <div class="tb-col-av" style="background:var(--border);font-size:18px">📋</div>
+      <span class="tb-col-name">미배정</span>
+      <span class="tb-col-count">${unassigned.length}</span>
+    </div>
+    <div class="tb-task-list">
+      ${unassigned.length?unassigned.map(taskCard).join(''):`<div class="tb-empty-col">할일을 여기에<br>드래그하세요</div>`}
+    </div>
+  </div>`;
+
+  const memberCols=members.map(m=>{
+    const mTasks=allTasks.filter(t=>t.assignee_id===m.id||t.assignee_name===m.name);
+    return`<div class="tb-col" id="tbcol-${m.id}"
+      ondragover="tbDragOver(event,this)" ondragleave="tbDragLeave(this)" ondrop="tbDrop(event,'${m.id}','${esc(m.name)}','${esc(m.avatar||'😊')}')">
+      <div class="tb-col-header">
+        <div class="tb-col-av" style="background:${m.color||'var(--accent)'}">
+          ${m.avatar||'😊'}
+        </div>
+        <span class="tb-col-name">${esc(m.name)}</span>
+        <span class="tb-col-count">${mTasks.length}</span>
+        <button class="tb-col-del" onclick="removeMember('${m.id}')" title="팀원 삭제">×</button>
+      </div>
+      <div class="tb-task-list">
+        ${mTasks.length?mTasks.map(taskCard).join(''):`<div class="tb-empty-col">여기에 드래그<br>해서 배정</div>`}
+      </div>
+    </div>`;
+  }).join('');
+
+  return`<div class="tb-wrap">
+    <div class="tb-toolbar">
+      <span class="tb-title">팀 보드</span>
+      <button class="tb-add-member" onclick="openAddMemberModal()">＋ 팀원 추가</button>
+    </div>
+    <div class="tb-board">
+      ${unassignedCol}
+      ${memberCols}
+    </div>
+  </div>`;
+}
+
+function tbDragStart(e, taskId){
+  _tbDragTaskId=taskId;
+  e.dataTransfer.effectAllowed='move';
+  setTimeout(()=>document.getElementById('tb-card-'+taskId)?.classList.add('dragging'),0);
+}
+
+function tbDragEnd(e){
+  document.querySelectorAll('.tb-card.dragging').forEach(el=>el.classList.remove('dragging'));
+  document.querySelectorAll('.tb-col.drag-over').forEach(el=>el.classList.remove('drag-over'));
+}
+
+function tbDragOver(e, colEl){
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+  colEl.classList.add('drag-over');
+}
+
+function tbDragLeave(colEl){
+  colEl.classList.remove('drag-over');
+}
+
+async function tbDrop(e, assigneeId, assigneeName, assigneeAvatar){
+  e.preventDefault();
+  tbDragEnd(e);
+  if(!_tbDragTaskId)return;
+  const taskId=_tbDragTaskId;
+  _tbDragTaskId=null;
+
+  // Update local state immediately
+  const task=D.tasks?.find(t=>t.id===taskId);
+  if(task){
+    task.assignee_id=assigneeId||null;
+    task.assignee_name=assigneeName||null;
+    task.assignee_avatar=assigneeAvatar||null;
+  }
+  if(VIEW==='teamboard')document.getElementById('view-area').innerHTML=renderTeamBoard();
+
+  // Persist
+  if(!window.GUEST_MODE&&ApiClient.isOnline()){
+    ApiClient.assignTask(taskId,assigneeId,assigneeName,assigneeAvatar).catch(e=>{
+      console.warn('[TeamBoard] 배정 실패:',e.message);
+    });
+  }
+}
+
+function openAddMemberModal(){
+  const avatars=['😊','😎','🧑','👩','👨','🦊','🐼','🐯','🦁','🐸'];
+  const colors=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#84cc16'];
+  let selAvatar=avatars[0];
+  let selColor=colors[0];
+
+  const overlay=document.createElement('div');
+  overlay.className='tb-member-modal-overlay';
+  overlay.id='tb-mm-overlay';
+  overlay.innerHTML=`<div class="tb-member-modal">
+    <div class="tb-mm-title">팀원 추가</div>
+    <div class="tb-mm-row">
+      <input class="tb-mm-inp" id="tb-mm-name" placeholder="이름" maxlength="20">
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px">아바타</div>
+    <div class="tb-mm-av-row" id="tb-mm-avs">
+      ${avatars.map((a,i)=>`<div class="tb-mm-av-opt${i===0?' selected':''}" onclick="tbSelAv(this,'${a}')" data-av="${a}">${a}</div>`).join('')}
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px">색상</div>
+    <div class="tb-mm-colors" id="tb-mm-colors">
+      ${colors.map((c,i)=>`<div class="tb-mm-color${i===0?' selected':''}" onclick="tbSelColor(this,'${c}')" style="background:${c}"></div>`).join('')}
+    </div>
+    <button class="tb-mm-btn" onclick="submitAddMember()">추가</button>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
+  window._tbSelAvatar=selAvatar;
+  window._tbSelColor=selColor;
+}
+
+function tbSelAv(el,av){
+  window._tbSelAvatar=av;
+  document.querySelectorAll('.tb-mm-av-opt').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function tbSelColor(el,c){
+  window._tbSelColor=c;
+  document.querySelectorAll('.tb-mm-color').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function submitAddMember(){
+  const name=(document.getElementById('tb-mm-name')?.value||'').trim();
+  if(!name){document.getElementById('tb-mm-name')?.focus();return;}
+  if(!D.settings.teamMembers)D.settings.teamMembers=[];
+  D.settings.teamMembers.push({
+    id:'tm_'+Date.now().toString(36),
+    name,
+    avatar:window._tbSelAvatar||'😊',
+    color:window._tbSelColor||'#3b82f6'
+  });
+  saveD();
+  document.getElementById('tb-mm-overlay')?.remove();
+  if(VIEW==='teamboard')document.getElementById('view-area').innerHTML=renderTeamBoard();
+}
+
+function removeMember(id){
+  if(!D.settings.teamMembers)return;
+  if(!confirm('팀원을 삭제할까요? 배정된 할일은 미배정으로 돌아가요.'))return;
+  // Unassign tasks
+  (D.tasks||[]).forEach(t=>{if(t.assignee_id===id){t.assignee_id=null;t.assignee_name=null;t.assignee_avatar=null;}});
+  D.settings.teamMembers=D.settings.teamMembers.filter(m=>m.id!==id);
+  saveD();
+  if(VIEW==='teamboard')document.getElementById('view-area').innerHTML=renderTeamBoard();
+}
+
+// ── Share Goal Modal ───────────────────────────────────────
+function openShareGoalModal(goalId){
+  const goal=D.goals.find(g=>g.id===goalId);
+  if(!goal||goal.readOnly)return;
+  document.getElementById('share-goal-modal')?.remove();
+  const overlay=document.createElement('div');
+  overlay.className='sg-modal-overlay';
+  overlay.id='share-goal-modal';
+  const currentGroupId=goal.group_id||null;
+  const groupOpts=_myGroups.map(grp=>`
+    <label class="sg-radio-row">
+      <input type="radio" name="sg-grp" value="${esc(grp.id)}" ${currentGroupId===grp.id?'checked':''}>
+      ${esc(grp.name)}
+    </label>`).join('');
+  overlay.innerHTML=`<div class="sg-modal">
+    <div class="sg-modal-title">📡 목표 공유</div>
+    <label class="sg-radio-row">
+      <input type="radio" name="sg-grp" value="" ${!currentGroupId?'checked':''}> 공유 안 함
+    </label>
+    ${groupOpts}
+    <button class="sg-save-btn" onclick="saveShareGoal('${goalId}')">저장</button>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
+}
+
+async function saveShareGoal(goalId){
+  const sel=document.querySelector('input[name="sg-grp"]:checked');
+  if(!sel)return;
+  const groupId=sel.value||null;
+  const isShared=!!groupId;
+  try{
+    await ApiClient.updateGoal(goalId,{groupId,isShared});
+    const idx=D.goals.findIndex(g=>g.id===goalId);
+    if(idx!==-1){D.goals[idx].group_id=groupId;D.goals[idx].is_shared=isShared;D.goals[idx].isShared=isShared;}
+  }catch(e){console.warn('[saveShareGoal]',e);}
+  document.getElementById('share-goal-modal')?.remove();
+  render();
+}
+
+// ── Group Profile Modal ────────────────────────────────────
+async function openGroupProfileModal() {
+  if (!_activeGroupId) return
+  const auth = { headers: { Authorization: 'Bearer ' + ApiClient.getToken() } }
+  let gp = {}
+  try {
+    const r = await fetch(`/api/group-profiles?groupId=${_activeGroupId}`, auth)
+    if (r.ok) gp = await r.json()
+  } catch(e) {}
+
+  let presets = _myProfilePresets
+  if (!presets.length) {
+    try {
+      const r = await fetch('/api/profile?presets=1', auth)
+      if (r.ok) { const d = await r.json(); presets = d.presets || []; _myProfilePresets = presets }
+    } catch(e) {}
+  }
+
+  const presetsHTML = presets.length ? `
+    <div style="margin-bottom:12px">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:6px">프리셋 불러오기</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${presets.map(pr => `<button class="btn btn-ghost btn-sm" onclick="applyPresetToGroupForm('${pr.id}')">${esc(pr.name)}</button>`).join('')}
+      </div>
+    </div>` : ''
+
+  const modal = `<div id="gp-modal-overlay" style="position:fixed;inset:0;background:#0008;z-index:9999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">
+    <div style="background:var(--surface);border-radius:16px;padding:24px;width:min(420px,92vw);max-height:80vh;overflow-y:auto">
+      <div style="font-weight:700;font-size:16px;margin-bottom:16px">그룹 프로필 설정</div>
+      ${presetsHTML}
+      <label style="display:block;font-size:12px;color:var(--text3);margin-bottom:4px">그룹 내 별명</label>
+      <input id="gp-nickname" class="form-input" value="${esc(gp.nickname||'')}" placeholder="${esc(D.settings.name||'별명')}">
+      <label style="display:block;font-size:12px;color:var(--text3);margin:10px 0 4px">아바타 이모지 (비워두면 기본 프로필 사용)</label>
+      <input id="gp-avatar" class="form-input" value="${esc(gp.avatar||'')}" placeholder="😊" maxlength="4" style="width:60px">
+      <label style="display:block;font-size:12px;color:var(--text3);margin:10px 0 4px">그룹 내 소개</label>
+      <textarea id="gp-bio" class="form-input" rows="2" style="resize:vertical">${esc(gp.bio||'')}</textarea>
+      <div style="display:flex;gap:16px;margin:12px 0">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="gp-show-title" ${gp.show_title!==false?'checked':''}> 칭호 표시
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="gp-show-avatar" ${gp.show_avatar!==false?'checked':''}> 아바타 표시
+        </label>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+        <button class="btn btn-ghost" onclick="document.getElementById('gp-modal-overlay').remove()">취소</button>
+        <button class="btn btn-primary" onclick="saveGroupProfile()">저장</button>
+      </div>
+    </div>
+  </div>`
+  document.body.insertAdjacentHTML('beforeend', modal)
+}
+
+function applyPresetToGroupForm(presetId) {
+  const pr = _myProfilePresets.find(p => p.id === presetId)
+  if (!pr) return
+  const n = document.getElementById('gp-nickname'); if(n) n.value = pr.name || ''
+  const a = document.getElementById('gp-avatar');   if(a) a.value = pr.avatar || ''
+  const b = document.getElementById('gp-bio');      if(b) b.value = pr.bio || ''
+}
+
+async function saveGroupProfile() {
+  if (!_activeGroupId) return
+  const payload = {
+    nickname:    document.getElementById('gp-nickname')?.value.trim() || null,
+    avatar:      document.getElementById('gp-avatar')?.value.trim() || null,
+    bio:         document.getElementById('gp-bio')?.value.trim() || null,
+    showTitle:   document.getElementById('gp-show-title')?.checked ?? true,
+    showAvatar:  document.getElementById('gp-show-avatar')?.checked ?? true,
+  }
+  try {
+    const r = await fetch(`/api/group-profiles?groupId=${_activeGroupId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + ApiClient.getToken() },
+      body: JSON.stringify(payload)
+    })
+    if (!r.ok) throw new Error(await r.text())
+    document.getElementById('gp-modal-overlay')?.remove()
+    loadCommunityFeed()
+  } catch(e) { alert('저장 실패: ' + e.message) }
+}
+
+// ── Multi-profile Preset Manager ──────────────────────────
+function _renderPresetsSection() {
+  return `<div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
+    <div style="font-weight:600;font-size:14px;margin-bottom:10px">멀티프로필 프리셋</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:10px">저장해두고 그룹별로 빠르게 적용할 수 있어요</div>
+    <div id="presets-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">
+      ${_myProfilePresets.map(pr => `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:10px">
+          <span style="font-size:20px">${esc(pr.avatar||'😊')}</span>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:13px">${esc(pr.name)}</div>
+            ${pr.bio?`<div style="font-size:11px;color:var(--text3)">${esc(pr.bio)}</div>`:''}
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="openEditPresetModal('${pr.id}')">✏️</button>
+          <button class="btn btn-sm btn-danger" onclick="deletePreset('${pr.id}')">🗑</button>
+        </div>`).join('')}
+    </div>
+    ${_myProfilePresets.length < 6 ? `<button class="btn btn-ghost btn-sm" onclick="openAddPresetModal()">＋ 프리셋 추가</button>` : ''}
+  </div>`
+}
+
+function openAddPresetModal(editId) {
+  const existing = editId ? _myProfilePresets.find(p=>p.id===editId) : null
+  document.body.insertAdjacentHTML('beforeend', `<div id="preset-modal" style="position:fixed;inset:0;background:#0008;z-index:9999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">
+    <div style="background:var(--surface);border-radius:16px;padding:24px;width:min(380px,92vw)">
+      <div style="font-weight:700;font-size:15px;margin-bottom:14px">${existing?'프리셋 수정':'새 프리셋'}</div>
+      <input id="preset-name" class="form-input" placeholder="프리셋 이름 (예: 업무용)" value="${esc(existing?.name||'')}">
+      <input id="preset-avatar" class="form-input" placeholder="아바타 이모지" maxlength="4" style="width:70px;margin-top:8px" value="${esc(existing?.avatar||'')}">
+      <textarea id="preset-bio" class="form-input" rows="2" placeholder="소개 (선택)" style="margin-top:8px;resize:vertical">${esc(existing?.bio||'')}</textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+        <button class="btn btn-ghost" onclick="document.getElementById('preset-modal').remove()">취소</button>
+        <button class="btn btn-primary" onclick="savePreset('${editId||''}')">저장</button>
+      </div>
+    </div>
+  </div>`)
+}
+
+function openEditPresetModal(id) { openAddPresetModal(id) }
+
+async function savePreset(editId) {
+  const name = document.getElementById('preset-name')?.value.trim()
+  if (!name) return alert('이름을 입력해주세요')
+  const avatar = document.getElementById('preset-avatar')?.value.trim() || '😊'
+  const bio = document.getElementById('preset-bio')?.value.trim() || ''
+  if (editId) {
+    const idx = _myProfilePresets.findIndex(p=>p.id===editId)
+    if (idx>=0) _myProfilePresets[idx] = { ..._myProfilePresets[idx], name, avatar, bio }
+  } else {
+    _myProfilePresets.push({ id: Date.now().toString(36), name, avatar, bio })
+  }
+  await fetch('/api/profile?presets=1', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + ApiClient.getToken() },
+    body: JSON.stringify({ presets: _myProfilePresets })
+  }).catch(()=>{})
+  document.getElementById('preset-modal')?.remove()
+  render()
+}
+
+async function deletePreset(id) {
+  _myProfilePresets = _myProfilePresets.filter(p=>p.id!==id)
+  await fetch('/api/profile?presets=1', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + ApiClient.getToken() },
+    body: JSON.stringify({ presets: _myProfilePresets })
+  }).catch(()=>{})
+  render()
+}
+
+// ── Profile Page ───────────────────────────────────────────
+function renderProfilePage() {
+  const s = D.settings
+  const doneTasks = D.tasks.filter(t=>t.done).length
+  const habitStreak = Math.max(0, ...(D.habits.map(h=>h.streak||0).concat([0])))
+  const avatarHTML = s.avatarImg
+    ? `<img src="${esc(s.avatarImg)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+    : (s.avatar||'😊')
+
+  return `<div style="max-width:500px;margin:0 auto;padding:20px">
+    <div style="background:var(--surface);border-radius:20px;padding:24px;text-align:center;box-shadow:0 2px 12px #0001;margin-bottom:16px">
+      <div style="width:80px;height:80px;border-radius:50%;background:${s.avatarBgGrad||'var(--accent)'};margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden">${avatarHTML}</div>
+      <div style="font-size:20px;font-weight:700">${esc(s.name||'이름 없음')}</div>
+      ${s.userTag?`<div style="font-size:13px;color:var(--text3);margin-top:2px">@${esc(s.userTag)}</div>`:''}
+      ${s.bio?`<div style="font-size:13px;color:var(--text2);margin-top:8px">${esc(s.bio)}</div>`:''}
+      <div style="display:flex;justify-content:center;gap:24px;margin-top:16px">
+        <div style="text-align:center"><div style="font-size:20px;font-weight:700">${doneTasks}</div><div style="font-size:11px;color:var(--text3)">완료 할일</div></div>
+        <div style="text-align:center"><div style="font-size:20px;font-weight:700">${D.goals.filter(g=>!g.readOnly).length}</div><div style="font-size:11px;color:var(--text3)">목표</div></div>
+        <div style="text-align:center"><div style="font-size:20px;font-weight:700">${habitStreak}</div><div style="font-size:11px;color:var(--text3)">최장 스트릭</div></div>
+      </div>
+    </div>
+    ${_myProfilePresets.length ? `
+    <div style="background:var(--surface);border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px #0001">
+      <div style="font-weight:600;font-size:14px;margin-bottom:10px">나의 프로필 프리셋</div>
+      ${_myProfilePresets.map(pr=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:22px">${esc(pr.avatar||'😊')}</span>
+          <div>
+            <div style="font-weight:600;font-size:13px">${esc(pr.name)}</div>
+            ${pr.bio?`<div style="font-size:11px;color:var(--text3)">${esc(pr.bio)}</div>`:''}
+          </div>
+        </div>`).join('')}
+    </div>` : ''}
+    ${_myGroups.length ? `
+    <div style="background:var(--surface);border-radius:16px;padding:16px;box-shadow:0 2px 8px #0001">
+      <div style="font-weight:600;font-size:14px;margin-bottom:10px">참여 중인 그룹</div>
+      ${_myGroups.map(g=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="setView('community');switchCommFeed('${g.id}')">
+          <span style="font-size:20px">${g.emoji||'👥'}</span>
+          <span style="font-size:13px;font-weight:600">${esc(g.name)}</span>
+        </div>`).join('')}
+    </div>` : ''}
+  </div>`
+}
+
+// ── Group Dashboard ────────────────────────────────────────
+async function loadGroupDash(groupId){
+  if(!groupId)return;
+  _gdLoading=true;
+  _gdData=null;
+  try{
+    const token=ApiClient.getToken?.();
+    const headers=token?{Authorization:'Bearer '+token}:{};
+    const postsRes=await fetch('/api/community?group='+groupId,{headers}).catch(()=>null);
+    const posts=postsRes&&postsRes.ok?await postsRes.json():[];
+    const sharedGoals=D.goals.filter(g=>g.group_id===groupId);
+    _gdData={posts:Array.isArray(posts)?posts.slice(0,5):[],sharedGoals};
+  }catch(e){console.warn('[loadGroupDash]',e);_gdData={posts:[],sharedGoals:[]};}
+  _gdLoading=false;
+  if(VIEW==='groupdash')document.getElementById('view-area').innerHTML=renderGroupDash();
+}
+
+function renderGroupDash(){
+  if(!_myGroups.length){
+    return`<div style="text-align:center;padding:60px 20px">
+      <div style="font-size:48px;margin-bottom:16px">👥</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:8px;color:var(--text)">그룹에 참여하면 대시보드를 볼 수 있어요</div>
+      <div style="font-size:13px;color:var(--text3);margin-bottom:20px">커뮤니티에서 그룹을 만들거나 참여해보세요</div>
+      <button class="btn btn-primary" onclick="setView('community')">커뮤니티로 이동</button>
+    </div>`;
+  }
+  // Default group selection
+  if(!_gdGroupId||!_myGroups.find(g=>g.id===_gdGroupId)){
+    _gdGroupId=_myGroups[0].id;
+  }
+  // Trigger data load if not cached
+  if(_gdData===null&&!_gdLoading){
+    loadGroupDash(_gdGroupId);
+    return`<div class="gd-wrap"><div class="gd-pills">${_myGroups.map(grp=>`<div class="gd-pill${_gdGroupId===grp.id?' active':''}" onclick="gdSelectGroup('${grp.id}')">${esc(grp.name)}</div>`).join('')}</div><div style="text-align:center;padding:40px;color:var(--text3)">로딩 중...</div></div>`;
+  }
+  const data=_gdData||{posts:[],sharedGoals:[]};
+  const members=D.settings.teamMembers||[];
+
+  // Team member task stats
+  const memberRows=members.map(m=>{
+    const mTasks=D.tasks.filter(t=>t.assignee_id===m.id||t.assignee_name===m.name);
+    const done=mTasks.filter(t=>t.done).length;
+    return`<div class="gd-member-row">
+      <div class="gd-member-av" style="background:${m.color||'var(--accent)'}">${m.avatar||'😊'}</div>
+      <span class="gd-member-name">${esc(m.name)}</span>
+      <span class="gd-member-stat">${done}/${mTasks.length} 완료</span>
+    </div>`;
+  }).join('');
+
+  // Shared goals section
+  const goalRows=data.sharedGoals.map(g=>{
+    const p=goalProgress(g.id);
+    return`<div class="gd-goal-row">
+      <span class="gd-goal-name">${esc(g.name)}</span>
+      <div class="gd-prog-track"><div class="gd-prog-fill" style="width:${p.pct}%;background:${g.color||'var(--accent)'}"></div></div>
+      <span class="gd-prog-pct">${p.pct}%</span>
+    </div>`;
+  }).join('');
+
+  // Recent posts section
+  const postRows=data.posts.map(p=>{
+    const snippet=(p.content||'').replace(/<[^>]*>/g,'').slice(0,80);
+    const timeStr=p.created_at?new Date(p.created_at).toLocaleDateString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+    return`<div class="gd-post-row">
+      <div class="gd-post-author">${esc(p.author_name||p.user_name||'익명')}</div>
+      <div class="gd-post-content">${esc(snippet)}${snippet.length>=80?'…':''}</div>
+      <div class="gd-post-time">${timeStr}</div>
+    </div>`;
+  }).join('');
+
+  return`<div class="gd-wrap">
+    <div class="gd-pills">
+      ${_myGroups.map(grp=>`<div class="gd-pill${_gdGroupId===grp.id?' active':''}" onclick="gdSelectGroup('${grp.id}')">${esc(grp.name)}</div>`).join('')}
+    </div>
+    <div class="gd-section">
+      <div class="gd-section-title">🎯 공유 목표</div>
+      ${goalRows||`<div class="gd-empty">이 그룹에 공유된 목표가 없어요</div>`}
+    </div>
+    <div class="gd-section">
+      <div class="gd-section-title">📝 최근 게시글</div>
+      ${postRows||`<div class="gd-empty">최근 게시글이 없어요</div>`}
+    </div>
+    <div class="gd-section">
+      <div class="gd-section-title">👥 팀 현황</div>
+      ${memberRows||`<div class="gd-empty">팀원이 없어요 — 팀 보드에서 추가하세요</div>`}
+    </div>
+  </div>`;
+}
+
+function gdSelectGroup(groupId){
+  _gdGroupId=groupId;
+  _gdData=null;
+  loadGroupDash(groupId);
+  if(VIEW==='groupdash')document.getElementById('view-area').innerHTML=renderGroupDash();
 }
 
 // ── Resource Room ──────────────────────────────────────────
@@ -7197,7 +8166,7 @@ function taskCardHTML(task){
     <div class="task-head" onclick="${headClick}">
       ${leftEl}
       <button class="check-btn${task.done?' chk':''}" onclick="${checkClick}">${task.done?'✓':''}</button>
-      <div class="task-title-text">${esc(task.title)}</div>
+      <div class="task-title-text">${esc(task.title)}${(task.assignee_id||task.assignee_name)?`<span style="font-size:10px;background:#3b82f622;color:#3b82f6;border-radius:4px;padding:1px 5px;margin-left:4px">워크</span>`:''}</div>
       <div class="task-tags">${task.tags.slice(0,3).map(tg=>tagHTML(tg)).join('')}</div>
       <div class="task-right">
         ${pLabel}
@@ -7678,8 +8647,7 @@ function renderGoals(){
         <div class="gh-prog-row"><div class="gh-prog-track"><div class="gh-prog-fill" style="width:${pp.pct}%;background:${p.color}"></div></div><span class="gh-prog-pct">${pp.pct}%</span></div>
         <span style="font-size:10px;color:var(--text3);flex-shrink:0">${pp.done}/${pp.total}</span>
         <div class="gh-proj-acts" onclick="event.stopPropagation()">
-          <button class="btn btn-ghost btn-sm" onclick="openGoalModal('${p.id}')">✏️</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteGoal('${p.id}')">🗑</button>
+          ${p.readOnly?`<span class="sg-shared-badge">[공유됨]</span>`:`<button class="btn btn-ghost btn-sm" onclick="openShareGoalModal('${p.id}')" title="목표 공유" style="${p.group_id?'color:var(--accent)':''}">${p.group_id?'📡 공유 중':'📡 공유'}</button><button class="btn btn-ghost btn-sm" onclick="openGoalModal('${p.id}')">✏️</button><button class="btn btn-sm btn-danger" onclick="deleteGoal('${p.id}')">🗑</button>`}
         </div>
       </div>
       ${isOpen?(tasks.length
@@ -7704,8 +8672,7 @@ function renderGoals(){
           <div class="gh-prog-row"><div class="gh-prog-track"><div class="gh-prog-fill" style="width:${gp.pct}%;background:${g.color}"></div></div><span class="gh-prog-pct">${gp.pct}%</span><span style="font-size:10px;color:var(--text3)">${gp.done}/${gp.total} 태스크${g.targetDate?' · '+g.targetDate:''}</span></div>
         </div>
         <div class="gh-gl-acts" onclick="event.stopPropagation()">
-          <button class="btn btn-ghost btn-sm" onclick="openGoalModal('${g.id}')">✏️</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteGoal('${g.id}')">🗑</button>
+          ${g.readOnly?`<span class="sg-shared-badge">[공유됨]</span>`:`<button class="btn btn-ghost btn-sm" onclick="openShareGoalModal('${g.id}')" title="목표 공유" style="${g.group_id?'color:var(--accent)':''}">${g.group_id?'📡 공유 중':'📡 공유'}</button><button class="btn btn-ghost btn-sm" onclick="openGoalModal('${g.id}')">✏️</button><button class="btn btn-sm btn-danger" onclick="deleteGoal('${g.id}')">🗑</button>`}
         </div>
       </div>
       ${isOpen?`<div class="gh-body">
@@ -9094,9 +10061,12 @@ function startApp(){
   }
   if(!D.notifications) D.notifications = [];
   // 뷰 기본값
-  const valid=['today','todayonly','all','done','high','dashboard','goals','habits','search','settings','home','time','memo','pomodoro','routine','community','calendar','resources'];
+  const valid=['today','todayonly','all','done','high','dashboard','goals','habits','search','settings','home','time','memo','pomodoro','routine','community','calendar','resources','teamboard'];
   const preferredView=D.settings.currentView||VIEW;
   VIEW=valid.includes(preferredView)?preferredView:'today';
+  // nav 모드 복원
+  _navMode=D.settings.navMode||(_WORK_VIEWS.has(VIEW)?'work':'personal');
+  setNavMode(_navMode);
 
   // ── 대시보드 기반 알림 생성 ──────────────────────────────
   generateDashboardNotifs();
@@ -9130,5 +10100,17 @@ document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{
 // 인증 시작 (모든 초기화의 진입점)
 initAuth();
 </script>
+<!-- DM Panel -->
+<div class="dm-overlay" id="dm-overlay" onclick="if(event.target===this)closeDM()">
+  <div class="dm-panel" id="dm-panel">
+    <div class="dm-panel-header">
+      <span id="dm-panel-title" class="dm-panel-title">메시지</span>
+      <button class="dm-panel-close" onclick="closeDM()">×</button>
+    </div>
+    <div id="dm-body" style="flex:1;display:flex;flex-direction:column;overflow:hidden"></div>
+    <div id="dm-input-area"></div>
+  </div>
+</div>
+<button class="dm-fab" id="dm-fab" onclick="openDMList()" title="메시지">💬</button>
 </body>
 </html>
